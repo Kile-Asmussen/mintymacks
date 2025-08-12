@@ -2,28 +2,34 @@ use std::num::NonZeroI8;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(transparent)]
-struct Square(NonZeroI8);
+pub struct Square(NonZeroI8);
 
 impl Square {
-    fn new(ix: i8) -> Option<Self> {
+    pub const fn new(ix: i8) -> Option<Self> {
         match ix {
-            0..=63 => NonZeroI8::new(ix + 1).map(Self),
+            0..=63 => {
+                if let Some(nzi8) = NonZeroI8::new(ix + 1) {
+                    return Some(Self(nzi8));
+                } else {
+                    return None;
+                }
+            }
             _ => None,
         }
     }
 
-    fn ix(self) -> i8 {
+    pub const fn ix(self) -> i8 {
         self.0.get() - 1
     }
 
-    fn at(f: File, r: Rank) -> Self {
+    pub const fn at(f: File, r: Rank) -> Self {
         Self::new(f as i8 + r as i8).unwrap()
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
-enum File {
+pub enum File {
     A = 0,
     B = 1,
     C = 2,
@@ -35,14 +41,14 @@ enum File {
 }
 
 impl File {
-    fn x(self, r: Rank) -> Square {
+    pub const fn x(self, r: Rank) -> Square {
         Square::at(self, r)
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
-enum Rank {
+pub enum Rank {
     _1 = 0,
     _2 = 8,
     _3 = 16,
@@ -55,14 +61,20 @@ enum Rank {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
-enum Color {
+pub enum Color {
     White = 1,
     Black = -1,
 }
 
+impl Color {
+    pub const fn piece(self, p: Piece) -> ColorPiece {
+        ColorPiece::new(self, p)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
-enum Piece {
+pub enum Piece {
     Pawn = 1,
     Knight = 2,
     Bishop = 3,
@@ -71,9 +83,15 @@ enum Piece {
     King = 6,
 }
 
+impl Piece {
+    pub const fn color(self, c: Color) -> ColorPiece {
+        ColorPiece::new(c, self)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
-enum ColorPiece {
+pub enum ColorPiece {
     WhitePawn = 1,
     WhiteKnight = 2,
     WhiteBishop = 3,
@@ -86,6 +104,28 @@ enum ColorPiece {
     BlackRook = -4,
     BlackQueen = -5,
     BlackKing = -6,
+}
+
+impl ColorPiece {
+    pub const fn new(c: Color, p: Piece) -> Self {
+        use Color::*;
+        use ColorPiece::*;
+        use Piece::*;
+        match (c, p) {
+            (White, Pawn) => WhitePawn,
+            (White, Knight) => WhiteKnight,
+            (White, Bishop) => WhiteBishop,
+            (White, Rook) => WhiteRook,
+            (White, Queen) => WhiteQueen,
+            (White, King) => WhiteKing,
+            (Black, Pawn) => BlackPawn,
+            (Black, Knight) => BlackKnight,
+            (Black, Bishop) => BlackBishop,
+            (Black, Rook) => BlackRook,
+            (Black, Queen) => BlackQueen,
+            (Black, King) => BlackKing,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -102,3 +142,21 @@ fn square_nullopt() {
     null_optimization::<Rank>();
     null_optimization::<File>();
 }
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(i8)]
+pub enum CastlingMove {
+    OOO = 1,
+    OO = 2,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(i8)]
+pub enum CastlingRights {
+    NoRights = 0,
+    QueenSide = 1,
+    KingSide = 2,
+    Both = 3,
+}
+
+impl CastlingRights {}
