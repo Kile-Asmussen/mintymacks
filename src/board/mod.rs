@@ -1,4 +1,9 @@
+mod square;
+mod tests;
+
 use std::num::NonZeroI8;
+
+use crate::byteboard::ByteBoard;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(transparent)]
@@ -25,6 +30,61 @@ impl Square {
     pub const fn at(f: File, r: Rank) -> Self {
         Self::new(f as i8 + r as i8).unwrap()
     }
+
+    pub const fn file_rank(self) -> (File, Rank) {
+        (
+            File::new(self.ix() & 0x7).unwrap(),
+            Rank::new(self.ix() >> 3).unwrap(),
+        )
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct Squares;
+
+impl Squares {
+    pub const fn all() -> AllSquares {
+        AllSquares(unsafe { NonZeroI8::new_unchecked(1) })
+    }
+}
+
+impl IntoIterator for Squares {
+    type Item = Square;
+
+    type IntoIter = AllSquares;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::all()
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+#[repr(transparent)]
+pub struct AllSquares(NonZeroI8);
+
+impl AllSquares {
+    pub const fn next(&mut self) -> Option<Square> {
+        if self.0.get() < 65 {
+            let res = Some(Square(self.0));
+            self.0 = unsafe { NonZeroI8::new_unchecked(self.0.get() + 1) };
+            res
+        } else {
+            None
+        }
+    }
+}
+
+impl Iterator for AllSquares {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let n = (65 - self.0.get()) as usize;
+        (n, Some(n))
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -41,8 +101,19 @@ pub enum File {
 }
 
 impl File {
-    pub const fn x(self, r: Rank) -> Square {
+    pub const fn by(self, r: Rank) -> Square {
         Square::at(self, r)
+    }
+
+    pub const fn ix(self) -> i8 {
+        self as i8
+    }
+
+    pub const fn new(ix: i8) -> Option<Self> {
+        match ix {
+            0..=7 => Some(unsafe { std::mem::transmute(ix) }),
+            _ => None,
+        }
     }
 }
 
@@ -57,6 +128,19 @@ pub enum Rank {
     _6 = 40,
     _7 = 48,
     _8 = 56,
+}
+
+impl Rank {
+    pub const fn ix(self) -> i8 {
+        self as i8
+    }
+
+    pub const fn new(ix: i8) -> Option<Self> {
+        match ix {
+            0..=7 => Some(unsafe { std::mem::transmute(ix * 8) }),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -128,21 +212,6 @@ impl ColorPiece {
     }
 }
 
-#[cfg(test)]
-fn null_optimization<T>() {
-    assert_eq!(std::mem::size_of::<Option<T>>(), std::mem::size_of::<T>());
-}
-
-#[test]
-fn square_nullopt() {
-    null_optimization::<Square>();
-    null_optimization::<Color>();
-    null_optimization::<Piece>();
-    null_optimization::<ColorPiece>();
-    null_optimization::<Rank>();
-    null_optimization::<File>();
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i8)]
 pub enum CastlingMove {
@@ -159,4 +228,8 @@ pub enum CastlingRights {
     Both = 3,
 }
 
-impl CastlingRights {}
+impl CastlingRights {
+    pub fn can(self, c: CastlingMove) -> bool {
+        (self as i8) & (c as i8) != 0
+    }
+}
