@@ -22,15 +22,15 @@
             bashInteractive
 
             # Rust
-            # (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-            #   extensions = [ "rust-src" "miri" ];
-            #   targets = [ "x86_64-unknown-linux-gnu" ];
-            # }))
-
-            (rust-bin.stable.latest.default.override {
-              extensions = [ "rust-src" ];
+            (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
+              extensions = [ "rust-src" "miri" ];
               targets = [ "x86_64-unknown-linux-gnu" ];
-            })
+            }))
+
+            # (rust-bin.stable.latest.default.override {
+            #   extensions = [ "rust-src" ];
+            #   targets = [ "x86_64-unknown-linux-gnu" ];
+            # })
 
             cargo-tarpaulin
           ];
