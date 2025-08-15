@@ -1,6 +1,9 @@
+#![allow(unstable_features)]
+#![feature(const_destruct)]
+#![feature(const_for)]
 #![allow(unused)]
 
-mod bitboard;
+mod bitboards;
 mod board;
 mod byteboard;
 mod minmax;

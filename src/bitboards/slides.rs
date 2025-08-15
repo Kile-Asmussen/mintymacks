@@ -1,5 +1,5 @@
 use crate::{
-    bitboard::{Mask, bit, mask},
+    bitboards::{Mask, bit, mask},
     board::{Square, Squares},
     byteboard::ByteBoard,
 };

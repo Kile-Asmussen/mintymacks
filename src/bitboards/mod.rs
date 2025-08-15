@@ -1,21 +1,8 @@
+mod board;
 mod slides;
 mod tests;
 
 use crate::board::{File, Rank, Square, Squares};
-
-pub struct HalfBitBoard {
-    pub pawns: Mask,
-    pub knights: Mask,
-    pub bishops: Mask,
-    pub rooks: Mask,
-    pub queens: Mask,
-    pub kings: Mask,
-}
-
-pub struct BitBoard {
-    pub white: HalfBitBoard,
-    pub black: HalfBitBoard,
-}
 
 pub type Mask = u64;
 
