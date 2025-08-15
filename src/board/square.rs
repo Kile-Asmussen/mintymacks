@@ -150,6 +150,3 @@ fn square_names() {
     assert_eq!(Square::h1.file_rank(), (File::H, Rank::_1));
     assert_eq!(Square::h8.file_rank(), (File::H, Rank::_8));
 }
-
-#[test]
-fn square_directions() {}

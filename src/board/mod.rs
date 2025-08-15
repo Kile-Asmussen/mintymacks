@@ -233,3 +233,16 @@ impl CastlingRights {
         (self as i8) & (c as i8) != 0
     }
 }
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(i8)]
+pub enum Dir {
+    North = 8,
+    East = 1,
+    South = -8,
+    West = -1,
+    NorthEast = 9,
+    SouthEast = -7,
+    SouthWest = -9,
+    NorthWest = 7,
+}
