@@ -1,7 +1,7 @@
 use crate::{
     bitboards::{Bits, Mask},
-    board::{AllSquares, File, Rank, Square, Squares},
-    byteboard::ByteBoard,
+    board::{File, Rank, Square, Squares},
+    byteboard::ArrayBoard,
 };
 
 #[allow(non_upper_case_globals)]
@@ -80,17 +80,17 @@ impl Square {
 }
 
 impl Squares {
-    pub const EAST: ByteBoard<i8> = ByteBoard::setup([[0, 1, 2, 3, 4, 5, 6, 7]; 8]);
+    pub const WEST: ArrayBoard<i8> = ArrayBoard::setup([[0, 1, 2, 3, 4, 5, 6, 7]; 8]);
 
-    pub const WEST: ByteBoard<i8> = ByteBoard::setup([[7, 6, 5, 4, 3, 2, 1, 0]; 8]);
+    pub const EAST: ArrayBoard<i8> = ArrayBoard::setup([[7, 6, 5, 4, 3, 2, 1, 0]; 8]);
 
-    pub const NORTH: ByteBoard<i8> =
-        ByteBoard::setup([[0; 8], [1; 8], [2; 8], [3; 8], [4; 8], [5; 8], [6; 8], [7; 8]]);
+    pub const NORTH: ArrayBoard<i8> =
+        ArrayBoard::setup([[0; 8], [1; 8], [2; 8], [3; 8], [4; 8], [5; 8], [6; 8], [7; 8]]);
 
-    pub const SOUTH: ByteBoard<i8> =
-        ByteBoard::setup([[7; 8], [6; 8], [5; 8], [4; 8], [3; 8], [2; 8], [1; 8], [0; 8]]);
+    pub const SOUTH: ArrayBoard<i8> =
+        ArrayBoard::setup([[7; 8], [6; 8], [5; 8], [4; 8], [3; 8], [2; 8], [1; 8], [0; 8]]);
 
-    pub const NORTHEAST: ByteBoard<i8> = ByteBoard::setup([
+    pub const NORTHEAST: ArrayBoard<i8> = ArrayBoard::setup([
         [0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 1, 1, 1, 1, 1, 0],
         [2, 2, 2, 2, 2, 2, 1, 0],
@@ -101,7 +101,7 @@ impl Squares {
         [7, 6, 5, 4, 3, 2, 1, 0],
     ]);
 
-    pub const NORTHWEST: ByteBoard<i8> = ByteBoard::setup([
+    pub const NORTHWEST: ArrayBoard<i8> = ArrayBoard::setup([
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 1, 1, 1, 1, 1, 1],
         [0, 1, 2, 2, 2, 2, 2, 2],
@@ -112,7 +112,7 @@ impl Squares {
         [0, 1, 2, 3, 4, 5, 6, 7],
     ]);
 
-    pub const SOUTHEAST: ByteBoard<i8> = ByteBoard::setup([
+    pub const SOUTHEAST: ArrayBoard<i8> = ArrayBoard::setup([
         [7, 6, 5, 4, 3, 2, 1, 0],
         [6, 6, 5, 4, 3, 2, 1, 0],
         [5, 5, 5, 4, 3, 2, 1, 0],
@@ -123,7 +123,7 @@ impl Squares {
         [0, 0, 0, 0, 0, 0, 0, 0],
     ]);
 
-    pub const SOUTHWEST: ByteBoard<i8> = ByteBoard::setup([
+    pub const SOUTHWEST: ArrayBoard<i8> = ArrayBoard::setup([
         [0, 1, 2, 3, 4, 5, 6, 7],
         [0, 1, 2, 3, 4, 5, 6, 6],
         [0, 1, 2, 3, 4, 5, 5, 5],

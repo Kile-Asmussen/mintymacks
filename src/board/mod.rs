@@ -3,7 +3,7 @@ mod tests;
 
 use std::num::NonZeroI8;
 
-use crate::byteboard::ByteBoard;
+use crate::byteboard::ArrayBoard;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(transparent)]

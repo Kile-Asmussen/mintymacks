@@ -48,6 +48,22 @@ pub const fn bit(sq: Square) -> Mask {
     1 << sq.ix()
 }
 
+pub fn show_mask(m: Mask) -> String {
+    let m = m.to_be_bytes().map(u8::reverse_bits);
+    format! {
+"mask([
+    0b_{:08b}, // 8
+    0b_{:08b}, // 7
+    0b_{:08b}, // 6
+    0b_{:08b}, // 5
+    0b_{:08b}, // 4
+    0b_{:08b}, // 3
+    0b_{:08b}, // 2
+    0b_{:08b}, // 1
+    // abcdefgh
+])", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7]}
+}
+
 pub const fn slide_move_stop_positive(
     move_mask: Mask,
     uncapturable: Mask,

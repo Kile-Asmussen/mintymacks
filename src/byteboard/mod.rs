@@ -3,9 +3,9 @@ use crate::{
     board::{AllSquares, ColorPiece, Square, Squares},
 };
 
-pub struct ByteBoard<T: Copy>(pub [T; 64]);
+pub struct ArrayBoard<T: Copy>(pub [T; 64]);
 
-impl<T: Copy> ByteBoard<T> {
+impl<T: Copy> ArrayBoard<T> {
     pub const fn new(t: T) -> Self {
         Self([t; 64])
     }
@@ -41,12 +41,12 @@ impl<T: Copy> ByteBoard<T> {
         ])
     }
 
-    pub const fn iter(&self) -> ByteBoardIter<T> {
+    pub const fn iter<'a>(&'a self) -> ByteBoardIter<'a, T> {
         ByteBoardIter(Squares::all(), self)
     }
 }
 
-impl<'a, T: Copy> IntoIterator for &'a ByteBoard<T> {
+impl<'a, T: Copy> IntoIterator for &'a ArrayBoard<T> {
     type Item = (Square, T);
 
     type IntoIter = ByteBoardIter<'a, T>;
@@ -56,7 +56,7 @@ impl<'a, T: Copy> IntoIterator for &'a ByteBoard<T> {
     }
 }
 
-pub struct ByteBoardIter<'a, T: Copy>(AllSquares, &'a ByteBoard<T>);
+pub struct ByteBoardIter<'a, T: Copy>(AllSquares, &'a ArrayBoard<T>);
 
 impl<'a, T: Copy> ByteBoardIter<'a, T> {
     pub const fn next(&mut self) -> Option<(Square, T)> {
@@ -76,7 +76,7 @@ impl<'a, T: Copy> Iterator for ByteBoardIter<'a, T> {
     }
 }
 
-impl ByteBoard<bool> {
+impl ArrayBoard<bool> {
     pub const fn mask(&self) -> Mask {
         let mut it = self.iter();
         let mut res = Mask::MIN;
@@ -89,7 +89,7 @@ impl ByteBoard<bool> {
     }
 }
 
-impl ByteBoard<Option<ColorPiece>> {
+impl ArrayBoard<Option<ColorPiece>> {
     pub const fn mask(&self, p: ColorPiece) -> Mask {
         let mut it = self.iter();
         let mut res = Mask::MIN;
