@@ -176,3 +176,5 @@ fn slidemask_correct() {
         ])
     );
 }
+
+// TODO: threat mask tests

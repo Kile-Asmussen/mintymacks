@@ -1,4 +1,4 @@
-use crate::model::{ColorPiece, Square, castling::CastlingRights};
+use crate::model::{ColorPiece, Piece, Square, castling::CastlingRights};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PseudoMove {
@@ -17,7 +17,7 @@ pub enum Special {
 pub struct Move {
     pub piece: ColorPiece,
     pub movement: PseudoMove,
-    pub capture: Option<(ColorPiece, Square)>,
+    pub capture: Option<(Piece, Square)>,
     pub special: Special,
     pub rights: CastlingRights,
     pub eps: Option<Square>,

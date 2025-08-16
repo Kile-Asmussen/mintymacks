@@ -1,9 +1,11 @@
 pub mod board;
 pub mod jumps;
+pub mod movegen;
 pub mod slides;
 pub mod tests;
+pub mod threats;
 
-use crate::model::{File, Rank, Square};
+use crate::model::{File, Rank, Square, moves::PseudoMove};
 
 pub type Mask = u64;
 
@@ -54,6 +56,20 @@ impl Square {
 pub const fn bit(sq: Option<Square>) -> Mask {
     if let Some(sq) = sq {
         sq.bit()
+    } else {
+        Mask::MIN
+    }
+}
+
+impl PseudoMove {
+    pub const fn bits(self) -> Mask {
+        self.from.bit() | self.to.bit()
+    }
+}
+
+pub const fn two_bits(mv: Option<PseudoMove>) -> Mask {
+    if let Some(mv) = mv {
+        mv.bits()
     } else {
         Mask::MIN
     }

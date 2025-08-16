@@ -1,5 +1,5 @@
 use crate::{
-    bits::Mask,
+    bits::{Bits, Mask},
     model::{ColorPiece, Square},
 };
 
@@ -100,6 +100,17 @@ impl ArrayBoard<Option<ColorPiece>> {
                     res |= 1 << sq.ix();
                 }
             }
+        }
+        res
+    }
+}
+
+impl ArrayBoard<Mask> {
+    pub const fn overlay(&self, m: Mask) -> Mask {
+        let mut it = Bits(m);
+        let mut res = Mask::MIN;
+        while let Some(sq) = it.next() {
+            res |= self.at(sq);
         }
         res
     }
