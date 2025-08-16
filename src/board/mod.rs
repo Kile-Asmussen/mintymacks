@@ -1,5 +1,7 @@
-mod square;
-mod tests;
+pub mod castling;
+pub mod moves;
+pub mod square;
+pub mod tests;
 
 use std::num::NonZeroI8;
 
@@ -37,53 +39,13 @@ impl Square {
             Rank::new(self.ix() >> 3).unwrap(),
         )
     }
-}
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct Squares;
-
-impl Squares {
-    pub const fn all() -> AllSquares {
-        AllSquares(unsafe { NonZeroI8::new_unchecked(1) })
-    }
-}
-
-impl IntoIterator for Squares {
-    type Item = Square;
-
-    type IntoIter = AllSquares;
-
-    fn into_iter(self) -> Self::IntoIter {
-        Self::all()
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[repr(transparent)]
-pub struct AllSquares(NonZeroI8);
-
-impl AllSquares {
-    pub const fn next(&mut self) -> Option<Square> {
-        if self.0.get() < 65 {
-            let res = Some(Square(self.0));
-            self.0 = unsafe { NonZeroI8::new_unchecked(self.0.get() + 1) };
-            res
-        } else {
+    pub const fn next(self) -> Option<Self> {
+        if self.0.get() == 64 {
             None
+        } else {
+            Some(Self(unsafe { NonZeroI8::new_unchecked(self.0.get() + 1) }))
         }
-    }
-}
-
-impl Iterator for AllSquares {
-    type Item = Square;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.next()
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let n = (65 - self.0.get()) as usize;
-        (n, Some(n))
     }
 }
 
@@ -209,28 +171,6 @@ impl ColorPiece {
             (Black, Queen) => BlackQueen,
             (Black, King) => BlackKing,
         }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-#[repr(i8)]
-pub enum CastlingMove {
-    OOO = 1,
-    OO = 2,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-#[repr(i8)]
-pub enum CastlingRights {
-    NoRights = 0,
-    QueenSide = 1,
-    KingSide = 2,
-    Both = 3,
-}
-
-impl CastlingRights {
-    pub fn can(self, c: CastlingMove) -> bool {
-        (self as i8) & (c as i8) != 0
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     bits::Mask,
-    board::{AllSquares, ColorPiece, Square, Squares},
+    board::{ColorPiece, Square},
 };
 
 pub struct ArrayBoard<T: Copy>(pub [T; 64]);
@@ -42,7 +42,7 @@ impl<T: Copy> ArrayBoard<T> {
     }
 
     pub const fn iter<'a>(&'a self) -> ByteBoardIter<'a, T> {
-        ByteBoardIter(Squares::all(), self)
+        ByteBoardIter(Some(Square::a1), self)
     }
 }
 
@@ -56,11 +56,12 @@ impl<'a, T: Copy> IntoIterator for &'a ArrayBoard<T> {
     }
 }
 
-pub struct ByteBoardIter<'a, T: Copy>(AllSquares, &'a ArrayBoard<T>);
+pub struct ByteBoardIter<'a, T: Copy>(Option<Square>, &'a ArrayBoard<T>);
 
 impl<'a, T: Copy> ByteBoardIter<'a, T> {
     pub const fn next(&mut self) -> Option<(Square, T)> {
-        if let Some(sq) = self.0.next() {
+        if let Some(sq) = self.0 {
+            self.0 = sq.next();
             Some((sq, self.1.at(sq)))
         } else {
             None

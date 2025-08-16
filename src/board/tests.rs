@@ -1,11 +1,4 @@
-use crate::board::{
-    CastlingMove, CastlingRights, Color, ColorPiece, File, Piece, Rank, Square, Squares,
-};
-
-#[test]
-fn squares_iter() {
-    assert_eq!(Squares::all().collect::<Vec<_>>().len(), 64);
-}
+use crate::board::{Color, ColorPiece, File, Piece, Rank, Square};
 
 #[cfg(test)]
 fn has_null_optimization<T>() {
@@ -20,6 +13,4 @@ fn nullopt() {
     has_null_optimization::<ColorPiece>();
     has_null_optimization::<Rank>();
     has_null_optimization::<File>();
-    has_null_optimization::<CastlingMove>();
-    has_null_optimization::<CastlingRights>();
 }

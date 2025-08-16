@@ -1,14 +1,10 @@
 use crate::{
-    bits::{Bits, Mask, bit, mask},
-    board::{Square, Squares},
+    bits::{Bits, Mask, bit, mask, slides},
+    board::Square,
 };
 
 #[test]
 fn square_iter() {
-    assert_eq!(
-        Bits(Mask::MAX).collect::<Vec<_>>(),
-        Squares.into_iter().collect::<Vec<_>>()
-    );
     assert_eq!(Bits(1).next(), Some(Square::a1));
     assert_eq!(Bits(2).next(), Some(Square::b1));
     assert_eq!(Bits(3).collect::<Vec<_>>(), vec![Square::a1, Square::b1]);
@@ -63,5 +59,120 @@ fn mask_board_setup() {
         ]))
         .next(),
         Some(Square::h8)
+    );
+}
+
+#[test]
+fn slidemask_correct() {
+    assert_eq!(
+        slides::EAST.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00001111,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        slides::NORTH.at(Square::d4),
+        mask([
+            0b_00010000,
+            0b_00010000,
+            0b_00010000,
+            0b_00010000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        slides::WEST.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_11100000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        slides::SOUTH.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00010000,
+            0b_00010000,
+            0b_00010000,
+        ])
+    );
+
+    assert_eq!(
+        slides::NORTHEAST.at(Square::d4),
+        mask([
+            0b_00000001,
+            0b_00000010,
+            0b_00000100,
+            0b_00001000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        slides::NORTHWEST.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_10000000,
+            0b_01000000,
+            0b_00100000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        slides::SOUTHEAST.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00001000,
+            0b_00000100,
+            0b_00000010,
+        ])
+    );
+
+    assert_eq!(
+        slides::SOUTHWEST.at(Square::d4),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00100000,
+            0b_01000000,
+            0b_10000000,
+        ])
     );
 }

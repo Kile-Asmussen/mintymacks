@@ -1,7 +1,7 @@
 use crate::{
-    bits::{Bits, Mask},
-    board::{File, Rank, Square, Squares},
     arrays::ArrayBoard,
+    bits::{Bits, Mask},
+    board::{Dir, File, Rank, Square},
 };
 
 #[allow(non_upper_case_globals)]
@@ -79,7 +79,7 @@ impl Square {
     pub const h8: Square = File::H.by(Rank::_8);
 }
 
-impl Squares {
+impl Square {
     pub const WEST: ArrayBoard<i8> = ArrayBoard::setup([[0, 1, 2, 3, 4, 5, 6, 7]; 8]);
 
     pub const EAST: ArrayBoard<i8> = ArrayBoard::setup([[7, 6, 5, 4, 3, 2, 1, 0]; 8]);
@@ -133,6 +133,37 @@ impl Squares {
         [0, 1, 1, 1, 1, 1, 1, 1],
         [0, 0, 0, 0, 0, 0, 0, 0],
     ]);
+
+    pub const fn go(self, mut dirs: &[Dir]) -> Option<Self> {
+        let mut res = Some(self);
+        let mut i = 0;
+        while i < dirs.len() {
+            let d = dirs[i];
+
+            let n = (match d {
+                Dir::North => Square::NORTH,
+                Dir::East => Square::EAST,
+                Dir::South => Square::SOUTH,
+                Dir::West => Square::WEST,
+                Dir::NorthEast => Square::NORTHEAST,
+                Dir::SouthEast => Square::SOUTHEAST,
+                Dir::SouthWest => Square::NORTHWEST,
+                Dir::NorthWest => Square::SOUTHWEST,
+            })
+            .at(self);
+
+            if n != 0 {
+                res = Square::new(self.ix() + d as i8)
+            } else {
+                res = None;
+                break;
+            };
+
+            i += 1;
+        }
+
+        res
+    }
 }
 
 #[test]

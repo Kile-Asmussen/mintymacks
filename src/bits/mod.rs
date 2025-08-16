@@ -1,8 +1,8 @@
-mod board;
-mod slides;
-mod tests;
+pub mod board;
+pub mod slides;
+pub mod tests;
 
-use crate::board::{File, Rank, Square, Squares};
+use crate::board::{File, Rank, Square};
 
 pub type Mask = u64;
 
