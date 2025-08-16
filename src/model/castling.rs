@@ -1,6 +1,6 @@
 use crate::{
     bits::{Mask, mask},
-    board::{Color, File, Rank, Square, moves::PseudoMove},
+    model::{Color, File, Rank, Square, moves::PseudoMove},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -35,6 +35,7 @@ impl CastlingRights {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastlingDetails {
+    capture_own_rook: bool,
     ooo: CastlingDetail,
     oo: CastlingDetail,
 }
@@ -105,6 +106,7 @@ impl CastlingDetail {
 }
 
 pub const CLASSIC_CASTLING: CastlingDetails = CastlingDetails {
+    capture_own_rook: false,
     ooo: CastlingDetail {
         rook_from: File::A,
         rook_to: File::D,

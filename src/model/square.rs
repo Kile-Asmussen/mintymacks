@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{Bits, Mask},
-    board::{Dir, File, Rank, Square},
+    model::{Dir, File, Rank, Square},
 };
 
 #[allow(non_upper_case_globals)]

@@ -1,4 +1,4 @@
-use crate::board::{Color, ColorPiece, File, Piece, Rank, Square};
+use crate::model::{Color, ColorPiece, File, Piece, Rank, Square};
 
 #[cfg(test)]
 fn has_null_optimization<T>() {

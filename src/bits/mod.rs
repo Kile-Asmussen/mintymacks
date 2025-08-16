@@ -1,8 +1,9 @@
 pub mod board;
+pub mod jumps;
 pub mod slides;
 pub mod tests;
 
-use crate::board::{File, Rank, Square};
+use crate::model::{File, Rank, Square};
 
 pub type Mask = u64;
 
@@ -44,8 +45,18 @@ pub const fn mask(board: [u8; 8]) -> Mask {
     ])
 }
 
-pub const fn bit(sq: Square) -> Mask {
-    1 << sq.ix()
+impl Square {
+    pub const fn bit(self) -> Mask {
+        1 << self.ix()
+    }
+}
+
+pub const fn bit(sq: Option<Square>) -> Mask {
+    if let Some(sq) = sq {
+        sq.bit()
+    } else {
+        Mask::MIN
+    }
 }
 
 pub fn show_mask(m: Mask) -> String {

@@ -8,8 +8,8 @@
 
 mod arrays;
 mod bits;
-mod board;
 mod minmax;
+mod model;
 mod parser;
 mod uci;
 

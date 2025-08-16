@@ -1,4 +1,4 @@
-use crate::board::{ColorPiece, Square, castling::CastlingRights};
+use crate::model::{ColorPiece, Square, castling::CastlingRights};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PseudoMove {

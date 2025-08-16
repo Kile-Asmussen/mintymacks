@@ -1,6 +1,6 @@
 use crate::{
     bits::Mask,
-    board::{ColorPiece, Square},
+    model::{ColorPiece, Square},
 };
 
 pub struct ArrayBoard<T: Copy>(pub [T; 64]);

@@ -1,6 +1,6 @@
 use crate::{
     bits::Mask,
-    board::{
+    model::{
         Color, Square,
         castling::{CastlingDetails, CastlingRights},
     },
@@ -28,5 +28,10 @@ pub struct BitBoard {
     pub tempo: u16,
     pub castling_rights: CastlingRights,
     pub en_passant: Option<Square>,
-    pub castling_details: &'static CastlingDetails,
+    pub castling_details: CastlingDetails,
+}
+
+#[test]
+fn bitboard_sizeof() {
+    println!("size {}", size_of::<BitBoard>())
 }

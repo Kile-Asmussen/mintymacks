@@ -1,6 +1,6 @@
 use crate::{
     bits::{Bits, Mask, bit, mask, slides},
-    board::Square,
+    model::Square,
 };
 
 #[test]
@@ -31,7 +31,7 @@ fn mask_board_setup() {
     );
 
     assert_eq!(
-        bit(Square::a1),
+        Square::a1.bit(),
         mask([
             0b_00000000, // 8
             0b_00000000, // 7
@@ -65,7 +65,7 @@ fn mask_board_setup() {
 #[test]
 fn slidemask_correct() {
     assert_eq!(
-        slides::EAST.at(Square::d4),
+        slides::RAYS_EAST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -79,7 +79,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::NORTH.at(Square::d4),
+        slides::RAYS_NORTH.at(Square::d4),
         mask([
             0b_00010000,
             0b_00010000,
@@ -93,7 +93,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::WEST.at(Square::d4),
+        slides::RAYS_WEST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -107,7 +107,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::SOUTH.at(Square::d4),
+        slides::RAYS_SOUTH.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -121,7 +121,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::NORTHEAST.at(Square::d4),
+        slides::RAYS_NORTHEAST.at(Square::d4),
         mask([
             0b_00000001,
             0b_00000010,
@@ -135,7 +135,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::NORTHWEST.at(Square::d4),
+        slides::RAYS_NORTHWEST.at(Square::d4),
         mask([
             0b_00000000,
             0b_10000000,
@@ -149,7 +149,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::SOUTHEAST.at(Square::d4),
+        slides::RAYS_SOUTHEAST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -163,7 +163,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        slides::SOUTHWEST.at(Square::d4),
+        slides::RAYS_SOUTHWEST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,

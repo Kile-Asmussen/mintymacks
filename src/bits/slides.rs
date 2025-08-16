@@ -1,18 +1,18 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{Mask, bit, mask, show_mask},
-    board::{Dir, Square},
+    model::{Color, Dir, Rank, Square},
 };
 
-pub const WEST: ArrayBoard<Mask> = build_slideboard(Dir::West, &Square::WEST);
-pub const EAST: ArrayBoard<Mask> = build_slideboard(Dir::East, &Square::EAST);
-pub const NORTH: ArrayBoard<Mask> = build_slideboard(Dir::North, &Square::NORTH);
-pub const SOUTH: ArrayBoard<Mask> = build_slideboard(Dir::South, &Square::SOUTH);
+pub const RAYS_WEST: ArrayBoard<Mask> = build_slideboard(Dir::West, &Square::WEST);
+pub const RAYS_EAST: ArrayBoard<Mask> = build_slideboard(Dir::East, &Square::EAST);
+pub const RAYS_NORTH: ArrayBoard<Mask> = build_slideboard(Dir::North, &Square::NORTH);
+pub const RAYS_SOUTH: ArrayBoard<Mask> = build_slideboard(Dir::South, &Square::SOUTH);
 
-pub const NORTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
-pub const NORTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
-pub const SOUTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::SouthEast, &Square::SOUTHEAST);
-pub const SOUTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::SouthWest, &Square::SOUTHWEST);
+pub const RAYS_NORTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
+pub const RAYS_NORTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
+pub const RAYS_SOUTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::SouthEast, &Square::SOUTHEAST);
+pub const RAYS_SOUTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::SouthWest, &Square::SOUTHWEST);
 
 pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<Mask> {
     let mut res = ArrayBoard::new(0);
@@ -32,8 +32,41 @@ pub const fn build_slidemask(dir: Dir, max: i8, sq: Square) -> Mask {
     while let Some(s) = Square::new(sq.ix() + (dir as i8) * n)
         && n <= max
     {
-        res |= bit(s);
+        res |= s.bit();
         n += 1;
     }
     res
+}
+
+pub const WHITE_PAWN_MOVES: ArrayBoard<Mask> = build_pawnboard(Color::White);
+pub const BLACK_PAWN_MOVES: ArrayBoard<Mask> = build_pawnboard(Color::Black);
+
+pub const fn build_pawnboard(c: Color) -> ArrayBoard<Mask> {
+    let mut res = ArrayBoard::new(0);
+    let mut it = Some(Square::a1);
+
+    while let Some(sq) = it {
+        res.set(sq, build_pawnmask(c, sq));
+        it = sq.next();
+    }
+
+    res
+}
+
+pub const fn build_pawnmask(c: Color, sq: Square) -> Mask {
+    let start_rank = match c {
+        Color::White => Rank::_2,
+        Color::Black => Rank::_7,
+    };
+
+    let dir = match c {
+        Color::White => Dir::North,
+        Color::Black => Dir::South,
+    };
+
+    if sq.file_rank().1 as i8 == start_rank as i8 {
+        bit(sq.go(&[dir])) | bit(sq.go(&[dir, dir]))
+    } else {
+        bit(sq.go(&[dir]))
+    }
 }
