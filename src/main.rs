@@ -6,9 +6,9 @@
 #![feature(const_trait_impl)]
 #![allow(unused)]
 
-mod bitboards;
+mod arrays;
+mod bits;
 mod board;
-mod byteboard;
 mod minmax;
 mod parser;
 mod uci;

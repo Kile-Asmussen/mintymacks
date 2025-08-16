@@ -1,4 +1,4 @@
-use crate::bitboards::Mask;
+use crate::bits::Mask;
 
 pub struct HalfBitBoard {
     pub pawns: Mask,

@@ -1,7 +1,7 @@
 use crate::{
-    bitboards::{Bits, Mask},
+    bits::{Bits, Mask},
     board::{File, Rank, Square, Squares},
-    byteboard::ArrayBoard,
+    arrays::ArrayBoard,
 };
 
 #[allow(non_upper_case_globals)]

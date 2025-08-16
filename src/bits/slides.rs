@@ -1,7 +1,7 @@
 use crate::{
-    bitboards::{Mask, bit, mask, show_mask},
+    bits::{Mask, bit, mask, show_mask},
     board::{Dir, Square, Squares},
-    byteboard::ArrayBoard,
+    arrays::ArrayBoard,
 };
 
 pub const WEST: ArrayBoard<Mask> = build_slideboard(Dir::West, &Squares::WEST);
