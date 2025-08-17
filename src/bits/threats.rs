@@ -71,18 +71,22 @@ impl HalfBitBoard {
         mv: Option<PseudoMove>,
         cap: Option<(Piece, Square)>,
     ) -> Mask {
-        let is_cap = |is: Piece| match cap {
-            Some((p, sq)) if p == is => sq.bit(),
-            _ => Mask::MIN,
-        };
         let enemy = enemy ^ two_bits(mv);
         let friendly = self.total() ^ bit(cap.map(|(_, s)| s));
 
-        pawn_threats(self.pawns ^ is_cap(Piece::Pawn), c)
-            | knight_threats(self.knights ^ is_cap(Piece::Knight))
+        return pawn_threats(self.pawns ^ is_cap(Piece::Pawn, cap), c)
+            | knight_threats(self.knights ^ is_cap(Piece::Knight, cap))
             | king_threats(self.kings)
-            | rook_threats(self.rooks ^ is_cap(Piece::Rook), friendly, enemy)
-            | bishop_threats(self.bishops ^ is_cap(Piece::Bishop), friendly, enemy)
-            | bishop_threats(self.queens ^ is_cap(Piece::Queen), friendly, enemy)
+            | rook_threats(self.rooks ^ is_cap(Piece::Rook, cap), friendly, enemy)
+            | bishop_threats(self.bishops ^ is_cap(Piece::Bishop, cap), friendly, enemy)
+            | bishop_threats(self.queens ^ is_cap(Piece::Queen, cap), friendly, enemy);
+
+        #[inline]
+        fn is_cap(is: Piece, cap: Option<(Piece, Square)>) -> u64 {
+            match cap {
+                Some((p, sq)) if p == is => sq.bit(),
+                _ => Mask::MIN,
+            }
+        }
     }
 }
