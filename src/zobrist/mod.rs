@@ -1,6 +1,6 @@
 use std::{arch::x86_64, array, ops::BitXor};
 
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 
 use crate::{
     arrays::ArrayBoard,
@@ -41,7 +41,7 @@ pub struct ZobristHalfBoard {
 }
 
 impl ZobristHalfBoard {
-    pub fn new<R: Rng>(rng: &mut R) -> ZobristHalfBoard {
+    pub fn new_from_rng<R: Rng>(rng: &mut R) -> ZobristHalfBoard {
         ZobristHalfBoard {
             pawns: ArrayBoard::new_from_rng(rng),
             knights: ArrayBoard::new_from_rng(rng),
@@ -71,7 +71,7 @@ pub struct ZobristCastling {
 }
 
 impl ZobristCastling {
-    pub fn new<R: Rng>(rng: &mut R) -> Self {
+    pub fn new_from_rng<R: Rng>(rng: &mut R) -> Self {
         ZobristCastling {
             white_eastward: zob(rng),
             white_westward: zob(rng),
@@ -112,12 +112,18 @@ pub struct ZobristBoard {
 }
 
 impl ZobristBoard {
-    pub fn new<R: Rng>(rng: &mut R) -> ZobristBoard {
+    pub fn new() -> ZobristBoard {
+        Self::new_from_rng(&mut rand::rngs::StdRng::from_seed(
+            *b"3.141592653589793238462643383279",
+        ))
+    }
+
+    pub fn new_from_rng<R: Rng>(rng: &mut R) -> ZobristBoard {
         ZobristBoard {
-            white: ZobristHalfBoard::new(rng),
-            black: ZobristHalfBoard::new(rng),
+            white: ZobristHalfBoard::new_from_rng(rng),
+            black: ZobristHalfBoard::new_from_rng(rng),
             en_passant: ArrayBoard::new_from_rng(rng),
-            castling: ZobristCastling::new(rng),
+            castling: ZobristCastling::new_from_rng(rng),
         }
     }
 
