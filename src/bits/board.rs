@@ -7,6 +7,7 @@ use crate::{
     },
 };
 
+#[derive(Debug, Clone)]
 pub struct HalfBitBoard {
     pub pawns: Mask,
     pub knights: Mask,
@@ -62,6 +63,7 @@ impl HalfBitBoard {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct BitBoard {
     pub white: HalfBitBoard,
     pub black: HalfBitBoard,
