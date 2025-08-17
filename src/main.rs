@@ -6,6 +6,7 @@ mod bits;
 mod minmax;
 mod model;
 mod uci;
+mod zobrist;
 
 fn main() {
     println!("Hello, world!");

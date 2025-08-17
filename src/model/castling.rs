@@ -11,14 +11,14 @@ impl CastlingRights {
         Self(0b_00001111)
     }
 
-    pub const fn can_ooo(self, c: Color) -> bool {
+    pub const fn westward(self, c: Color) -> bool {
         0 != match c {
             Color::White => self.0 & 1,
             Color::Black => self.0 & 4,
         }
     }
 
-    pub const fn can_oo(self, c: Color) -> bool {
+    pub const fn eastward(self, c: Color) -> bool {
         0 != match c {
             Color::White => self.0 & 2,
             Color::Black => self.0 & 8,
@@ -35,9 +35,9 @@ impl CastlingRights {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastlingDetails {
-    capture_own_rook: bool,
-    ooo: CastlingDetail,
-    oo: CastlingDetail,
+    pub capture_own_rook: bool,
+    pub westward: CastlingDetail,
+    pub eastward: CastlingDetail,
 }
 
 #[test]
@@ -47,20 +47,20 @@ fn castling_sizeof() {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastlingDetail {
-    rook_from: File,
-    rook_to: File,
-    king_from: File,
-    king_to: File,
-    threat_mask: u8,
-    clear_mask: u8,
+    pub rook_from: File,
+    pub rook_to: File,
+    pub king_from: File,
+    pub king_to: File,
+    pub threat_mask: u8,
+    pub clear_mask: u8,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastlingMove {
-    rook_move: PseudoMove,
-    king_move: PseudoMove,
-    threat_mask: Mask,
-    clear_mask: Mask,
+    pub rook_move: PseudoMove,
+    pub king_move: PseudoMove,
+    pub threat_mask: Mask,
+    pub clear_mask: Mask,
 }
 
 impl CastlingDetail {
@@ -107,7 +107,7 @@ impl CastlingDetail {
 
 pub const CLASSIC_CASTLING: CastlingDetails = CastlingDetails {
     capture_own_rook: false,
-    ooo: CastlingDetail {
+    westward: CastlingDetail {
         rook_from: File::A,
         rook_to: File::D,
         king_from: File::E,
@@ -115,7 +115,7 @@ pub const CLASSIC_CASTLING: CastlingDetails = CastlingDetails {
         threat_mask: 0b_00111000,
         clear_mask: 0b_01110000,
     },
-    oo: CastlingDetail {
+    eastward: CastlingDetail {
         rook_from: File::H,
         rook_to: File::F,
         king_from: File::E,

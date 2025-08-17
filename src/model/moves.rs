@@ -6,21 +6,47 @@ pub struct PseudoMove {
     pub to: Square,
 }
 
+impl Square {
+    pub const fn to(self, to: Square) -> PseudoMove {
+        PseudoMove { from: self, to }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Special {
-    Promotion(ColorPiece),
-    CastlingOOO,
-    CastlingOO,
+    Promotion(Piece),
+    CastlingWestward,
+    CastlingEastward,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Move {
     pub piece: ColorPiece,
-    pub movement: PseudoMove,
-    pub capture: Option<(Piece, Square)>,
-    pub special: Special,
+    pub mv: PseudoMove,
+    pub cap: Option<(Piece, Square)>,
+    pub special: Option<Special>,
     pub rights: CastlingRights,
     pub eps: Option<Square>,
+}
+
+impl Move {
+    pub const fn ep_opening(self) -> Option<Square> {
+        if self.piece as i8 == ColorPiece::WhitePawn as i8 {
+            if (self.mv.to.ix() - self.mv.from.ix()).abs() == 16 {
+                Square::new(self.mv.from.ix() + 8)
+            } else {
+                None
+            }
+        } else if self.piece as i8 == ColorPiece::BlackPawn as i8 {
+            if (self.mv.to.ix() - self.mv.from.ix()).abs() == 16 {
+                Square::new(self.mv.from.ix() - 8)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
 
 #[test]

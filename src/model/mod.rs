@@ -116,6 +116,13 @@ impl Color {
     pub const fn piece(self, p: Piece) -> ColorPiece {
         ColorPiece::new(self, p)
     }
+
+    pub const fn opposite(self) -> Color {
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -227,4 +234,12 @@ pub enum Dir {
     SouthEast = -7,
     SouthWest = -9,
     NorthWest = 7,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(i8)]
+pub enum Victory {
+    WhiteWins = 1,
+    BlackWins = 2,
+    Draw = 3,
 }
