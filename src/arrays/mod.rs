@@ -3,6 +3,7 @@ use crate::{
     model::{ColorPiece, Square},
 };
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ArrayBoard<T: Copy>(pub [T; 64]);
 
 impl<T: Copy> ArrayBoard<T> {

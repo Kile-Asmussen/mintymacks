@@ -1,10 +1,10 @@
 #![allow(unused)]
+#![feature(iter_collect_into)]
 
 mod arrays;
 mod bits;
 mod minmax;
 mod model;
-mod parser;
 mod uci;
 
 fn main() {

@@ -153,6 +153,28 @@ pub enum ColorPiece {
 }
 
 impl ColorPiece {
+    pub const fn piece(self) -> Piece {
+        use ColorPiece::*;
+        use Piece::*;
+        match self {
+            WhitePawn | BlackPawn => Pawn,
+            WhiteKnight | BlackKnight => Knight,
+            WhiteBishop | BlackBishop => Bishop,
+            WhiteRook | BlackRook => Rook,
+            WhiteQueen | BlackQueen => Queen,
+            WhiteKing | BlackKing => King,
+        }
+    }
+
+    pub const fn color(self) -> Color {
+        use Color::*;
+        use ColorPiece::*;
+        match self {
+            WhitePawn | WhiteKnight | WhiteBishop | WhiteRook | WhiteQueen | WhiteKing => White,
+            BlackPawn | BlackKnight | BlackBishop | BlackRook | BlackQueen | BlackKing => Black,
+        }
+    }
+
     pub const fn new(c: Color, p: Piece) -> Self {
         use Color::*;
         use ColorPiece::*;
@@ -170,6 +192,26 @@ impl ColorPiece {
             (Black, Rook) => BlackRook,
             (Black, Queen) => BlackQueen,
             (Black, King) => BlackKing,
+        }
+    }
+
+    pub const fn split(self) -> (Color, Piece) {
+        use Color::*;
+        use ColorPiece::*;
+        use Piece::*;
+        match self {
+            WhitePawn => (White, Pawn),
+            WhiteKnight => (White, Knight),
+            WhiteBishop => (White, Bishop),
+            WhiteRook => (White, Rook),
+            WhiteQueen => (White, Queen),
+            WhiteKing => (White, King),
+            BlackPawn => (Black, Pawn),
+            BlackKnight => (Black, Knight),
+            BlackBishop => (Black, Bishop),
+            BlackRook => (Black, Rook),
+            BlackQueen => (Black, Queen),
+            BlackKing => (Black, King),
         }
     }
 }
