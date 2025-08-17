@@ -25,7 +25,6 @@ pub struct BitBoard {
     pub white: HalfBitBoard,
     pub black: HalfBitBoard,
     pub to_move: Color,
-    pub tempo: u16,
     pub castling_rights: CastlingRights,
     pub en_passant: Option<Square>,
     pub castling_details: CastlingDetails,

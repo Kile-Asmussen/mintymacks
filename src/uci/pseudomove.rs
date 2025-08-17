@@ -6,8 +6,8 @@ pub fn parse_pseudomove(s: &str) -> Option<PseudoMove> {
     let mut it = s.chars();
 
     let res = PseudoMove {
-        from: parse_square(&mut it)?,
-        to: parse_square(&mut it)?,
+        from: parse_square_raw(&mut it)?,
+        to: parse_square_raw(&mut it)?,
     };
 
     if let None = it.next() {
@@ -17,7 +17,19 @@ pub fn parse_pseudomove(s: &str) -> Option<PseudoMove> {
     }
 }
 
-pub fn parse_square(it: &mut Chars) -> Option<Square> {
+pub fn parse_square(s: &str) -> Option<Square> {
+    let mut it = s.chars();
+
+    let res = parse_square_raw(&mut it)?;
+
+    if let None = it.next() {
+        Some(res)
+    } else {
+        None
+    }
+}
+
+fn parse_square_raw(it: &mut Chars) -> Option<Square> {
     let file = file_letter(it.next()?)?;
     let rank = rank_letter(it.next()?)?;
     Some(file.by(rank))

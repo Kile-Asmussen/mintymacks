@@ -2,8 +2,36 @@ use anyhow::Error;
 
 use crate::{
     arrays::ArrayBoard,
-    model::{ColorPiece, File, Square},
+    model::{Color, ColorPiece, File, Square, castling::CastlingRights},
 };
+
+pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {
+    todo!();
+}
+
+pub fn parse_fen_turn_counter(hmc: &str) -> anyhow::Result<u16> {
+    todo!();
+}
+
+pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<CastlingRights>> {
+    todo!();
+}
+
+pub fn parse_fen_castling_rights(cr: &str) -> anyhow::Result<CastlingRights> {
+    todo!();
+}
+
+pub fn parse_fen_to_move(bw: &str) -> anyhow::Result<Color> {
+    Ok(match bw {
+        "w" => Color::White,
+        "b" => Color::Black,
+        _ => {
+            return Err(Error::msg(format!(
+                "Invalid FEN: unrecognized color to move {bw}"
+            )));
+        }
+    })
+}
 
 pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColorPiece>>> {
     for c in board.chars() {
