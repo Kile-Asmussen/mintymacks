@@ -1,13 +1,16 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::HalfBitBoard,
+        board::{BitMetadata, HalfBitBoard},
         mask,
-        movegen::pawn_move,
+        movegen::{legal_moves, pawn_moves},
         show_mask, slides,
         threats::{knight_threats, rook_threats},
     },
-    model::{Color, Square, castling::CastlingRights},
+    model::{
+        Color, Square,
+        castling::{CLASSIC_CASTLING, CastlingRights},
+    },
     uci::fen,
 };
 
@@ -80,35 +83,40 @@ fn rook_threat_masks() {
 }
 
 #[test]
-fn test_pawn_movegen() {
+fn test_movegen() {
     let board = fen::parse_fen_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR").unwrap();
 
     let white = HalfBitBoard::new(Color::White, &board);
     let black = HalfBitBoard::new(Color::Black, &board);
+    let metadata = BitMetadata {
+        to_move: Color::White,
+        castling_rights: CastlingRights::new(),
+        en_passant: None,
+        castling_details: CLASSIC_CASTLING,
+    };
 
     let mut moves = vec![];
 
-    pawn_move(
-        Color::White,
-        &white,
-        &black,
-        CastlingRights::new(),
-        None,
-        &mut moves,
-    );
+    legal_moves(&white, &black, metadata, &mut moves);
 
-    assert_eq!(moves.len(), 16);
+    assert_eq!(moves.len(), 20);
+
+    let board = fen::parse_fen_board("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1").unwrap();
+
+    let white = HalfBitBoard::new(Color::White, &board);
+    let black = HalfBitBoard::new(Color::Black, &board);
+    let metadata = BitMetadata {
+        to_move: Color::White,
+        castling_rights: CastlingRights::new()
+            .move_king(Color::White)
+            .move_king(Color::Black),
+        en_passant: None,
+        castling_details: CLASSIC_CASTLING,
+    };
 
     let mut moves = vec![];
 
-    pawn_move(
-        Color::Black,
-        &black,
-        &white,
-        CastlingRights::new(),
-        None,
-        &mut moves,
-    );
+    legal_moves(&white, &black, metadata, &mut moves);
 
-    assert_eq!(moves.len(), 16);
+    assert_eq!(moves.len(), 218);
 }

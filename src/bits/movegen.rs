@@ -1,7 +1,7 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::HalfBitBoard,
+        board::{BitMetadata, HalfBitBoard},
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         slide_move_stop_negative, slide_move_stop_positive,
         slides::{
@@ -11,80 +11,45 @@ use crate::{
     },
     model::{
         Color, ColorPiece, Piece, Rank, Square,
-        castling::{CastlingDetails, CastlingMove, CastlingRights},
+        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         moves::{self, Move, PseudoMove, Special},
     },
 };
 
 pub fn legal_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
-    castling: CastlingDetails,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
+    pawn_moves(friendly, enemy, metadata, res);
+    pawn_captures(friendly, enemy, metadata, res);
+    knight_moves(friendly, enemy, metadata, res);
+    bishop_moves(friendly, enemy, metadata, res);
+    rook_moves(friendly, enemy, metadata, res);
+    queen_moves(friendly, enemy, metadata, res);
+    king_moves(friendly, enemy, metadata, res);
 }
 
 #[inline]
-pub fn generic_move(
-    mv: PseudoMove,
-    piece: ColorPiece,
-    friendly: &HalfBitBoard,
-    enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
-    res: &mut Vec<Move>,
-) {
-    let cap = enemy.at(mv.to).map(|p| (p, mv.to));
-
-    let hypothetical_threat =
-        enemy.threats(piece.color().opposite(), friendly.total(), Some(mv), cap);
-
-    if (hypothetical_threat & friendly.kings) != 0 {
-        return;
-    }
-
-    res.push(Move {
-        piece,
-        mv,
-        cap,
-        special: None,
-        rights,
-        eps,
-    });
-}
-
 pub fn knight_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.knights) {
         for dst in Bits(KNIGHT_MOVES.at(from) & !friendly.total()) {
-            generic_move(
-                from.to(dst),
-                color.piece(Piece::Knight),
-                friendly,
-                enemy,
-                rights,
-                eps,
-                res,
-            )
+            generic_move(from.to(dst), Piece::Knight, friendly, enemy, metadata, res)
         }
     }
 }
 
+#[inline]
 pub fn rook_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -94,25 +59,16 @@ pub fn rook_moves(
             | slide_move_stop_negative(RAYS_SOUTH.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            generic_move(
-                from.to(dst),
-                color.piece(Piece::Rook),
-                friendly,
-                enemy,
-                rights,
-                eps,
-                res,
-            );
+            generic_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
         }
     }
 }
 
+#[inline]
 pub fn bishop_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -135,25 +91,16 @@ pub fn bishop_moves(
                 );
 
         for dst in Bits(mask) {
-            generic_move(
-                from.to(dst),
-                color.piece(Piece::Rook),
-                friendly,
-                enemy,
-                rights,
-                eps,
-                res,
-            );
+            generic_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
         }
     }
 }
 
+#[inline]
 pub fn queen_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -167,29 +114,20 @@ pub fn queen_moves(
             | slide_move_stop_negative(RAYS_SOUTHWEST.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            generic_move(
-                from.to(dst),
-                color.piece(Piece::Queen),
-                friendly,
-                enemy,
-                rights,
-                eps,
-                res,
-            );
+            generic_move(from.to(dst), Piece::Queen, friendly, enemy, metadata, res);
         }
     }
 }
 
-pub fn pawn_move(
-    color: Color,
+#[inline]
+pub fn pawn_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.pawns) {
-        let mask = match color {
+        let mask = match metadata.to_move {
             Color::White => slide_move_stop_positive(
                 WHITE_PAWN_MOVES.at(from),
                 friendly.total() | enemy.total(),
@@ -204,30 +142,37 @@ pub fn pawn_move(
 
         for dst in Bits(mask) {
             let mv = from.to(dst);
-            let hypothetical_threat =
-                enemy.threats(color.opposite(), friendly.total(), Some(mv), None);
+            let hypothetical_threat = enemy.threats(
+                metadata.to_move.opposite(),
+                friendly.total(),
+                Some(mv),
+                None,
+            );
 
             if (hypothetical_threat & friendly.kings) != 0 {
                 return;
             }
 
-            handle_pawn_promotion(color, mv, None, rights, eps, res);
+            handle_pawn_promotion(mv, None, metadata, res);
         }
     }
 }
 
-pub fn pawn_capture(
-    color: Color,
+#[inline]
+pub fn pawn_captures(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.pawns) {
-        let mask = match color {
-            Color::White => WHITE_PAWN_CAPTURE.at(from) & (enemy.total() | bit(eps)),
-            Color::Black => BLACK_PAWN_CAPTURE.at(from) & (enemy.total() | bit(eps)),
+        let mask = match metadata.to_move {
+            Color::White => {
+                WHITE_PAWN_CAPTURE.at(from) & (enemy.total() | bit(metadata.en_passant))
+            }
+            Color::Black => {
+                BLACK_PAWN_CAPTURE.at(from) & (enemy.total() | bit(metadata.en_passant))
+            }
         };
 
         for dst in Bits(mask) {
@@ -235,102 +180,85 @@ pub fn pawn_capture(
             let mut cap = enemy.at(dst).map(|p| (p, dst));
 
             if cap == None {
-                cap = eps
-                    .and_then(|sq| Square::new(sq.ix() + 8 * (color as i8)))
+                cap = metadata
+                    .en_passant
+                    .and_then(|sq| Square::new(sq.ix() + 8 * (metadata.to_move as i8)))
                     .map(|sq| (Piece::Pawn, sq))
             }
 
             let hypothetical_threat =
-                enemy.threats(color.opposite(), friendly.total(), Some(mv), cap);
+                enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
             if (hypothetical_threat & friendly.kings) != 0 {
                 return;
             }
 
-            handle_pawn_promotion(color, mv, cap, rights, eps, res);
+            handle_pawn_promotion(mv, cap, metadata, res);
         }
     }
 }
 
 #[inline]
 pub fn handle_pawn_promotion(
-    color: Color,
     mv: PseudoMove,
     cap: Option<(Piece, Square)>,
-    rights: CastlingRights,
-    eps: Option<Square>,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
     if let 0..=7 | 56..=63 = mv.to.ix() {
         for p in [Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen] {
             res.push(Move {
-                piece: color.piece(Piece::Pawn),
+                piece: metadata.to_move.piece(Piece::Pawn),
                 mv,
                 cap,
                 special: Some(Special::Promotion(p)),
-                rights,
-                eps,
+                rights: metadata.castling_rights,
+                epc: metadata.en_passant,
             });
         }
     } else {
         res.push(Move {
-            piece: color.piece(Piece::Pawn),
+            piece: metadata.to_move.piece(Piece::Pawn),
             mv,
             cap,
             special: None,
-            rights,
-            eps,
+            rights: metadata.castling_rights,
+            epc: metadata.en_passant,
         });
     }
 }
 
+#[inline]
 pub fn king_moves(
-    color: Color,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    rights: CastlingRights,
-    eps: Option<Square>,
-    castling: CastlingDetails,
+    metadata: BitMetadata,
     res: &mut Vec<Move>,
 ) {
-    let static_threats = enemy.threats(color.opposite(), friendly.total(), None, None);
+    let static_threats = enemy.threats(metadata.to_move.opposite(), friendly.total(), None, None);
 
     for from in Bits(friendly.kings) {
         for dst in Bits(KING_MOVES.at(from) & !static_threats & !friendly.total()) {
-            generic_move(
-                from.to(dst),
-                color.piece(Piece::King),
-                friendly,
-                enemy,
-                rights,
-                eps,
-                res,
-            )
+            generic_move(from.to(dst), Piece::King, friendly, enemy, metadata, res)
         }
     }
 
-    if rights.westward(color) {
+    if metadata.castling_rights.westward(metadata.to_move) {
         handle_castling(
-            color,
-            castling.westward.reify(color),
-            castling,
+            metadata.castling_details.westward,
+            metadata,
             static_threats,
             friendly.total() | enemy.total(),
-            rights,
-            eps,
             res,
         );
     }
 
-    if rights.eastward(color) {
+    if metadata.castling_rights.eastward(metadata.to_move) {
         handle_castling(
-            color,
-            castling.eastward.reify(color),
-            castling,
+            metadata.castling_details.eastward,
+            metadata,
             static_threats,
             friendly.total() | enemy.total(),
-            rights,
-            eps,
             res,
         );
     }
@@ -338,34 +266,60 @@ pub fn king_moves(
 
 #[inline]
 pub fn handle_castling(
-    color: Color,
-    cmv: CastlingMove,
-    castling: CastlingDetails,
+    castling: CastlingDetail,
+    metadata: BitMetadata,
     static_threats: Mask,
     total: Mask,
-    rights: CastlingRights,
-    eps: Option<Square>,
     res: &mut Vec<Move>,
 ) {
+    let cmv = castling.reify(metadata.to_move);
     if (cmv.threat_mask & static_threats) == 0 && (cmv.clear_mask & total) == 0 {
-        if castling.capture_own_rook {
+        if metadata.castling_details.capture_own_rook {
             res.push(Move {
-                piece: color.piece(Piece::King),
+                piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
                 special: Some(Special::CastlingWestward),
-                rights,
-                eps,
+                rights: metadata.castling_rights,
+                epc: metadata.en_passant,
             })
         } else {
             res.push(Move {
-                piece: color.piece(Piece::King),
+                piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move,
                 cap: None,
                 special: Some(Special::CastlingWestward),
-                rights,
-                eps,
+                rights: metadata.castling_rights,
+                epc: metadata.en_passant,
             })
         }
     }
+}
+
+#[inline]
+pub fn generic_move(
+    mv: PseudoMove,
+    piece: Piece,
+    friendly: &HalfBitBoard,
+    enemy: &HalfBitBoard,
+    metadata: BitMetadata,
+    res: &mut Vec<Move>,
+) {
+    let cap = enemy.at(mv.to).map(|p| (p, mv.to));
+
+    let hypothetical_threat =
+        enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
+
+    if (hypothetical_threat & friendly.kings) != 0 {
+        return;
+    }
+
+    res.push(Move {
+        piece: metadata.to_move.piece(piece),
+        mv,
+        cap,
+        special: None,
+        rights: metadata.castling_rights,
+        epc: metadata.en_passant,
+    });
 }

@@ -1,6 +1,7 @@
 pub mod board;
 pub mod jumps;
 pub mod movegen;
+pub mod moving;
 pub mod slides;
 pub mod tests;
 pub mod threats;

@@ -15,6 +15,7 @@ impl Square {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Special {
     Promotion(Piece),
+    DrawOffer,
     CastlingWestward,
     CastlingEastward,
 }
@@ -26,7 +27,7 @@ pub struct Move {
     pub cap: Option<(Piece, Square)>,
     pub special: Option<Special>,
     pub rights: CastlingRights,
-    pub eps: Option<Square>,
+    pub epc: Option<Square>,
 }
 
 impl Move {

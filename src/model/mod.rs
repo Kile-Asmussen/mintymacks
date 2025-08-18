@@ -2,6 +2,7 @@ pub mod castling;
 pub mod moves;
 pub mod square;
 pub mod tests;
+pub mod wincon;
 
 use std::num::NonZeroI8;
 

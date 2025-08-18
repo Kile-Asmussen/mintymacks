@@ -25,10 +25,24 @@ impl CastlingRights {
         }
     }
 
-    pub const fn lose(self, c: Color) -> Self {
+    pub const fn move_king(self, c: Color) -> Self {
         Self(match c {
             Color::White => self.0 & !3,
             Color::Black => self.0 & !12,
+        })
+    }
+
+    pub const fn move_east_rook(self, c: Color) -> Self {
+        Self(match c {
+            Color::White => self.0 & !2,
+            Color::Black => self.0 & !8,
+        })
+    }
+
+    pub const fn move_west_rook(self, c: Color) -> Self {
+        Self(match c {
+            Color::White => self.0 & !1,
+            Color::Black => self.0 & !4,
         })
     }
 }

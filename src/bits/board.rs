@@ -70,12 +70,17 @@ pub struct BitBoard {
     pub metadata: BitMetadata,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct BitMetadata {
     pub to_move: Color,
     pub castling_rights: CastlingRights,
     pub en_passant: Option<Square>,
     pub castling_details: CastlingDetails,
+}
+
+#[test]
+fn bitmetadata_sizeof() {
+    println!("{}", size_of::<BitMetadata>())
 }
 
 impl BitBoard {
