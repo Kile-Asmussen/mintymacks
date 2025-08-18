@@ -16,6 +16,17 @@ use crate::{
     },
 };
 
+pub fn legal_moves(
+    color: Color,
+    friendly: &HalfBitBoard,
+    enemy: &HalfBitBoard,
+    rights: CastlingRights,
+    eps: Option<Square>,
+    castling: CastlingDetails,
+    res: &mut Vec<Move>,
+) {
+}
+
 #[inline]
 pub fn generic_move(
     mv: PseudoMove,

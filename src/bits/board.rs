@@ -67,6 +67,11 @@ impl HalfBitBoard {
 pub struct BitBoard {
     pub white: HalfBitBoard,
     pub black: HalfBitBoard,
+    pub metadata: BitMetadata,
+}
+
+#[derive(Debug, Clone)]
+pub struct BitMetadata {
     pub to_move: Color,
     pub castling_rights: CastlingRights,
     pub en_passant: Option<Square>,
@@ -84,10 +89,12 @@ impl BitBoard {
         Self {
             white: HalfBitBoard::new(Color::White, board),
             black: HalfBitBoard::new(Color::Black, board),
-            to_move,
-            castling_rights,
-            en_passant,
-            castling_details,
+            metadata: BitMetadata {
+                to_move,
+                castling_rights,
+                en_passant,
+                castling_details,
+            },
         }
     }
 }

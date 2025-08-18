@@ -6,7 +6,7 @@ use crate::{
     arrays::ArrayBoard,
     bits::{
         Bits, Mask, bit,
-        board::{BitBoard, HalfBitBoard},
+        board::{BitBoard, BitMetadata, HalfBitBoard},
     },
     model::{Color, castling::CastlingRights, moves::Move},
 };
@@ -107,8 +107,7 @@ impl ZobristCastling {
 pub struct ZobristBoard {
     pub white: ZobristHalfBoard,
     pub black: ZobristHalfBoard,
-    pub en_passant: ArrayBoard<Hash>,
-    pub castling: ZobristCastling,
+    pub metadata: ZobristMetadata,
 }
 
 impl ZobristBoard {
@@ -122,24 +121,42 @@ impl ZobristBoard {
         ZobristBoard {
             white: ZobristHalfBoard::new_from_rng(rng),
             black: ZobristHalfBoard::new_from_rng(rng),
-            en_passant: ArrayBoard::new_from_rng(rng),
-            castling: ZobristCastling::new_from_rng(rng),
+            metadata: ZobristMetadata::new_from_rng(rng),
         }
     }
 
     pub fn hash(&self, board: &BitBoard) -> Hash {
         self.white.hash(&board.white)
             ^ self.black.hash(&board.black)
-            ^ self.en_passant.hash(bit(board.en_passant))
-            ^ self.castling.hash(board.castling_rights)
-            ^ if board.to_move == Color::Black {
-                BLACK_TO_MOVE
-            } else {
-                Hash::MIN
-            }
+            ^ self.metadata.hash(&board.metadata)
     }
 
     pub fn delta(&self, h: Hash, mv: Move) -> Hash {
         todo!()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ZobristMetadata {
+    pub en_passant: ArrayBoard<Hash>,
+    pub castling: ZobristCastling,
+}
+
+impl ZobristMetadata {
+    pub fn new_from_rng<R: Rng>(rng: &mut R) -> ZobristMetadata {
+        ZobristMetadata {
+            en_passant: ArrayBoard::new_from_rng(rng),
+            castling: ZobristCastling::new_from_rng(rng),
+        }
+    }
+
+    pub fn hash(&self, metadata: &BitMetadata) -> Hash {
+        self.en_passant.hash(bit(metadata.en_passant))
+            ^ self.castling.hash(metadata.castling_rights)
+            ^ if metadata.to_move == Color::Black {
+                BLACK_TO_MOVE
+            } else {
+                Hash::MIN
+            }
     }
 }
