@@ -1,7 +1,7 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::{BitMetadata, HalfBitBoard},
+        board::HalfBitBoard,
         mask,
         movegen::{legal_moves, pawn_moves},
         show_mask, slides,
@@ -10,6 +10,7 @@ use crate::{
     model::{
         Color, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
+        metadata::Metadata,
     },
     uci::fen,
 };
@@ -88,7 +89,7 @@ fn test_movegen() {
 
     let white = HalfBitBoard::new(Color::White, &board);
     let black = HalfBitBoard::new(Color::Black, &board);
-    let metadata = BitMetadata {
+    let metadata = Metadata {
         to_move: Color::White,
         castling_rights: CastlingRights::new(),
         en_passant: None,
@@ -96,16 +97,17 @@ fn test_movegen() {
     };
 
     let mut moves = vec![];
-
     legal_moves(&white, &black, metadata, &mut moves);
-
     assert_eq!(moves.len(), 20);
+}
 
+#[test]
+fn test_movegen2() {
     let board = fen::parse_fen_board("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1").unwrap();
 
     let white = HalfBitBoard::new(Color::White, &board);
     let black = HalfBitBoard::new(Color::Black, &board);
-    let metadata = BitMetadata {
+    let metadata = Metadata {
         to_move: Color::White,
         castling_rights: CastlingRights::new()
             .move_king(Color::White)
@@ -115,8 +117,6 @@ fn test_movegen() {
     };
 
     let mut moves = vec![];
-
     legal_moves(&white, &black, metadata, &mut moves);
-
     assert_eq!(moves.len(), 218);
 }

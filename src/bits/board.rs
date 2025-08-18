@@ -4,6 +4,7 @@ use crate::{
     model::{
         Color, ColorPiece, Piece, Square,
         castling::{self, CastlingDetails, CastlingRights},
+        metadata::Metadata,
     },
 };
 
@@ -67,20 +68,12 @@ impl HalfBitBoard {
 pub struct BitBoard {
     pub white: HalfBitBoard,
     pub black: HalfBitBoard,
-    pub metadata: BitMetadata,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct BitMetadata {
-    pub to_move: Color,
-    pub castling_rights: CastlingRights,
-    pub en_passant: Option<Square>,
-    pub castling_details: CastlingDetails,
+    pub metadata: Metadata,
 }
 
 #[test]
 fn bitmetadata_sizeof() {
-    println!("{}", size_of::<BitMetadata>())
+    println!("{}", size_of::<Metadata>())
 }
 
 impl BitBoard {
@@ -94,7 +87,7 @@ impl BitBoard {
         Self {
             white: HalfBitBoard::new(Color::White, board),
             black: HalfBitBoard::new(Color::Black, board),
-            metadata: BitMetadata {
+            metadata: Metadata {
                 to_move,
                 castling_rights,
                 en_passant,

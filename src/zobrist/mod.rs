@@ -6,9 +6,9 @@ use crate::{
     arrays::ArrayBoard,
     bits::{
         Bits, Mask, bit,
-        board::{BitBoard, BitMetadata, HalfBitBoard},
+        board::{BitBoard, HalfBitBoard},
     },
-    model::{Color, castling::CastlingRights, moves::Move},
+    model::{Color, castling::CastlingRights, metadata::Metadata, moves::Move},
 };
 
 type Hash = u64;
@@ -128,7 +128,7 @@ impl ZobristBoard {
     pub fn hash(&self, board: &BitBoard) -> Hash {
         self.white.hash(&board.white)
             ^ self.black.hash(&board.black)
-            ^ self.metadata.hash(&board.metadata)
+            ^ self.metadata.hash(board.metadata)
     }
 
     pub fn delta(&self, h: Hash, mv: Move) -> Hash {
@@ -150,7 +150,7 @@ impl ZobristMetadata {
         }
     }
 
-    pub fn hash(&self, metadata: &BitMetadata) -> Hash {
+    pub fn hash(&self, metadata: Metadata) -> Hash {
         self.en_passant.hash(bit(metadata.en_passant))
             ^ self.castling.hash(metadata.castling_rights)
             ^ if metadata.to_move == Color::Black {

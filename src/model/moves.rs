@@ -15,9 +15,11 @@ impl Square {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Special {
     Promotion(Piece),
-    DrawOffer,
     CastlingWestward,
     CastlingEastward,
+    DrawOffer,
+    Resignation,
+    Null,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -53,4 +55,5 @@ impl Move {
 #[test]
 pub fn move_size() {
     println!("size: {}\nalign: {}", size_of::<Move>(), align_of::<Move>());
+    println!("option-size: {}", size_of::<Option<Move>>());
 }

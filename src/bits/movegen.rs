@@ -1,7 +1,7 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::{BitMetadata, HalfBitBoard},
+        board::HalfBitBoard,
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         slide_move_stop_negative, slide_move_stop_positive,
         slides::{
@@ -12,6 +12,7 @@ use crate::{
     model::{
         Color, ColorPiece, Piece, Rank, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
+        metadata::Metadata,
         moves::{self, Move, PseudoMove, Special},
     },
 };
@@ -19,7 +20,7 @@ use crate::{
 pub fn legal_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     pawn_moves(friendly, enemy, metadata, res);
@@ -35,7 +36,7 @@ pub fn legal_moves(
 pub fn knight_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.knights) {
@@ -49,7 +50,7 @@ pub fn knight_moves(
 pub fn rook_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -68,7 +69,7 @@ pub fn rook_moves(
 pub fn bishop_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -100,7 +101,7 @@ pub fn bishop_moves(
 pub fn queen_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.rooks) {
@@ -123,7 +124,7 @@ pub fn queen_moves(
 pub fn pawn_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.pawns) {
@@ -162,7 +163,7 @@ pub fn pawn_moves(
 pub fn pawn_captures(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     for from in Bits(friendly.pawns) {
@@ -202,7 +203,7 @@ pub fn pawn_captures(
 pub fn handle_pawn_promotion(
     mv: PseudoMove,
     cap: Option<(Piece, Square)>,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     if let 0..=7 | 56..=63 = mv.to.ix() {
@@ -232,7 +233,7 @@ pub fn handle_pawn_promotion(
 pub fn king_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     let static_threats = enemy.threats(metadata.to_move.opposite(), friendly.total(), None, None);
@@ -267,7 +268,7 @@ pub fn king_moves(
 #[inline]
 pub fn handle_castling(
     castling: CastlingDetail,
-    metadata: BitMetadata,
+    metadata: Metadata,
     static_threats: Mask,
     total: Mask,
     res: &mut Vec<Move>,
@@ -302,7 +303,7 @@ pub fn generic_move(
     piece: Piece,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
-    metadata: BitMetadata,
+    metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
     let cap = enemy.at(mv.to).map(|p| (p, mv.to));

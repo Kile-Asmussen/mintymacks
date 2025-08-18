@@ -1,4 +1,5 @@
 pub mod castling;
+pub mod metadata;
 pub mod moves;
 pub mod square;
 pub mod tests;
