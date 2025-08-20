@@ -1,16 +1,17 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::HalfBitBoard,
+        board::{BitBoard, HalfBitBoard},
         mask,
         movegen::{legal_moves, pawn_moves},
         show_mask, slides,
         threats::{knight_threats, rook_threats},
     },
     model::{
-        Color, Square,
+        Color, ColorPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         metadata::Metadata,
+        moves::{Move, PseudoMove},
     },
     uci::fen,
 };
@@ -83,40 +84,64 @@ fn rook_threat_masks() {
     )
 }
 
-#[test]
-fn test_movegen() {
-    let board = fen::parse_fen_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR").unwrap();
+fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square>, num: usize) {
+    let board = fen::parse_fen_board(fen).unwrap();
 
     let white = HalfBitBoard::new(Color::White, &board);
     let black = HalfBitBoard::new(Color::Black, &board);
     let metadata = Metadata {
-        to_move: Color::White,
-        castling_rights: CastlingRights::new(),
-        en_passant: None,
+        to_move: c,
+        castling_rights: cr,
+        en_passant: epc,
         castling_details: CLASSIC_CASTLING,
     };
 
     let mut moves = vec![];
     legal_moves(&white, &black, metadata, &mut moves);
-    assert_eq!(moves.len(), 20);
+    assert_eq!(moves.len(), num);
 }
 
 #[test]
-fn test_movegen2() {
-    let board = fen::parse_fen_board("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1").unwrap();
+fn test_movegen() {
+    test_move_numbers(
+        "8/8/8/8/8/8/8/8",
+        Color::White,
+        CastlingRights::new(),
+        None,
+        0,
+    );
 
-    let white = HalfBitBoard::new(Color::White, &board);
-    let black = HalfBitBoard::new(Color::Black, &board);
-    let metadata = Metadata {
-        to_move: Color::White,
-        castling_rights: CastlingRights::new()
-            .move_king(Color::White)
-            .move_king(Color::Black),
-        en_passant: None,
-        castling_details: CLASSIC_CASTLING,
-    };
+    test_move_numbers(
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+        Color::White,
+        CastlingRights::new(),
+        None,
+        20,
+    );
 
-    let mut moves = vec![];
-    legal_moves(&white, &black, metadata, &mut moves);
-    assert_eq!(moves.len(), 218);
+    test_move_numbers(
+        "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1",
+        Color::White,
+        CastlingRights::new(),
+        None,
+        218,
+    );
+}
+
+#[test]
+fn test_moving() {
+    let mut board = BitBoard::startpos();
+    board.apply(Move {
+        piece: ColorPiece::WhitePawn,
+        mv: Square::d2.to(Square::d4),
+        cap: None,
+        special: None,
+        rights: CastlingRights::new(),
+        epc: None,
+    });
+
+    assert_eq!(
+        board.render(),
+        fen::parse_fen_board("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR").unwrap()
+    );
 }

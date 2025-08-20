@@ -19,6 +19,13 @@ impl<T: Copy> ArrayBoard<T> {
         self.0[sq.ix() as usize] = t
     }
 
+    pub const fn set_mask(&mut self, m: Mask, t: T) {
+        let mut it = Bits(m);
+        while let Some(sq) = it.next() {
+            self.set(sq, t);
+        }
+    }
+
     pub const fn setup(board: [[T; 8]; 8]) -> Self {
         let [
             [a8, b8, c8, d8, e8, f8, g8, h8],

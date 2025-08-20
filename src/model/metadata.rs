@@ -3,7 +3,7 @@ use crate::model::{
     castling::{CastlingDetails, CastlingRights},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Metadata {
     pub to_move: Color,
     pub castling_rights: CastlingRights,

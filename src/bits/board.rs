@@ -3,12 +3,12 @@ use crate::{
     bits::Mask,
     model::{
         Color, ColorPiece, Piece, Square,
-        castling::{self, CastlingDetails, CastlingRights},
+        castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HalfBitBoard {
     pub pawns: Mask,
     pub knights: Mask,
@@ -62,9 +62,18 @@ impl HalfBitBoard {
             None
         }
     }
+
+    pub const fn render_to(&self, color: Color, board: &mut ArrayBoard<Option<ColorPiece>>) {
+        board.set_mask(self.pawns, Some(color.piece(Piece::Pawn)));
+        board.set_mask(self.knights, Some(color.piece(Piece::Knight)));
+        board.set_mask(self.bishops, Some(color.piece(Piece::Bishop)));
+        board.set_mask(self.rooks, Some(color.piece(Piece::Rook)));
+        board.set_mask(self.queens, Some(color.piece(Piece::Queen)));
+        board.set_mask(self.kings, Some(color.piece(Piece::King)));
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BitBoard {
     pub white: HalfBitBoard,
     pub black: HalfBitBoard,
@@ -94,6 +103,51 @@ impl BitBoard {
                 castling_details,
             },
         }
+    }
+
+    pub const fn startpos() -> Self {
+        use ColorPiece::*;
+        Self::new(
+            &ArrayBoard::setup([
+                [
+                    Some(BlackRook),
+                    Some(BlackKnight),
+                    Some(BlackBishop),
+                    Some(BlackQueen),
+                    Some(BlackKing),
+                    Some(BlackBishop),
+                    Some(BlackKnight),
+                    Some(BlackRook),
+                ],
+                [Some(BlackPawn); 8],
+                [None; 8],
+                [None; 8],
+                [None; 8],
+                [None; 8],
+                [Some(WhitePawn); 8],
+                [
+                    Some(WhiteRook),
+                    Some(WhiteKnight),
+                    Some(WhiteBishop),
+                    Some(WhiteQueen),
+                    Some(WhiteKing),
+                    Some(WhiteBishop),
+                    Some(WhiteKnight),
+                    Some(WhiteRook),
+                ],
+            ]),
+            Color::White,
+            CastlingRights::new(),
+            None,
+            CLASSIC_CASTLING,
+        )
+    }
+
+    pub const fn render(&self) -> ArrayBoard<Option<ColorPiece>> {
+        let mut res = ArrayBoard::new(None);
+        self.white.render_to(Color::White, &mut res);
+        self.black.render_to(Color::Black, &mut res);
+        res
     }
 }
 
