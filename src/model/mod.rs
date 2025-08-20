@@ -125,6 +125,13 @@ impl Color {
             Color::Black => Color::White,
         }
     }
+
+    pub const fn rank(self) -> Rank {
+        match self {
+            Color::White => Rank::_1,
+            Color::Black => Rank::_8,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
