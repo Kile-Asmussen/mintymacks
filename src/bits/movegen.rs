@@ -1,7 +1,7 @@
 use crate::{
     bits::{
         Bits, Mask, bit,
-        board::HalfBitBoard,
+        board::{BitBoard, HalfBitBoard},
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         slide_move_stop_negative, slide_move_stop_positive,
         slides::{
@@ -16,6 +16,15 @@ use crate::{
         moves::{self, Move, PseudoMove, Special},
     },
 };
+
+impl BitBoard {
+    pub fn moves(&self, res: &mut Vec<Move>) {
+        match self.metadata.to_move {
+            Color::White => legal_moves(&self.white, &self.black, self.metadata, res),
+            Color::Black => legal_moves(&self.black, &self.white, self.metadata, res),
+        }
+    }
+}
 
 pub fn legal_moves(
     friendly: &HalfBitBoard,
@@ -72,7 +81,7 @@ pub fn bishop_moves(
     metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
-    for from in Bits(friendly.rooks) {
+    for from in Bits(friendly.bishops) {
         let mask =
             slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
                 | slide_move_stop_positive(
@@ -104,7 +113,7 @@ pub fn queen_moves(
     metadata: Metadata,
     res: &mut Vec<Move>,
 ) {
-    for from in Bits(friendly.rooks) {
+    for from in Bits(friendly.queens) {
         let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
             | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
             | slide_move_stop_negative(RAYS_WEST.at(from), friendly.total(), enemy.total())

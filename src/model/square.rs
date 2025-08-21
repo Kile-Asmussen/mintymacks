@@ -134,40 +134,33 @@ impl Square {
         [0, 0, 0, 0, 0, 0, 0, 0],
     ]);
 
-    // TODO: reimplement recursively
     pub const fn go(self, mut dirs: &[Dir]) -> Option<Self> {
-        let mut res = Some(self);
-        let mut i = 0;
-        while i < dirs.len() {
-            let d = dirs[i];
+        if dirs.is_empty() {
+            Some(self)
+        } else {
+            let dir = dirs[0];
+            let dirs = &dirs[1..];
 
-            let Some(sq) = res else {
-                break;
-            };
-
-            let n = (match d {
+            let n = (match dir {
                 Dir::North => Square::NORTH,
                 Dir::East => Square::EAST,
                 Dir::South => Square::SOUTH,
                 Dir::West => Square::WEST,
                 Dir::NorthEast => Square::NORTHEAST,
                 Dir::SouthEast => Square::SOUTHEAST,
-                Dir::SouthWest => Square::NORTHWEST,
-                Dir::NorthWest => Square::SOUTHWEST,
+                Dir::SouthWest => Square::SOUTHWEST,
+                Dir::NorthWest => Square::NORTHWEST,
             })
-            .at(sq);
+            .at(self);
 
-            if n != 0 {
-                res = Square::new(sq.ix() + d as i8)
+            if n != 0
+                && let Some(sq) = Square::new(self.ix() + dir as i8)
+            {
+                sq.go(dirs)
             } else {
-                res = None;
-                break;
-            };
-
-            i += 1;
+                None
+            }
         }
-
-        res
     }
 }
 
@@ -198,6 +191,11 @@ fn square_go_correct() {
     assert_eq!(Square::a1.go(&[Dir::SouthWest]), None);
     assert_eq!(Square::a1.go(&[Dir::SouthEast]), None);
     assert_eq!(Square::a1.go(&[Dir::NorthWest]), None);
+
+    assert_eq!(
+        Square::c1.go(&[Dir::West, Dir::NorthWest]),
+        Some(Square::a2)
+    );
 
     assert_eq!(
         Square::a1.go(&[Dir::North, Dir::East]),

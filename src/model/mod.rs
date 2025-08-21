@@ -149,6 +149,17 @@ impl Piece {
     pub const fn color(self, c: Color) -> ColorPiece {
         ColorPiece::new(c, self)
     }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Piece::Pawn => "p",
+            Piece::Knight => "n",
+            Piece::Bishop => "b",
+            Piece::Rook => "r",
+            Piece::Queen => "q",
+            Piece::King => "k",
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

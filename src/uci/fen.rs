@@ -1,24 +1,63 @@
-use anyhow::Error;
+use std::ops::Index;
+
+use anyhow::{Error, anyhow};
 
 use crate::{
     arrays::ArrayBoard,
     model::{Color, ColorPiece, File, Square, castling::CastlingRights},
+    uci::longalg::parse_square,
 };
 
 pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {
-    todo!();
+    u16::from_str_radix(hmc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed ply clock `{}'", hmc))
 }
 
-pub fn parse_fen_turn_counter(hmc: &str) -> anyhow::Result<u16> {
-    todo!();
+pub fn parse_fen_turn_counter(tc: &str) -> anyhow::Result<u16> {
+    u16::from_str_radix(tc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed turn counter `{}'", tc))
 }
 
-pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<CastlingRights>> {
-    todo!();
+pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> {
+    if eps == "-" {
+        return Ok(None);
+    }
+
+    if let Some(sq) = parse_square(eps) {
+        return Ok(Some(sq));
+    }
+
+    return Err(anyhow!(
+        "Invalid FEN: Malformed en-passant square `{}'",
+        eps
+    ));
 }
 
 pub fn parse_fen_castling_rights(cr: &str) -> anyhow::Result<CastlingRights> {
-    todo!();
+    if cr != "-" && !cr.chars().all(|c| "KQkq".contains(c)) || cr.len() > 4 {
+        return Err(anyhow!(
+            "Invalid FEN: Malformed castling rights string `{}'",
+            cr
+        ));
+    }
+
+    let mut res = CastlingRights::full();
+
+    if !cr.contains('K') {
+        res.move_west_rook(Color::White);
+    }
+
+    if !cr.contains('Q') {
+        res.move_east_rook(Color::White);
+    }
+
+    if !cr.contains('k') {
+        res.move_west_rook(Color::Black);
+    }
+
+    if !cr.contains('q') {
+        res.move_east_rook(Color::Black);
+    }
+
+    Ok(res)
 }
 
 pub fn parse_fen_to_move(bw: &str) -> anyhow::Result<Color> {

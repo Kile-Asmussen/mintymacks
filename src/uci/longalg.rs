@@ -1,8 +1,8 @@
 use std::str::Chars;
 
-use crate::model::{File, Rank, Square, moves::PseudoMove};
+use crate::model::{File, Piece, Rank, Square, moves::PseudoMove};
 
-pub fn parse_pseudomove(s: &str) -> Option<PseudoMove> {
+pub fn parse_long_alg(s: &str) -> Option<(PseudoMove, Option<Piece>)> {
     let mut it = s.chars();
 
     let res = PseudoMove {
@@ -10,10 +10,14 @@ pub fn parse_pseudomove(s: &str) -> Option<PseudoMove> {
         to: parse_square_raw(&mut it)?,
     };
 
-    if let None = it.next() {
-        Some(res)
+    if let Some(p) = it.next() {
+        if let None = it.next() {
+            Some((res, Some(piece_letter(p)?)))
+        } else {
+            None
+        }
     } else {
-        None
+        Some((res, None))
     }
 }
 
@@ -33,6 +37,16 @@ fn parse_square_raw(it: &mut Chars) -> Option<Square> {
     let file = file_letter(it.next()?)?;
     let rank = rank_letter(it.next()?)?;
     Some(file.by(rank))
+}
+
+pub fn piece_letter(c: char) -> Option<Piece> {
+    Some(match c {
+        'n' => Piece::Knight,
+        'b' => Piece::Bishop,
+        'r' => Piece::Rook,
+        'q' => Piece::Queen,
+        _ => return None,
+    })
 }
 
 pub fn rank_letter(c: char) -> Option<Rank> {

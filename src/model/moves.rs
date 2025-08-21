@@ -50,6 +50,17 @@ impl Move {
             None
         }
     }
+
+    pub const fn matches(self, mv: PseudoMove, prom: Option<Piece>) -> bool {
+        self.mv.from.ix() == mv.from.ix()
+            && self.mv.to.ix() == mv.to.ix()
+            && match (self.special, prom) {
+                (Some(Special::Promotion(p)), Some(p2)) => p as i8 == p2 as i8,
+                (Some(Special::Promotion(_)), None) => false,
+                (_, None) => true,
+                (_, Some(_)) => false,
+            }
+    }
 }
 
 #[test]

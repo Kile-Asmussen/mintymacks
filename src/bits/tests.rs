@@ -2,6 +2,7 @@ use crate::{
     bits::{
         Bits, Mask, bit,
         board::{BitBoard, HalfBitBoard},
+        jumps::KNIGHT_MOVES,
         mask,
         movegen::{legal_moves, pawn_moves},
         show_mask, slides,
@@ -98,6 +99,15 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
 
     let mut moves = vec![];
     legal_moves(&white, &black, metadata, &mut moves);
+    println!("FEN: {}", fen);
+    println!(
+        "moves: {}",
+        moves
+            .iter()
+            .map(|x| x.to_uci())
+            .collect::<Vec<_>>()
+            .join(" ")
+    );
     assert_eq!(moves.len(), num);
 }
 
@@ -117,6 +127,14 @@ fn test_movegen() {
         CastlingRights::full(),
         None,
         20,
+    );
+
+    test_move_numbers(
+        "R7/8/8/8/8/8/8/8",
+        Color::White,
+        CastlingRights::nil(),
+        None,
+        14,
     );
 
     test_move_numbers(
@@ -143,5 +161,50 @@ fn test_moving() {
     assert_eq!(
         board.render(),
         fen::parse_fen_board("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR").unwrap()
+    );
+}
+
+#[test]
+fn test_knight_move_corner_case() {
+    assert_eq!(
+        KNIGHT_MOVES.at(Square::c1),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_01010000,
+            0b_10001000,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        KNIGHT_MOVES.at(Square::d1),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00101000,
+            0b_01000100,
+            0b_00000000,
+        ])
+    );
+
+    assert_eq!(
+        KNIGHT_MOVES.at(Square::g1),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000000,
+            0b_00000101,
+            0b_00001000,
+            0b_00000000,
+        ])
     );
 }
