@@ -137,7 +137,7 @@ impl BitBoard {
                 ],
             ]),
             Color::White,
-            CastlingRights::new(),
+            CastlingRights::full(),
             None,
             CLASSIC_CASTLING,
         )

@@ -7,7 +7,10 @@ use crate::{
 pub struct CastlingRights(u8);
 
 impl CastlingRights {
-    pub const fn new() -> Self {
+    pub const fn nil() -> Self {
+        Self(0)
+    }
+    pub const fn full() -> Self {
         Self(0b_00001111)
     }
 

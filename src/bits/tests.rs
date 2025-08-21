@@ -106,7 +106,7 @@ fn test_movegen() {
     test_move_numbers(
         "8/8/8/8/8/8/8/8",
         Color::White,
-        CastlingRights::new(),
+        CastlingRights::nil(),
         None,
         0,
     );
@@ -114,7 +114,7 @@ fn test_movegen() {
     test_move_numbers(
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
         Color::White,
-        CastlingRights::new(),
+        CastlingRights::full(),
         None,
         20,
     );
@@ -122,7 +122,7 @@ fn test_movegen() {
     test_move_numbers(
         "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1",
         Color::White,
-        CastlingRights::new(),
+        CastlingRights::nil(),
         None,
         218,
     );
@@ -136,7 +136,7 @@ fn test_moving() {
         mv: Square::d2.to(Square::d4),
         cap: None,
         special: None,
-        rights: CastlingRights::new(),
+        rights: CastlingRights::full(),
         epc: None,
     });
 
