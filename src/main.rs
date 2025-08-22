@@ -6,14 +6,10 @@
 
 use std::{io::PipeReader, process::Stdio, thread, time::Duration};
 
-use crate::{
-    fuzzing::{Stockfish, run_stockfish},
-    model::{Square, castling::CastlingRights, moves::Move},
-};
+use crate::model::{Square, castling::CastlingRights, moves::Move};
 
 mod arrays;
 mod bits;
-mod fuzzing;
 mod minmax;
 mod model;
 mod uci;
