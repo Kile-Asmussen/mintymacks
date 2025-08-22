@@ -9,7 +9,7 @@ use std::num::NonZeroI8;
 
 use crate::arrays::ArrayBoard;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(transparent)]
 pub struct Square(NonZeroI8);
 
@@ -51,7 +51,7 @@ impl Square {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum File {
     A = 0,
@@ -81,7 +81,7 @@ impl File {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum Rank {
     _1 = 0,
@@ -107,7 +107,7 @@ impl Rank {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum Color {
     White = 1,
@@ -134,7 +134,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum Piece {
     Pawn = 1,
@@ -162,7 +162,7 @@ impl Piece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum ColorPiece {
     WhitePawn = 1,
@@ -243,7 +243,7 @@ impl ColorPiece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum Dir {
     North = 8,
@@ -256,7 +256,7 @@ pub enum Dir {
     NorthWest = 7,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
 pub enum Victory {
     WhiteWins = 1,

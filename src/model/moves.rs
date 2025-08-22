@@ -1,6 +1,6 @@
 use crate::model::{ColorPiece, Piece, Square, castling::CastlingRights};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PseudoMove {
     pub from: Square,
     pub to: Square,

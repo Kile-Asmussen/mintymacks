@@ -104,7 +104,7 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
         "moves: {}",
         moves
             .iter()
-            .map(|x| x.to_uci())
+            .map(|x| x.to_longalg())
             .collect::<Vec<_>>()
             .join(" ")
     );

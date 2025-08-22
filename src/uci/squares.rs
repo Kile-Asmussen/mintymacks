@@ -24,24 +24,17 @@ impl Square {
 }
 
 impl PseudoMove {
-    pub fn to_uci(self, x: &str) -> String {
+    pub fn to_longalg(self, x: &str) -> String {
         format!("{}{}{}", self.from.to_uci(), self.to.to_uci(), x)
     }
 }
 
 impl Move {
-    pub fn to_uci(self) -> String {
+    pub fn to_longalg(self) -> String {
         match self.special {
-            Some(Special::Promotion(p)) => self.mv.to_uci(match p {
-                Piece::Pawn => "",
-                Piece::Knight => "n",
-                Piece::Bishop => "b",
-                Piece::Rook => "r",
-                Piece::Queen => "q",
-                Piece::King => "",
-            }),
+            Some(Special::Promotion(p)) => self.mv.to_longalg(p.as_str()),
             Some(Special::Null) => "0000".to_string(),
-            _ => self.mv.to_uci(""),
+            _ => self.mv.to_longalg(""),
         }
     }
 }
