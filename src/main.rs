@@ -4,7 +4,12 @@
 #![feature(const_trait_impl)]
 #![feature(slice_partition_dedup)]
 
-use crate::fuzzing::run_stockfish;
+use std::{io::PipeReader, process::Stdio, thread, time::Duration};
+
+use crate::{
+    fuzzing::{Stockfish, run_stockfish},
+    model::{Square, castling::CastlingRights, moves::Move},
+};
 
 mod arrays;
 mod bits;
