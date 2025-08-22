@@ -15,6 +15,7 @@ use crate::model::{Square, castling::CastlingRights, moves::Move};
 
 mod arrays;
 mod bits;
+mod fuzzing;
 mod minmax;
 mod model;
 mod uci;
