@@ -17,8 +17,6 @@ pub enum Special {
     Promotion(Piece),
     CastlingWestward,
     CastlingEastward,
-    DrawOffer,
-    Resignation,
     Null,
 }
 

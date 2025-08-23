@@ -7,7 +7,7 @@ use crate::{
 };
 
 impl Square {
-    pub fn to_uci(self) -> &'static str {
+    pub fn str(self) -> &'static str {
         Square::STRING.at(self)
     }
 
@@ -24,17 +24,17 @@ impl Square {
 }
 
 impl PseudoMove {
-    pub fn to_longalg(self, x: &str) -> String {
-        format!("{}{}{}", self.from.to_uci(), self.to.to_uci(), x)
+    pub fn longalg(self, x: &str) -> String {
+        format!("{}{}{}", self.from.str(), self.to.str(), x)
     }
 }
 
 impl Move {
-    pub fn to_longalg(self) -> String {
+    pub fn longalg(self) -> String {
         match self.special {
-            Some(Special::Promotion(p)) => self.mv.to_longalg(p.as_str()),
+            Some(Special::Promotion(p)) => self.mv.longalg(p.as_str()),
             Some(Special::Null) => "0000".to_string(),
-            _ => self.mv.to_longalg(""),
+            _ => self.mv.longalg(""),
         }
     }
 }

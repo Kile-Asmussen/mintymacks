@@ -93,6 +93,7 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
     let metadata = Metadata {
         to_move: c,
         castling_rights: cr,
+        turn: 0,
         en_passant: epc,
         castling_details: CLASSIC_CASTLING,
     };
@@ -104,7 +105,7 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
         "moves: {}",
         moves
             .iter()
-            .map(|x| x.to_longalg())
+            .map(|x| x.longalg())
             .collect::<Vec<_>>()
             .join(" ")
     );

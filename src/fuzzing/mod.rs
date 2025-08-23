@@ -21,7 +21,7 @@ pub fn stockfish_perft(
             .arg(
                 moves
                     .into_iter()
-                    .map(|m| m.to_longalg())
+                    .map(|m| m.longalg())
                     .collect::<Vec<_>>()
                     .join(" "),
             )

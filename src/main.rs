@@ -3,6 +3,7 @@
 #![feature(const_index)]
 #![feature(const_trait_impl)]
 #![feature(slice_partition_dedup)]
+#![feature(default_field_values)]
 
 use std::{
     io::PipeReader,

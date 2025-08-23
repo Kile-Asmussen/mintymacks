@@ -89,6 +89,7 @@ impl BitBoard {
     pub const fn new(
         board: &ArrayBoard<Option<ColorPiece>>,
         to_move: Color,
+        turn: u16,
         castling_rights: CastlingRights,
         en_passant: Option<Square>,
         castling_details: CastlingDetails,
@@ -98,6 +99,7 @@ impl BitBoard {
             black: HalfBitBoard::new(Color::Black, board),
             metadata: Metadata {
                 to_move,
+                turn,
                 castling_rights,
                 en_passant,
                 castling_details,
@@ -137,6 +139,7 @@ impl BitBoard {
                 ],
             ]),
             Color::White,
+            0,
             CastlingRights::full(),
             None,
             CLASSIC_CASTLING,
