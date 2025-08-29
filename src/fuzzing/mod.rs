@@ -1,3 +1,5 @@
+mod test;
+
 use std::{collections::HashMap, process::Command};
 
 use anyhow::anyhow;

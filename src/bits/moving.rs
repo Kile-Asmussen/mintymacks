@@ -12,11 +12,17 @@ use crate::{
 };
 
 impl BitBoard {
+    /// Calling this method on a Move value that
+    /// does not come from the BitBoard::moves method
+    /// is unspecified behavior
     pub fn apply(&mut self, mv: Move) {
         self.apply_no_metadata(mv);
         self.metadata.apply(mv);
     }
 
+    /// Calling this method with a Move value that was
+    /// not used with the BitBoard::apply method immediately
+    /// before this call, is unspecified behavior
     pub fn unapply(&mut self, mv: Move) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
@@ -87,52 +93,9 @@ impl HalfBitBoard {
 impl Metadata {
     #[inline]
     pub fn apply(&mut self, mv: Move) {
-        use ColorPiece::*;
-        self.castling_rights = match mv.piece {
-            WhiteKing | BlackKing => self.castling_rights.move_king(mv.piece.color()),
-            WhiteRook => move_rook(
-                mv.mv.from,
-                Color::White,
-                self.castling_details,
-                self.castling_rights,
-            ),
-            BlackRook => move_rook(
-                mv.mv.from,
-                Color::Black,
-                self.castling_details,
-                self.castling_rights,
-            ),
-            _ => self.castling_rights,
-        };
-
-        self.castling_rights = if let Some((Piece::Rook, sq)) = mv.cap {
-            move_rook(
-                sq,
-                mv.piece.color().opposite(),
-                self.castling_details,
-                self.castling_rights,
-            )
-        } else {
-            self.castling_rights
-        };
-
+        self.castling_rights = mv.castling_change(self.castling_details);
         self.en_passant = mv.ep_opening();
         self.to_move = mv.piece.color().opposite();
-
-        fn move_rook(
-            from: Square,
-            color: Color,
-            details: CastlingDetails,
-            rights: CastlingRights,
-        ) -> CastlingRights {
-            if from == details.eastward.rook_from.by(color.rank()) {
-                rights.move_east_rook(color)
-            } else if from == details.westward.rook_from.by(color.rank()) {
-                rights.move_west_rook(color)
-            } else {
-                rights
-            }
-        }
     }
 
     fn unapply(&mut self, mv: Move) {

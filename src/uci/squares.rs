@@ -24,17 +24,22 @@ impl Square {
 }
 
 impl PseudoMove {
-    pub fn longalg(self, x: &str) -> String {
-        format!("{}{}{}", self.from.str(), self.to.str(), x)
+    pub fn longalg(self, x: Option<Piece>) -> String {
+        format!(
+            "{}{}{}",
+            self.from.str(),
+            self.to.str(),
+            x.map(Piece::as_str).unwrap_or("")
+        )
     }
 }
 
 impl Move {
     pub fn longalg(self) -> String {
         match self.special {
-            Some(Special::Promotion(p)) => self.mv.longalg(p.as_str()),
+            Some(Special::Promotion(p)) => self.mv.longalg(Some(p)),
             Some(Special::Null) => "0000".to_string(),
-            _ => self.mv.longalg(""),
+            _ => self.mv.longalg(None),
         }
     }
 }

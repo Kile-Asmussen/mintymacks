@@ -18,37 +18,44 @@ fn fen_board_roundtrip() {
 
     use ColorPiece::*;
 
+    let startpos = ArrayBoard::setup([
+        [
+            BlackRook,
+            BlackKnight,
+            BlackBishop,
+            BlackQueen,
+            BlackKing,
+            BlackBishop,
+            BlackKnight,
+            BlackRook,
+        ]
+        .map(Some),
+        [BlackPawn; 8].map(Some),
+        [None; 8],
+        [None; 8],
+        [None; 8],
+        [None; 8],
+        [WhitePawn; 8].map(Some),
+        [
+            WhiteRook,
+            WhiteKnight,
+            WhiteBishop,
+            WhiteQueen,
+            WhiteKing,
+            WhiteBishop,
+            WhiteKnight,
+            WhiteRook,
+        ]
+        .map(Some),
+    ]);
+
     assert_eq!(
         parse_fen_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR").unwrap(),
-        ArrayBoard::setup([
-            [
-                BlackRook,
-                BlackKnight,
-                BlackBishop,
-                BlackQueen,
-                BlackKing,
-                BlackBishop,
-                BlackKnight,
-                BlackRook
-            ]
-            .map(Some),
-            [BlackPawn; 8].map(Some),
-            [None; 8],
-            [None; 8],
-            [None; 8],
-            [None; 8],
-            [WhitePawn; 8].map(Some),
-            [
-                WhiteRook,
-                WhiteKnight,
-                WhiteBishop,
-                WhiteQueen,
-                WhiteKing,
-                WhiteBishop,
-                WhiteKnight,
-                WhiteRook
-            ]
-            .map(Some)
-        ])
+        startpos
     );
+
+    assert_eq!(
+        render_fen_board(&startpos),
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+    )
 }

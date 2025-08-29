@@ -1,4 +1,7 @@
-use crate::model::{ColorPiece, Piece, Square, castling::CastlingRights};
+use crate::model::{
+    Color, ColorPiece, Piece, Square,
+    castling::{self, CastlingDetails, CastlingRights},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PseudoMove {
@@ -12,7 +15,7 @@ impl Square {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Special {
     Promotion(Piece),
     CastlingWestward,
@@ -20,7 +23,7 @@ pub enum Special {
     Null,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Move {
     pub piece: ColorPiece,
     pub mv: PseudoMove,
@@ -58,6 +61,51 @@ impl Move {
                 (_, None) => true,
                 (_, Some(_)) => false,
             }
+    }
+
+    pub const fn simplify(self) -> (PseudoMove, Option<Piece>) {
+        (
+            self.mv,
+            match self.special {
+                Some(Special::Promotion(p)) => Some(p),
+                _ => None,
+            },
+        )
+    }
+
+    pub const fn castling_change(self, details: CastlingDetails) -> CastlingRights {
+        use ColorPiece::*;
+        let mut rights = self.rights;
+
+        match self.piece {
+            WhiteKing | BlackKing => rights.move_king(self.piece.color()),
+            WhiteRook => move_rook(self.mv.from, Color::White, details, rights),
+            BlackRook => move_rook(self.mv.from, Color::Black, details, rights),
+            _ => rights,
+        };
+
+        rights = if let Some((Piece::Rook, sq)) = self.cap {
+            move_rook(sq, self.piece.color().opposite(), details, rights)
+        } else {
+            rights
+        };
+
+        const fn move_rook(
+            from: Square,
+            color: Color,
+            details: CastlingDetails,
+            rights: CastlingRights,
+        ) -> CastlingRights {
+            if from.ix() == details.eastward.rook_from.by(color.rank()).ix() {
+                rights.move_east_rook(color)
+            } else if from.ix() == details.westward.rook_from.by(color.rank()).ix() {
+                rights.move_west_rook(color)
+            } else {
+                rights
+            }
+        }
+
+        rights
     }
 }
 

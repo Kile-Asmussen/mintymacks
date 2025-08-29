@@ -64,7 +64,7 @@ pub const fn bit(sq: Option<Square>) -> Mask {
 
 impl PseudoMove {
     pub const fn bits(self) -> Mask {
-        self.from.bit() | self.to.bit()
+        self.from.bit() ^ self.to.bit()
     }
 }
 

@@ -8,8 +8,8 @@ use crate::{
 
 pub mod fen;
 pub mod longalg;
+pub mod perft;
 pub mod squares;
-pub mod tests;
+mod tests;
 
 const COMMANDS: &[(&'static str, &'static str, fn(&[&str]))] = &[];
-

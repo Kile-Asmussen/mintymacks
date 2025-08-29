@@ -3,7 +3,7 @@ use crate::{
     model::{Color, File, Rank, Square, moves::PseudoMove},
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub struct CastlingRights(u8);
 
 impl CastlingRights {

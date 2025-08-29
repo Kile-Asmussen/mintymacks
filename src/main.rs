@@ -6,13 +6,17 @@
 #![feature(default_field_values)]
 
 use std::{
+    alloc::System,
     io::PipeReader,
     process::{Command, Stdio},
     thread,
     time::{Duration, Instant},
 };
 
+use stats_alloc::{INSTRUMENTED_SYSTEM, Region, StatsAlloc};
+
 use crate::{
+    bits::board::BitBoard,
     fuzzing::stockfish_perft,
     model::{Square, castling::CastlingRights, moves::Move},
 };
@@ -25,8 +29,13 @@ mod model;
 mod uci;
 mod zobrist;
 
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
 fn main() -> anyhow::Result<()> {
-    println!("{:?}", stockfish_perft(&[], 5)?);
+    let reg = Region::new(&GLOBAL);
+    BitBoard::startpos().perft(6).print();
+    println!("Allocations: {:?}", reg.change());
 
     Ok(())
 }

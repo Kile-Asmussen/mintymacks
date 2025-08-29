@@ -174,9 +174,9 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
         if let Some(c) = board.at(sq) {
             if n != 0 {
                 s += &n.to_string();
-                s.push(letter_color_piece(c));
-                n = 0;
             }
+            s.push(letter_color_piece(c));
+            n = 0;
         } else {
             n += 1;
         }
@@ -184,8 +184,8 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
         if sq.file_rank().0 == File::H {
             if n != 0 {
                 s += &n.to_string();
-                n = 0;
             }
+            n = 0;
             res.push(s);
             s = String::with_capacity(8);
         }
