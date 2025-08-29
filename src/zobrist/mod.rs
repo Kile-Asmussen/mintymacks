@@ -20,11 +20,8 @@ use crate::{
 
 pub type Hash = u64;
 
-const BLACK_TO_MOVE: Hash = 1 << 63;
-const HASH_BITS: Hash = !BLACK_TO_MOVE;
-
 pub fn zob<R: Rng>(rng: &mut R) -> Hash {
-    rng.next_u64() & HASH_BITS
+    rng.next_u64()
 }
 
 impl ArrayBoard<Hash> {
@@ -183,7 +180,8 @@ impl ZobristBoard {
             Hash::MIN
         };
 
-        let meta = BLACK_TO_MOVE
+        let meta = self.metadata.hash_color(mv.piece.color())
+            ^ self.metadata.hash_color(mv.piece.color().opposite())
             ^ self.metadata.hash_epc(mv.ep_opening())
             ^ self.metadata.hash_epc(mv.epc)
             ^ self.metadata.castling.hash(mv.rights)
@@ -197,6 +195,7 @@ impl ZobristBoard {
 pub struct ZobristMetadata {
     pub en_passant: [Hash; 8],
     pub castling: ZobristCastling,
+    pub black_to_move: Hash,
 }
 
 impl ZobristMetadata {
@@ -204,12 +203,13 @@ impl ZobristMetadata {
         ZobristMetadata {
             en_passant: array::from_fn(|_| zob(rng)),
             castling: ZobristCastling::new_from_rng(rng),
+            black_to_move: zob(rng),
         }
     }
 
     pub fn hash_color(&self, color: Color) -> Hash {
         if color == Color::Black {
-            BLACK_TO_MOVE
+            self.black_to_move
         } else {
             Hash::MIN
         }
