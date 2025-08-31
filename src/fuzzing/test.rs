@@ -2,9 +2,16 @@ use std::collections::HashMap;
 
 use rand::{SeedableRng, rngs::SmallRng, seq::IndexedRandom};
 
+use anyhow::anyhow;
+
 use crate::{
-    bits::board::BitBoard,
-    uci::fen::render_fen_board,
+    bits::{board::BitBoard, show_mask},
+    fuzzing::stockfish_perft,
+    model::{Color, ColorPiece, Piece, Square, castling::CastlingRights, moves::PseudoMove},
+    uci::{
+        fen::{parse_fen_board, render_fen_board},
+        perft,
+    },
     zobrist::{self, Hash, ZobristBoard},
 };
 
@@ -173,4 +180,127 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize, zobrist: &ZobristBoard) {
             break;
         }
     }
+}
+
+fn stockfish_comparison_game(
+    rng: &mut SmallRng,
+    ply: usize,
+    skip: usize,
+    depth: usize,
+    start: &[(PseudoMove, Option<Piece>)],
+) -> anyhow::Result<()> {
+    let mut buf = vec![];
+    let mut board = BitBoard::startpos();
+    let mut moves = board.make_moves(start);
+
+    if moves.len() != start.len() {
+        panic!("Bad starting moves")
+    }
+
+    let mut problems = vec![];
+
+    'ply: for _ in 0..=ply {
+        let stock = stockfish_perft(&moves, depth)?;
+        let mut mint = board.perft(depth).moves;
+
+        for (stock_move, stock_num) in stock {
+            if let Some((mint_move, mint_num)) = mint.remove_entry(&stock_move) {
+                if mint_num != stock_num {
+                    problems.push(format!(
+                        "{} has {} stockfish moves and {} mintymacks moves",
+                        stock_move.0.longalg(stock_move.1),
+                        stock_num,
+                        mint_num
+                    ));
+                }
+            } else {
+                problems.push(format!(
+                    "{} not found in mintymacks perft",
+                    stock_move.0.longalg(stock_move.1)
+                ));
+            }
+        }
+        for (mint_move, mint_num) in mint {
+            problems.push(format!(
+                "{} not found in stockfish perft",
+                mint_move.0.longalg(mint_move.1)
+            ));
+        }
+
+        if problems.len() > 0 {
+            break;
+        }
+
+        for _ in 0..=skip {
+            buf.clear();
+            board.moves(&mut buf);
+
+            if let Some(mv) = buf.choose(rng) {
+                moves.push(*mv);
+                board.apply(*mv);
+            } else {
+                break 'ply;
+            }
+        }
+    }
+
+    if problems.len() > 0 {
+        println!("Perft mismatch!");
+        println!("FEN: {}", render_fen_board(&board.render()));
+        println!(
+            "Moves: [{}]",
+            moves
+                .into_iter()
+                .map(|m| m.longalg())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+
+        for p in problems {
+            println!("  {}", p);
+        }
+
+        panic!();
+    }
+
+    println!(
+        "Game of {} moves successfully played in accordance with stockfish",
+        moves.len()
+    );
+
+    Ok(())
+}
+
+#[test]
+fn fuzz_stockfish_comparison() {
+    let mut rng = pi();
+
+    stockfish_comparison_game(
+        &mut rng,
+        0,
+        0,
+        1,
+        &[
+            Square::e2.to(Square::e3).z(),
+            Square::h7.to(Square::h6).z(),
+            Square::d1.to(Square::h5).z(),
+        ],
+    );
+}
+
+#[test]
+fn fuzz_stockfish_comparison_2() {
+    let mut rng = pi();
+
+    stockfish_comparison_game(
+        &mut rng,
+        0,
+        0,
+        1,
+        &[
+            Square::e2.to(Square::e3).z(),
+            Square::h7.to(Square::h6).z(),
+            Square::f1.to(Square::b5).z(),
+        ],
+    );
 }

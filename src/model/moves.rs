@@ -15,6 +15,28 @@ impl Square {
     }
 }
 
+impl PseudoMove {
+    pub const fn q(self) -> (Self, Option<Piece>) {
+        (self, Some(Piece::Queen))
+    }
+
+    pub const fn r(self) -> (Self, Option<Piece>) {
+        (self, Some(Piece::Rook))
+    }
+
+    pub const fn b(self) -> (Self, Option<Piece>) {
+        (self, Some(Piece::Bishop))
+    }
+
+    pub const fn n(self) -> (Self, Option<Piece>) {
+        (self, Some(Piece::Knight))
+    }
+
+    pub const fn z(self) -> (Self, Option<Piece>) {
+        (self, None)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Special {
     Promotion(Piece),

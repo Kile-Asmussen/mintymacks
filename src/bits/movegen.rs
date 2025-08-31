@@ -101,7 +101,7 @@ pub fn bishop_moves(
                 );
 
         for dst in Bits(mask) {
-            generic_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
+            generic_move(from.to(dst), Piece::Bishop, friendly, enemy, metadata, res);
         }
     }
 }

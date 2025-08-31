@@ -7,7 +7,7 @@ use crate::{
         Color, ColorPiece, Piece, Rank, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         metadata::{self, Metadata},
-        moves::{Move, Special},
+        moves::{Move, PseudoMove, Special},
     },
 };
 
@@ -26,6 +26,39 @@ impl BitBoard {
     pub fn unapply(&mut self, mv: Move) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
+    }
+
+    pub fn make_move(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<Move> {
+        let mut buf = vec![];
+        self.make_move_internal(mv, &mut buf)
+    }
+
+    pub fn make_moves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<Move> {
+        let mut res = vec![];
+        let mut buf = vec![];
+        for mv in mvs {
+            if let Some(mv) = self.make_move_internal(*mv, &mut buf) {
+                res.push(mv);
+            } else {
+                break;
+            }
+        }
+        return res;
+    }
+
+    fn make_move_internal(
+        &mut self,
+        mv: (PseudoMove, Option<Piece>),
+        buf: &mut Vec<Move>,
+    ) -> Option<Move> {
+        buf.clear();
+        self.moves(buf);
+        if let Some(mv) = buf.iter().find(|m| m.matches(mv.0, mv.1)) {
+            self.apply(*mv);
+            Some(*mv)
+        } else {
+            None
+        }
     }
 
     fn apply_no_metadata(&mut self, mv: Move) {

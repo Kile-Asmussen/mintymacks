@@ -152,6 +152,16 @@ impl BitBoard {
         self.black.render_to(Color::Black, &mut res);
         res
     }
+
+    pub const fn at(&self, sq: Square) -> Option<ColorPiece> {
+        if let Some(p) = self.white.at(sq) {
+            Some(p.color(Color::White))
+        } else if let Some(p) = self.black.at(sq) {
+            Some(p.color(Color::Black))
+        } else {
+            None
+        }
+    }
 }
 
 #[test]

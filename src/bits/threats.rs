@@ -77,7 +77,7 @@ impl HalfBitBoard {
             | king_threats(self.kings)
             | rook_threats(self.rooks ^ is_cap(Piece::Rook, cap), total)
             | bishop_threats(self.bishops ^ is_cap(Piece::Bishop, cap), total)
-            | bishop_threats(self.queens ^ is_cap(Piece::Queen, cap), total);
+            | queen_threats(self.queens ^ is_cap(Piece::Queen, cap), total);
 
         #[inline]
         fn is_cap(is: Piece, cap: Option<(Piece, Square)>) -> u64 {

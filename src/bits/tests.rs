@@ -6,7 +6,7 @@ use crate::{
         mask,
         movegen::{legal_moves, pawn_moves},
         show_mask, slides,
-        threats::{knight_threats, rook_threats},
+        threats::{bishop_threats, knight_threats, rook_threats},
     },
     model::{
         Color, ColorPiece, Square,
@@ -81,6 +81,46 @@ fn rook_threat_masks() {
             0b_11011100,
             0b_00100100,
             0b_00100100,
+        ])
+    )
+}
+
+#[test]
+fn bishop_threat_masks() {
+    let t = bishop_threats(
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000100,
+            0b_00000000,
+            0b_00000000,
+            0b_00100000,
+            0b_00000000,
+            0b_00000000,
+        ]),
+        mask([
+            0b_00000000,
+            0b_00000000,
+            0b_00000100,
+            0b_00000000,
+            0b_00000000,
+            0b_00100000,
+            0b_00000000,
+            0b_00000000,
+        ]),
+    );
+
+    assert_eq!(
+        t,
+        mask([
+            0b_00010001,
+            0b_00001010,
+            0b_00000100,
+            0b_10001010,
+            0b_01010001,
+            0b_00100000,
+            0b_01010000,
+            0b_10001000,
         ])
     )
 }
