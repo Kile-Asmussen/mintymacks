@@ -3,7 +3,7 @@ use crate::{
         Bits, Mask, bit,
         board::{BitBoard, HalfBitBoard},
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        slide_move_stop_negative, slide_move_stop_positive,
+        show_mask, slide_move_stop_negative, slide_move_stop_positive,
         slides::{
             BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
@@ -152,6 +152,7 @@ pub fn pawn_moves(
 
         for dst in Bits(mask) {
             let mv = from.to(dst);
+
             let hypothetical_threat = enemy.threats(
                 metadata.to_move.opposite(),
                 friendly.total(),
@@ -159,11 +160,9 @@ pub fn pawn_moves(
                 None,
             );
 
-            if (hypothetical_threat & friendly.kings) != 0 {
-                return;
+            if (hypothetical_threat & friendly.kings) == 0 {
+                handle_pawn_promotion(mv, None, metadata, res);
             }
-
-            handle_pawn_promotion(mv, None, metadata, res);
         }
     }
 }
@@ -199,11 +198,9 @@ pub fn pawn_captures(
             let hypothetical_threat =
                 enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
-            if (hypothetical_threat & friendly.kings) != 0 {
-                return;
+            if (hypothetical_threat & friendly.kings) == 0 {
+                handle_pawn_promotion(mv, cap, metadata, res);
             }
-
-            handle_pawn_promotion(mv, cap, metadata, res);
         }
     }
 }
@@ -320,16 +317,14 @@ pub fn generic_move(
     let hypothetical_threat =
         enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
-    if (hypothetical_threat & friendly.kings) != 0 {
-        return;
+    if (hypothetical_threat & friendly.kings) == 0 {
+        res.push(Move {
+            piece: metadata.to_move.piece(piece),
+            mv,
+            cap,
+            special: None,
+            rights: metadata.castling_rights,
+            epc: metadata.en_passant,
+        });
     }
-
-    res.push(Move {
-        piece: metadata.to_move.piece(piece),
-        mv,
-        cap,
-        special: None,
-        rights: metadata.castling_rights,
-        epc: metadata.en_passant,
-    });
 }

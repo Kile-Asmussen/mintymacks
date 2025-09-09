@@ -5,11 +5,11 @@ use rand::{SeedableRng, rngs::SmallRng, seq::IndexedRandom};
 use anyhow::anyhow;
 
 use crate::{
-    bits::{board::BitBoard, show_mask},
+    bits::{Bits, board::BitBoard, movegen::pawn_moves, show_mask},
     fuzzing::stockfish_perft,
     model::{Color, ColorPiece, Piece, Square, castling::CastlingRights, moves::PseudoMove},
     uci::{
-        fen::{parse_fen_board, render_fen_board},
+        fen::{self, parse_fen_board, render_fen_board},
         perft,
     },
     zobrist::{self, Hash, ZobristBoard},
@@ -275,32 +275,5 @@ fn stockfish_comparison_game(
 fn fuzz_stockfish_comparison() {
     let mut rng = pi();
 
-    stockfish_comparison_game(
-        &mut rng,
-        0,
-        0,
-        1,
-        &[
-            Square::e2.to(Square::e3).z(),
-            Square::h7.to(Square::h6).z(),
-            Square::d1.to(Square::h5).z(),
-        ],
-    );
-}
-
-#[test]
-fn fuzz_stockfish_comparison_2() {
-    let mut rng = pi();
-
-    stockfish_comparison_game(
-        &mut rng,
-        0,
-        0,
-        1,
-        &[
-            Square::e2.to(Square::e3).z(),
-            Square::h7.to(Square::h6).z(),
-            Square::f1.to(Square::b5).z(),
-        ],
-    );
+    stockfish_comparison_game(&mut rng, 50, 0, 1, &[]);
 }

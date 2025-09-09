@@ -129,11 +129,17 @@ impl Metadata {
         self.castling_rights = mv.castling_change(self.castling_details);
         self.en_passant = mv.ep_opening();
         self.to_move = mv.piece.color().opposite();
+        if mv.piece.color() == Color::Black {
+            self.turn += 1;
+        }
     }
 
     fn unapply(&mut self, mv: Move) {
         self.en_passant = mv.epc;
         self.castling_rights = mv.rights;
         self.to_move = mv.piece.color();
+        if mv.piece.color() == Color::Black {
+            self.turn -= 1;
+        }
     }
 }

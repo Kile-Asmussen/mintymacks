@@ -32,7 +32,7 @@ impl PseudoMove {
         (self, Some(Piece::Knight))
     }
 
-    pub const fn z(self) -> (Self, Option<Piece>) {
+    pub const fn p(self) -> (Self, Option<Piece>) {
         (self, None)
     }
 }

@@ -34,7 +34,9 @@ static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 fn main() -> anyhow::Result<()> {
     let reg = Region::new(&GLOBAL);
-    BitBoard::startpos().perft(6).print();
+    let mut board = BitBoard::startpos();
+
+    board.perft(6).print();
     println!("Allocations: {:?}", reg.change());
 
     Ok(())
