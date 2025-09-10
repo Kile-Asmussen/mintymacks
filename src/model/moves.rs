@@ -99,7 +99,7 @@ impl Move {
         use ColorPiece::*;
         let mut rights = self.rights;
 
-        match self.piece {
+        rights = match self.piece {
             WhiteKing | BlackKing => rights.move_king(self.piece.color()),
             WhiteRook => move_rook(self.mv.from, Color::White, details, rights),
             BlackRook => move_rook(self.mv.from, Color::Black, details, rights),
@@ -112,6 +112,7 @@ impl Move {
             rights
         };
 
+        #[must_use]
         const fn move_rook(
             from: Square,
             color: Color,

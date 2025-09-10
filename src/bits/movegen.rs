@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        Bits, Mask, bit,
+        self, Bits, Mask, bit,
         board::{BitBoard, HalfBitBoard},
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         show_mask, slide_move_stop_negative, slide_move_stop_positive,
@@ -50,7 +50,7 @@ pub fn knight_moves(
 ) {
     for from in Bits(friendly.knights) {
         for dst in Bits(KNIGHT_MOVES.at(from) & !friendly.total()) {
-            generic_move(from.to(dst), Piece::Knight, friendly, enemy, metadata, res)
+            encode_piece_move(from.to(dst), Piece::Knight, friendly, enemy, metadata, res)
         }
     }
 }
@@ -69,7 +69,7 @@ pub fn rook_moves(
             | slide_move_stop_negative(RAYS_SOUTH.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            generic_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
+            encode_piece_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
         }
     }
 }
@@ -101,7 +101,7 @@ pub fn bishop_moves(
                 );
 
         for dst in Bits(mask) {
-            generic_move(from.to(dst), Piece::Bishop, friendly, enemy, metadata, res);
+            encode_piece_move(from.to(dst), Piece::Bishop, friendly, enemy, metadata, res);
         }
     }
 }
@@ -124,7 +124,7 @@ pub fn queen_moves(
             | slide_move_stop_negative(RAYS_SOUTHWEST.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            generic_move(from.to(dst), Piece::Queen, friendly, enemy, metadata, res);
+            encode_piece_move(from.to(dst), Piece::Queen, friendly, enemy, metadata, res);
         }
     }
 }
@@ -153,16 +153,7 @@ pub fn pawn_moves(
         for dst in Bits(mask) {
             let mv = from.to(dst);
 
-            let hypothetical_threat = enemy.threats(
-                metadata.to_move.opposite(),
-                friendly.total(),
-                Some(mv),
-                None,
-            );
-
-            if (hypothetical_threat & friendly.kings) == 0 {
-                handle_pawn_promotion(mv, None, metadata, res);
-            }
+            encode_pawn_move(mv, None, friendly, enemy, metadata, res);
         }
     }
 }
@@ -191,47 +182,12 @@ pub fn pawn_captures(
             if cap == None {
                 cap = metadata
                     .en_passant
-                    .and_then(|sq| Square::new(sq.ix() + 8 * (metadata.to_move as i8)))
+                    .and_then(|sq| Square::new(sq.ix() - 8 * (metadata.to_move as i8)))
                     .map(|sq| (Piece::Pawn, sq))
             }
 
-            let hypothetical_threat =
-                enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
-
-            if (hypothetical_threat & friendly.kings) == 0 {
-                handle_pawn_promotion(mv, cap, metadata, res);
-            }
+            encode_pawn_move(mv, cap, friendly, enemy, metadata, res);
         }
-    }
-}
-
-#[inline]
-pub fn handle_pawn_promotion(
-    mv: PseudoMove,
-    cap: Option<(Piece, Square)>,
-    metadata: Metadata,
-    res: &mut Vec<Move>,
-) {
-    if let 0..=7 | 56..=63 = mv.to.ix() {
-        for p in [Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen] {
-            res.push(Move {
-                piece: metadata.to_move.piece(Piece::Pawn),
-                mv,
-                cap,
-                special: Some(Special::Promotion(p)),
-                rights: metadata.castling_rights,
-                epc: metadata.en_passant,
-            });
-        }
-    } else {
-        res.push(Move {
-            piece: metadata.to_move.piece(Piece::Pawn),
-            mv,
-            cap,
-            special: None,
-            rights: metadata.castling_rights,
-            epc: metadata.en_passant,
-        });
     }
 }
 
@@ -246,13 +202,14 @@ pub fn king_moves(
 
     for from in Bits(friendly.kings) {
         for dst in Bits(KING_MOVES.at(from) & !static_threats & !friendly.total()) {
-            generic_move(from.to(dst), Piece::King, friendly, enemy, metadata, res)
+            encode_piece_move(from.to(dst), Piece::King, friendly, enemy, metadata, res)
         }
     }
 
     if metadata.castling_rights.westward(metadata.to_move) {
-        handle_castling(
+        encode_castling_move(
             metadata.castling_details.westward,
+            Special::CastlingWestward,
             metadata,
             static_threats,
             friendly.total() | enemy.total(),
@@ -261,8 +218,9 @@ pub fn king_moves(
     }
 
     if metadata.castling_rights.eastward(metadata.to_move) {
-        handle_castling(
+        encode_castling_move(
             metadata.castling_details.eastward,
+            Special::CastlingEastward,
             metadata,
             static_threats,
             friendly.total() | enemy.total(),
@@ -272,8 +230,9 @@ pub fn king_moves(
 }
 
 #[inline]
-pub fn handle_castling(
+pub fn encode_castling_move(
     castling: CastlingDetail,
+    special: Special,
     metadata: Metadata,
     static_threats: Mask,
     total: Mask,
@@ -286,7 +245,7 @@ pub fn handle_castling(
                 piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
-                special: Some(Special::CastlingWestward),
+                special: Some(special),
                 rights: metadata.castling_rights,
                 epc: metadata.en_passant,
             })
@@ -295,7 +254,7 @@ pub fn handle_castling(
                 piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move,
                 cap: None,
-                special: Some(Special::CastlingWestward),
+                special: Some(special),
                 rights: metadata.castling_rights,
                 epc: metadata.en_passant,
             })
@@ -304,7 +263,7 @@ pub fn handle_castling(
 }
 
 #[inline]
-pub fn generic_move(
+pub fn encode_piece_move(
     mv: PseudoMove,
     piece: Piece,
     friendly: &HalfBitBoard,
@@ -317,7 +276,13 @@ pub fn generic_move(
     let hypothetical_threat =
         enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
-    if (hypothetical_threat & friendly.kings) == 0 {
+    let kings = if piece == Piece::King {
+        friendly.kings ^ mv.bits()
+    } else {
+        friendly.kings
+    };
+
+    if (hypothetical_threat & kings) == 0 {
         res.push(Move {
             piece: metadata.to_move.piece(piece),
             mv,
@@ -326,5 +291,39 @@ pub fn generic_move(
             rights: metadata.castling_rights,
             epc: metadata.en_passant,
         });
+    }
+}
+
+#[inline]
+pub fn encode_pawn_move(
+    mv: PseudoMove,
+    cap: Option<(Piece, Square)>,
+    friendly: &HalfBitBoard,
+    enemy: &HalfBitBoard,
+    metadata: Metadata,
+    res: &mut Vec<Move>,
+) {
+    let hypothetical_threat =
+        enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
+
+    if (hypothetical_threat & friendly.kings) == 0 {
+        let promotions = if let Rank::_1 | Rank::_8 = mv.to.file_rank().1 {
+            &[Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen]
+                .map(|p| Some(Special::Promotion(p)))[..]
+        } else {
+            &[None][..]
+        };
+
+        for special in promotions {
+            let special = *special;
+            res.push(Move {
+                piece: metadata.to_move.piece(Piece::Pawn),
+                mv,
+                cap,
+                special,
+                rights: metadata.castling_rights,
+                epc: metadata.en_passant,
+            });
+        }
     }
 }

@@ -23,6 +23,7 @@ use crate::{
 
 mod arrays;
 mod bits;
+mod eval;
 mod fuzzing;
 mod minmax;
 mod model;
@@ -32,12 +33,6 @@ mod zobrist;
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
-fn main() -> anyhow::Result<()> {
-    let reg = Region::new(&GLOBAL);
-    let mut board = BitBoard::startpos();
-
-    board.perft(6).print();
-    println!("Allocations: {:?}", reg.change());
-
-    Ok(())
+fn main() {
+    BitBoard::startpos().perft(8).print();
 }

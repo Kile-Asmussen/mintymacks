@@ -5,11 +5,12 @@ pub mod square;
 pub mod tests;
 pub mod wincon;
 
+use std::fmt::Debug;
 use std::num::NonZeroI8;
 
 use crate::arrays::ArrayBoard;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Square(NonZeroI8);
 
@@ -48,6 +49,13 @@ impl Square {
         } else {
             Some(Self(unsafe { NonZeroI8::new_unchecked(self.0.get() + 1) }))
         }
+    }
+}
+
+impl Debug for Square {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Square::")?;
+        f.write_str(self.str())
     }
 }
 

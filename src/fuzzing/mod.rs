@@ -1,4 +1,4 @@
-mod test;
+pub mod test;
 
 use std::{collections::HashMap, process::Command};
 

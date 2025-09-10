@@ -81,10 +81,10 @@ impl HalfBitBoard {
     pub fn apply_active(&mut self, castling: CastlingDetails, mv: Move) {
         if let Some(sp) = mv.special {
             match sp {
-                Special::CastlingEastward => {
+                Special::CastlingWestward => {
                     castling_move(self, castling.westward, mv.piece.color())
                 }
-                Special::CastlingWestward => {
+                Special::CastlingEastward => {
                     castling_move(self, castling.eastward, mv.piece.color())
                 }
                 Special::Promotion(p) => {
@@ -97,6 +97,7 @@ impl HalfBitBoard {
             *self.piece(mv.piece.piece()) ^= mv.mv.bits()
         }
 
+        #[inline]
         fn castling_move(_self: &mut HalfBitBoard, cd: CastlingDetail, c: Color) {
             let cmv = cd.reify(c);
             _self.kings ^= cmv.king_move.bits();

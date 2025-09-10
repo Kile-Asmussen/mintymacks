@@ -18,18 +18,18 @@ use crate::{
     },
 };
 
-pub type Hash = u64;
+pub type ZobHash = u64;
 
-pub fn zob<R: Rng>(rng: &mut R) -> Hash {
+pub fn zob<R: Rng>(rng: &mut R) -> ZobHash {
     rng.next_u64()
 }
 
-impl ArrayBoard<Hash> {
-    pub fn hash(&self, m: Mask) -> Hash {
+impl ArrayBoard<ZobHash> {
+    pub fn hash(&self, m: Mask) -> ZobHash {
         Bits(m).map(|sq| self.at(sq)).fold(0, u64::bitxor)
     }
 
-    pub fn at2(&self, pm: PseudoMove) -> Hash {
+    pub fn at2(&self, pm: PseudoMove) -> ZobHash {
         self.at(pm.from) ^ self.at(pm.to)
     }
 
@@ -40,12 +40,12 @@ impl ArrayBoard<Hash> {
 
 #[derive(Debug, Clone)]
 pub struct ZobristHalfBoard {
-    pub pawns: ArrayBoard<Hash>,
-    pub knights: ArrayBoard<Hash>,
-    pub bishops: ArrayBoard<Hash>,
-    pub rooks: ArrayBoard<Hash>,
-    pub queens: ArrayBoard<Hash>,
-    pub kings: ArrayBoard<Hash>,
+    pub pawns: ArrayBoard<ZobHash>,
+    pub knights: ArrayBoard<ZobHash>,
+    pub bishops: ArrayBoard<ZobHash>,
+    pub rooks: ArrayBoard<ZobHash>,
+    pub queens: ArrayBoard<ZobHash>,
+    pub kings: ArrayBoard<ZobHash>,
 }
 
 impl ZobristHalfBoard {
@@ -60,7 +60,7 @@ impl ZobristHalfBoard {
         }
     }
 
-    pub fn hash(&self, hboard: &HalfBitBoard) -> Hash {
+    pub fn hash(&self, hboard: &HalfBitBoard) -> ZobHash {
         self.pawns.hash(hboard.pawns)
             ^ self.knights.hash(hboard.knights)
             ^ self.bishops.hash(hboard.bishops)
@@ -69,7 +69,7 @@ impl ZobristHalfBoard {
             ^ self.kings.hash(hboard.kings)
     }
 
-    pub fn piece(&self, piece: Piece) -> &ArrayBoard<Hash> {
+    pub fn piece(&self, piece: Piece) -> &ArrayBoard<ZobHash> {
         match piece {
             Piece::Pawn => &self.pawns,
             Piece::Knight => &self.knights,
@@ -83,10 +83,10 @@ impl ZobristHalfBoard {
 
 #[derive(Debug, Clone)]
 pub struct ZobristCastling {
-    pub white_eastward: Hash,
-    pub white_westward: Hash,
-    pub black_eastward: Hash,
-    pub black_westward: Hash,
+    pub white_eastward: ZobHash,
+    pub white_westward: ZobHash,
+    pub black_eastward: ZobHash,
+    pub black_westward: ZobHash,
 }
 
 impl ZobristCastling {
@@ -99,8 +99,8 @@ impl ZobristCastling {
         }
     }
 
-    pub fn hash(&self, cr: CastlingRights) -> Hash {
-        let mut res = Hash::MIN;
+    pub fn hash(&self, cr: CastlingRights) -> ZobHash {
+        let mut res = ZobHash::MIN;
 
         if cr.eastward(Color::White) {
             res ^= self.white_eastward;
@@ -144,7 +144,7 @@ impl ZobristBoard {
         }
     }
 
-    pub fn hash(&self, board: &BitBoard) -> Hash {
+    pub fn hash(&self, board: &BitBoard) -> ZobHash {
         self.white.hash(&board.white)
             ^ self.black.hash(&board.black)
             ^ self.metadata.hash(board.metadata)
@@ -157,7 +157,7 @@ impl ZobristBoard {
         }
     }
 
-    pub fn delta(&self, mv: Move, details: CastlingDetails) -> Hash {
+    pub fn delta(&self, mv: Move, details: CastlingDetails) -> ZobHash {
         let (act, pas) = self.active_passive(mv.piece.color());
 
         let movement = match mv.special {
@@ -170,14 +170,14 @@ impl ZobristBoard {
                 let cast = details.westward.reify(mv.piece.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
-            Some(Special::Null) => Hash::MIN,
+            Some(Special::Null) => ZobHash::MIN,
             None => act.piece(mv.piece.piece()).at2(mv.mv),
         };
 
         let capture = if let Some((p, sq)) = mv.cap {
             pas.piece(p).hash(sq.bit())
         } else {
-            Hash::MIN
+            ZobHash::MIN
         };
 
         let meta = self.metadata.hash_color(mv.piece.color())
@@ -193,9 +193,9 @@ impl ZobristBoard {
 
 #[derive(Debug, Clone)]
 pub struct ZobristMetadata {
-    pub en_passant: [Hash; 8],
+    pub en_passant: [ZobHash; 8],
     pub castling: ZobristCastling,
-    pub black_to_move: Hash,
+    pub black_to_move: ZobHash,
 }
 
 impl ZobristMetadata {
@@ -207,23 +207,23 @@ impl ZobristMetadata {
         }
     }
 
-    pub fn hash_color(&self, color: Color) -> Hash {
+    pub fn hash_color(&self, color: Color) -> ZobHash {
         if color == Color::Black {
             self.black_to_move
         } else {
-            Hash::MIN
+            ZobHash::MIN
         }
     }
 
-    pub fn hash_epc(&self, epc: Option<Square>) -> Hash {
+    pub fn hash_epc(&self, epc: Option<Square>) -> ZobHash {
         if let Some(sq) = epc {
             self.en_passant[sq.file_rank().0.ix() as usize]
         } else {
-            Hash::MIN
+            ZobHash::MIN
         }
     }
 
-    pub fn hash(&self, metadata: Metadata) -> Hash {
+    pub fn hash(&self, metadata: Metadata) -> ZobHash {
         self.castling.hash(metadata.castling_rights)
             ^ self.hash_color(metadata.to_move)
             ^ self.hash_epc(metadata.en_passant)

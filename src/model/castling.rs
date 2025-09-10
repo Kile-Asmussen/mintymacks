@@ -28,6 +28,7 @@ impl CastlingRights {
         }
     }
 
+    #[must_use]
     pub const fn move_king(self, c: Color) -> Self {
         Self(match c {
             Color::White => self.0 & !3,
@@ -35,6 +36,7 @@ impl CastlingRights {
         })
     }
 
+    #[must_use]
     pub const fn move_east_rook(self, c: Color) -> Self {
         Self(match c {
             Color::White => self.0 & !2,
@@ -42,6 +44,7 @@ impl CastlingRights {
         })
     }
 
+    #[must_use]
     pub const fn move_west_rook(self, c: Color) -> Self {
         Self(match c {
             Color::White => self.0 & !1,

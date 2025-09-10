@@ -1,18 +1,32 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    io::{Write, stdout},
+    time::Instant,
+};
 
 use rand::{SeedableRng, rngs::SmallRng, seq::IndexedRandom};
 
 use anyhow::anyhow;
 
 use crate::{
-    bits::{Bits, board::BitBoard, movegen::pawn_moves, show_mask},
+    arrays::ArrayBoard,
+    bits::{
+        Bits,
+        board::BitBoard,
+        movegen::{king_moves, pawn_moves},
+        show_mask,
+    },
     fuzzing::stockfish_perft,
-    model::{Color, ColorPiece, Piece, Square, castling::CastlingRights, moves::PseudoMove},
+    model::{
+        Color, ColorPiece, Piece, Square,
+        castling::{CLASSIC_CASTLING, CastlingRights},
+        moves::PseudoMove,
+    },
     uci::{
         fen::{self, parse_fen_board, render_fen_board},
         perft,
     },
-    zobrist::{self, Hash, ZobristBoard},
+    zobrist::{self, ZobHash, ZobristBoard},
 };
 
 fn pi() -> SmallRng {
@@ -96,7 +110,11 @@ fn fuzz_zobrist_hashing() {
     println!("Positions seen: {}", positions.len());
 }
 
-fn zobrist_hashing_game(rng: &mut SmallRng, ply: usize, positions: &mut HashMap<Hash, BitBoard>) {
+fn zobrist_hashing_game(
+    rng: &mut SmallRng,
+    ply: usize,
+    positions: &mut HashMap<ZobHash, BitBoard>,
+) {
     let zobrist = ZobristBoard::new();
 
     let mut buf = vec![];
@@ -185,10 +203,11 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize, zobrist: &ZobristBoard) {
 fn stockfish_comparison_game(
     rng: &mut SmallRng,
     ply: usize,
-    skip: usize,
+    skip_over: usize,
     depth: usize,
     start: &[(PseudoMove, Option<Piece>)],
-) -> anyhow::Result<()> {
+    skip_this: bool,
+) {
     let mut buf = vec![];
     let mut board = BitBoard::startpos();
     let mut moves = board.make_moves(start);
@@ -197,11 +216,21 @@ fn stockfish_comparison_game(
         panic!("Bad starting moves")
     }
 
+    let now = Instant::now();
     let mut problems = vec![];
 
-    'ply: for _ in 0..=ply {
-        let stock = stockfish_perft(&moves, depth)?;
+    println!("Playing {} ply: ", ply + 1);
+    if skip_this {
+        println!("(skipping stockfish eval)");
+    }
+
+    'ply: loop {
         let mut mint = board.perft(depth).moves;
+        let stock = if skip_this {
+            mint.clone()
+        } else {
+            stockfish_perft(&moves, depth).expect("Unable to get stockfish perft!")
+        };
 
         for (stock_move, stock_num) in stock {
             if let Some((mint_move, mint_num)) = mint.remove_entry(&stock_move) {
@@ -215,14 +244,16 @@ fn stockfish_comparison_game(
                 }
             } else {
                 problems.push(format!(
-                    "{} not found in mintymacks perft",
+                    "{:?} {} not found in mintymacks perft",
+                    board.metadata.to_move,
                     stock_move.0.longalg(stock_move.1)
                 ));
             }
         }
         for (mint_move, mint_num) in mint {
             problems.push(format!(
-                "{} not found in stockfish perft",
+                "{:?} {} not found in stockfish perft",
+                board.metadata.to_move,
                 mint_move.0.longalg(mint_move.1)
             ));
         }
@@ -231,49 +262,93 @@ fn stockfish_comparison_game(
             break;
         }
 
-        for _ in 0..=skip {
+        for _ in 0..=skip_over {
             buf.clear();
             board.moves(&mut buf);
 
             if let Some(mv) = buf.choose(rng) {
+                if moves.len() % 8 == 0 {
+                    if moves.len() != 0 {
+                        println!();
+                    }
+                    print!("{:03}> ", moves.len());
+                }
                 moves.push(*mv);
                 board.apply(*mv);
+                print!("{} ", mv.longalg());
+                stdout().flush();
             } else {
                 break 'ply;
             }
         }
+
+        if moves.len() > ply + skip_over {
+            break 'ply;
+        }
     }
 
     if problems.len() > 0 {
+        println!();
         println!("Perft mismatch!");
         println!("FEN: {}", render_fen_board(&board.render()));
-        println!(
-            "Moves: [{}]",
-            moves
-                .into_iter()
-                .map(|m| m.longalg())
-                .collect::<Vec<_>>()
-                .join(" ")
-        );
 
         for p in problems {
-            println!("  {}", p);
+            println!("- {}", p);
         }
 
         panic!();
+    } else {
+        println!();
+        println!(
+            "Game of {} ply successfully played in accordance with stockfish in {} seconds",
+            moves.len(),
+            now.elapsed().as_secs(),
+        );
+    }
+}
+
+// #[test]
+pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: usize, step: usize) {
+    let mut rng = pi();
+
+    println!("Playing {n} random games and comparing to stockfish...");
+
+    for i in 1..=n {
+        println!("\n### Game {i} ###");
+        stockfish_comparison_game(&mut rng, ply - 1, step - 1, depth, &[], i < skip_to);
     }
 
-    println!(
-        "Game of {} moves successfully played in accordance with stockfish",
-        moves.len()
-    );
-
-    Ok(())
+    println!();
+    println!("!!! Successfully played {n} random games in accordance with stockfish !!!");
 }
 
 #[test]
-fn fuzz_stockfish_comparison() {
-    let mut rng = pi();
+fn en_passant_pawn_capture() {
+    let mut board = ArrayBoard::<Option<ColorPiece>>::new(None);
 
-    stockfish_comparison_game(&mut rng, 50, 0, 1, &[]);
+    board.set(Square::a7, Some(ColorPiece::BlackPawn));
+    board.set(Square::b5, Some(ColorPiece::WhitePawn));
+    board.set(Square::h1, Some(ColorPiece::WhiteKing));
+    board.set(Square::h8, Some(ColorPiece::BlackKing));
+
+    let mut board = BitBoard::new(
+        &board,
+        Color::Black,
+        1,
+        CastlingRights::nil(),
+        None,
+        CLASSIC_CASTLING,
+    );
+
+    let mv = board.make_move(Square::a7.to(Square::a5).p()).unwrap();
+
+    println!("({:?}).epc_opening() == {:?}", mv, mv.ep_opening());
+    println!();
+
+    let mut res = vec![];
+    board.moves(&mut res);
+
+    for mv in &res {
+        println!("{:?}", mv)
+    }
 }
