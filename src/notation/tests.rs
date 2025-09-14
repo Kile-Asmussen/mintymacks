@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     model::ColorPiece,
-    uci::fen::{parse_fen_board, render_fen_board},
+    notation::fen::{parse_fen_board, render_fen_board},
 };
 
 #[test]

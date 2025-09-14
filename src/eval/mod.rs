@@ -2,16 +2,13 @@ use std::collections::HashMap;
 
 use crate::{bits::board::BitBoard, zobrist::ZobHash};
 
-
-
 pub trait Evaluator {
-    fn stateval(&mut self, board: &BitBoard, )
+    fn stateval(&mut self, board: &BitBoard);
 }
-
 
 pub enum StackList<'a, T, U> {
     Link(T, &'a StackList<'a, T, U>),
-    Base(U)
+    Base(U),
 }
 
 impl<'a, T, U> StackList<'a, T, U> {
@@ -19,7 +16,10 @@ impl<'a, T, U> StackList<'a, T, U> {
         Self::Base(u)
     }
 
-    pub fn push<'b>(&'a self, t: T) -> StackList<'b, T, U> where 'a: 'b {
+    pub fn push<'b>(&'a self, t: T) -> StackList<'b, T, U>
+    where
+        'a: 'b,
+    {
         StackList::Link(t, self)
     }
 

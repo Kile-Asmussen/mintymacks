@@ -27,12 +27,12 @@ mod eval;
 mod fuzzing;
 mod minmax;
 mod model;
-mod uci;
+mod notation;
 mod zobrist;
 
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 fn main() {
-    BitBoard::startpos().perft(8).print();
+    BitBoard::startpos().enumerate(8).print();
 }

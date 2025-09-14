@@ -8,7 +8,6 @@ use crate::{
 
 pub mod fen;
 pub mod longalg;
-pub mod perft;
 pub mod squares;
 mod tests;
 

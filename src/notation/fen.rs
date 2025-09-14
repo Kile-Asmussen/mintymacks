@@ -5,7 +5,7 @@ use anyhow::{Error, anyhow};
 use crate::{
     arrays::ArrayBoard,
     model::{Color, ColorPiece, File, Square, castling::CastlingRights},
-    uci::longalg::parse_square,
+    notation::longalg::parse_square,
 };
 
 pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {

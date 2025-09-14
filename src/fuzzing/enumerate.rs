@@ -13,20 +13,20 @@ use crate::{
 };
 
 impl BitBoard {
-    pub fn perft(&self, depth: usize) -> PerfTestResult {
+    pub fn enumerate(&self, depth: usize) -> EnumerationResult {
         if depth == 0 {
-            PerfTestResult {
+            EnumerationResult {
                 time: Duration::ZERO,
                 depth,
                 moves: HashMap::new(),
                 transpos: (0, 0),
             }
         } else {
-            self.clone().perft_mut(depth)
+            self.clone().enumerate_mut(depth)
         }
     }
 
-    fn perft_mut(&mut self, depth: usize) -> PerfTestResult {
+    fn enumerate_mut(&mut self, depth: usize) -> EnumerationResult {
         let now = Instant::now();
         let mut moves = HashMap::new();
         let mut zobrist = HashMap::with_capacity(10usize.pow(depth as u32));
@@ -50,7 +50,7 @@ impl BitBoard {
             self.unapply(mv);
         }
 
-        PerfTestResult {
+        EnumerationResult {
             time: now.elapsed(),
             depth,
             moves,
@@ -100,14 +100,14 @@ impl BitBoard {
     }
 }
 
-pub struct PerfTestResult {
+pub struct EnumerationResult {
     pub time: Duration,
     pub depth: usize,
     pub moves: HashMap<(PseudoMove, Option<Piece>), usize>,
     pub transpos: (usize, usize),
 }
 
-impl PerfTestResult {
+impl EnumerationResult {
     pub fn total(&self) -> usize {
         self.moves.values().map(|x| *x).sum()
     }
@@ -115,7 +115,7 @@ impl PerfTestResult {
     pub fn print(&self) {
         println!("Depth searched: {}", self.depth);
         println!("Time elapsed: {} ms", self.time.as_millis());
-        println!("Nodes searched: {}", self.total());
+        println!("Nodes reached: {}", self.total());
         println!("Zobrist table: {}/{}", self.transpos.0, self.transpos.1);
 
         for (k, v) in &self.moves {
@@ -125,8 +125,8 @@ impl PerfTestResult {
 }
 
 #[test]
-fn perft_3() {
-    let res = BitBoard::startpos().perft(3);
+fn enumerate_3() {
+    let res = BitBoard::startpos().enumerate(3);
 
     res.print();
 }

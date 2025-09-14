@@ -1,3 +1,4 @@
+pub mod enumerate;
 pub mod test;
 
 use std::{collections::HashMap, process::Command};
@@ -9,7 +10,7 @@ use crate::{
         Piece,
         moves::{Move, PseudoMove},
     },
-    uci::longalg::parse_long_alg,
+    notation::longalg::parse_long_alg,
 };
 
 pub fn stockfish_perft(

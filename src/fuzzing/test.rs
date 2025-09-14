@@ -22,10 +22,7 @@ use crate::{
         castling::{CLASSIC_CASTLING, CastlingRights},
         moves::PseudoMove,
     },
-    uci::{
-        fen::{self, parse_fen_board, render_fen_board},
-        perft,
-    },
+    notation::fen::{self, parse_fen_board, render_fen_board},
     zobrist::{self, ZobHash, ZobristBoard},
 };
 
@@ -225,7 +222,7 @@ fn stockfish_comparison_game(
     }
 
     'ply: loop {
-        let mut mint = board.perft(depth).moves;
+        let mut mint = board.enumerate(depth).moves;
         let stock = if skip_this {
             mint.clone()
         } else {

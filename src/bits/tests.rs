@@ -14,7 +14,7 @@ use crate::{
         metadata::Metadata,
         moves::{Move, PseudoMove},
     },
-    uci::fen,
+    notation::fen,
 };
 
 #[test]
