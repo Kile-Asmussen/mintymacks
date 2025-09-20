@@ -28,6 +28,7 @@ mod fuzzing;
 mod minmax;
 mod model;
 mod notation;
+mod uci;
 mod zobrist;
 
 #[global_allocator]
