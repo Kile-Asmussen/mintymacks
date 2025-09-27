@@ -12,7 +12,7 @@ use crate::{
         Color, ColorPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         metadata::Metadata,
-        moves::{Move, PseudoMove},
+        moves::{ChessMove, PseudoMove},
     },
     notation::fen,
 };
@@ -190,7 +190,7 @@ fn test_movegen() {
 #[test]
 fn test_moving() {
     let mut board = BitBoard::startpos();
-    board.apply(Move {
+    board.apply(ChessMove {
         piece: ColorPiece::WhitePawn,
         mv: Square::d2.to(Square::d4),
         cap: None,

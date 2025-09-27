@@ -46,7 +46,7 @@ pub enum Special {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct Move {
+pub struct ChessMove {
     pub piece: ColorPiece,
     pub mv: PseudoMove,
     pub cap: Option<(Piece, Square)>,
@@ -55,7 +55,7 @@ pub struct Move {
     pub epc: Option<Square>,
 }
 
-impl Move {
+impl ChessMove {
     pub const fn ep_opening(self) -> Option<Square> {
         if self.piece as i8 == ColorPiece::WhitePawn as i8 {
             if (self.mv.to.ix() - self.mv.from.ix()).abs() == 16 {
@@ -134,6 +134,10 @@ impl Move {
 
 #[test]
 pub fn move_size() {
-    println!("size: {}\nalign: {}", size_of::<Move>(), align_of::<Move>());
-    println!("option-size: {}", size_of::<Option<Move>>());
+    println!(
+        "size: {}\nalign: {}",
+        size_of::<ChessMove>(),
+        align_of::<ChessMove>()
+    );
+    println!("option-size: {}", size_of::<Option<ChessMove>>());
 }

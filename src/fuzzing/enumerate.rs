@@ -7,7 +7,7 @@ use crate::{
     bits::board::BitBoard,
     model::{
         Piece,
-        moves::{Move, PseudoMove},
+        moves::{ChessMove, PseudoMove},
     },
     zobrist::{ZobHash, ZobristBoard},
 };
@@ -60,7 +60,7 @@ impl BitBoard {
 
     fn enum_nodes(
         &mut self,
-        moves: &[Move],
+        moves: &[ChessMove],
         depth: usize,
         hash: ZobHash,
         zobrist: &mut HashMap<(ZobHash, usize), usize>,

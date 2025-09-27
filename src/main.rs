@@ -18,17 +18,15 @@ use stats_alloc::{INSTRUMENTED_SYSTEM, Region, StatsAlloc};
 use crate::{
     bits::board::BitBoard,
     fuzzing::stockfish_perft,
-    model::{Square, castling::CastlingRights, moves::Move},
+    model::{Square, castling::CastlingRights, moves::ChessMove},
 };
 
 mod arrays;
 mod bits;
-mod eval;
 mod fuzzing;
-mod minmax;
 mod model;
+#[macro_use]
 mod notation;
-mod uci;
 mod zobrist;
 
 #[global_allocator]

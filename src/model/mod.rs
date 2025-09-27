@@ -55,7 +55,7 @@ impl Square {
 impl Debug for Square {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Square::")?;
-        f.write_str(self.str())
+        f.write_str(self.to_str())
     }
 }
 

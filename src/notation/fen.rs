@@ -5,15 +5,14 @@ use anyhow::{Error, anyhow};
 use crate::{
     arrays::ArrayBoard,
     model::{Color, ColorPiece, File, Square, castling::CastlingRights},
-    notation::longalg::parse_square,
 };
 
 pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {
-    u16::from_str_radix(hmc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed ply clock `{}'", hmc))
+    u16::from_str_radix(hmc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed ply clock `{hmc}'"))
 }
 
 pub fn parse_fen_turn_counter(tc: &str) -> anyhow::Result<u16> {
-    u16::from_str_radix(tc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed turn counter `{}'", tc))
+    u16::from_str_radix(tc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed turn counter `{tc}'"))
 }
 
 pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> {
@@ -21,21 +20,17 @@ pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> 
         return Ok(None);
     }
 
-    if let Some(sq) = parse_square(eps) {
+    if let Some(sq) = Square::from_str(eps) {
         return Ok(Some(sq));
     }
 
-    return Err(anyhow!(
-        "Invalid FEN: Malformed en-passant square `{}'",
-        eps
-    ));
+    return Err(anyhow!("Invalid FEN: Malformed en-passant square `{eps}'"));
 }
 
 pub fn parse_fen_castling_rights(cr: &str) -> anyhow::Result<CastlingRights> {
     if cr != "-" && !cr.chars().all(|c| "KQkq".contains(c)) || cr.len() > 4 {
         return Err(anyhow!(
-            "Invalid FEN: Malformed castling rights string `{}'",
-            cr
+            "Invalid FEN: Malformed castling rights string `{cr}'"
         ));
     }
 

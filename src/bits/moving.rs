@@ -7,7 +7,7 @@ use crate::{
         Color, ColorPiece, Piece, Rank, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         metadata::{self, Metadata},
-        moves::{Move, PseudoMove, Special},
+        moves::{ChessMove, PseudoMove, Special},
     },
 };
 
@@ -15,7 +15,7 @@ impl BitBoard {
     /// Calling this method on a Move value that
     /// does not come from the BitBoard::moves method
     /// is unspecified behavior
-    pub fn apply(&mut self, mv: Move) {
+    pub fn apply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.apply(mv);
     }
@@ -23,17 +23,17 @@ impl BitBoard {
     /// Calling this method with a Move value that was
     /// not used with the BitBoard::apply method immediately
     /// before this call, is unspecified behavior
-    pub fn unapply(&mut self, mv: Move) {
+    pub fn unapply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
     }
 
-    pub fn make_move(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<Move> {
+    pub fn make_move(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<ChessMove> {
         let mut buf = vec![];
         self.make_move_internal(mv, &mut buf)
     }
 
-    pub fn make_moves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<Move> {
+    pub fn make_moves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<ChessMove> {
         let mut res = vec![];
         let mut buf = vec![];
         for mv in mvs {
@@ -49,8 +49,8 @@ impl BitBoard {
     fn make_move_internal(
         &mut self,
         mv: (PseudoMove, Option<Piece>),
-        buf: &mut Vec<Move>,
-    ) -> Option<Move> {
+        buf: &mut Vec<ChessMove>,
+    ) -> Option<ChessMove> {
         buf.clear();
         self.moves(buf);
         if let Some(mv) = buf.iter().find(|m| m.matches(mv.0, mv.1)) {
@@ -61,7 +61,7 @@ impl BitBoard {
         }
     }
 
-    fn apply_no_metadata(&mut self, mv: Move) {
+    fn apply_no_metadata(&mut self, mv: ChessMove) {
         let cd = self.metadata.castling_details;
         let (act, pas) = self.active_passive(mv.piece.color());
         act.apply_active(cd, mv);
@@ -78,7 +78,7 @@ impl BitBoard {
 
 impl HalfBitBoard {
     #[inline]
-    pub fn apply_active(&mut self, castling: CastlingDetails, mv: Move) {
+    pub fn apply_active(&mut self, castling: CastlingDetails, mv: ChessMove) {
         if let Some(sp) = mv.special {
             match sp {
                 Special::CastlingWestward => {
@@ -106,7 +106,7 @@ impl HalfBitBoard {
     }
 
     #[inline]
-    pub fn apply_passive(&mut self, mv: Move) {
+    pub fn apply_passive(&mut self, mv: ChessMove) {
         if let Some((p, sq)) = mv.cap {
             *self.piece(p) ^= sq.bit();
         }
@@ -126,7 +126,7 @@ impl HalfBitBoard {
 
 impl Metadata {
     #[inline]
-    pub fn apply(&mut self, mv: Move) {
+    pub fn apply(&mut self, mv: ChessMove) {
         self.castling_rights = mv.castling_change(self.castling_details);
         self.en_passant = mv.ep_opening();
         self.to_move = mv.piece.color().opposite();
@@ -135,7 +135,7 @@ impl Metadata {
         }
     }
 
-    fn unapply(&mut self, mv: Move) {
+    fn unapply(&mut self, mv: ChessMove) {
         self.en_passant = mv.epc;
         self.castling_rights = mv.rights;
         self.to_move = mv.piece.color();

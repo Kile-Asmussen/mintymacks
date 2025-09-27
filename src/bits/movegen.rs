@@ -13,12 +13,12 @@ use crate::{
         Color, ColorPiece, Piece, Rank, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         metadata::Metadata,
-        moves::{self, Move, PseudoMove, Special},
+        moves::{self, ChessMove, PseudoMove, Special},
     },
 };
 
 impl BitBoard {
-    pub fn moves(&self, res: &mut Vec<Move>) {
+    pub fn moves(&self, res: &mut Vec<ChessMove>) {
         match self.metadata.to_move {
             Color::White => legal_moves(&self.white, &self.black, self.metadata, res),
             Color::Black => legal_moves(&self.black, &self.white, self.metadata, res),
@@ -30,7 +30,7 @@ pub fn legal_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     pawn_moves(friendly, enemy, metadata, res);
     pawn_captures(friendly, enemy, metadata, res);
@@ -46,7 +46,7 @@ pub fn knight_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.knights) {
         for dst in Bits(KNIGHT_MOVES.at(from) & !friendly.total()) {
@@ -60,7 +60,7 @@ pub fn rook_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.rooks) {
         let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
@@ -79,7 +79,7 @@ pub fn bishop_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.bishops) {
         let mask =
@@ -111,7 +111,7 @@ pub fn queen_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.queens) {
         let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
@@ -134,7 +134,7 @@ pub fn pawn_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
@@ -163,7 +163,7 @@ pub fn pawn_captures(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
@@ -196,7 +196,7 @@ pub fn king_moves(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     let static_threats = enemy.threats(metadata.to_move.opposite(), friendly.total(), None, None);
 
@@ -236,12 +236,12 @@ pub fn encode_castling_move(
     metadata: Metadata,
     static_threats: Mask,
     total: Mask,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     let cmv = castling.reify(metadata.to_move);
     if (cmv.threat_mask & static_threats) == 0 && (cmv.clear_mask & total) == 0 {
         if metadata.castling_details.capture_own_rook {
-            res.push(Move {
+            res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
@@ -250,7 +250,7 @@ pub fn encode_castling_move(
                 epc: metadata.en_passant,
             })
         } else {
-            res.push(Move {
+            res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::King),
                 mv: cmv.king_move,
                 cap: None,
@@ -269,7 +269,7 @@ pub fn encode_piece_move(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     let cap = enemy.at(mv.to).map(|p| (p, mv.to));
 
@@ -283,7 +283,7 @@ pub fn encode_piece_move(
     };
 
     if (hypothetical_threat & kings) == 0 {
-        res.push(Move {
+        res.push(ChessMove {
             piece: metadata.to_move.piece(piece),
             mv,
             cap,
@@ -301,7 +301,7 @@ pub fn encode_pawn_move(
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
-    res: &mut Vec<Move>,
+    res: &mut Vec<ChessMove>,
 ) {
     let hypothetical_threat =
         enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
@@ -316,7 +316,7 @@ pub fn encode_pawn_move(
 
         for special in promotions {
             let special = *special;
-            res.push(Move {
+            res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::Pawn),
                 mv,
                 cap,

@@ -8,13 +8,13 @@ use anyhow::anyhow;
 use crate::{
     model::{
         Piece,
-        moves::{Move, PseudoMove},
+        moves::{ChessMove, PseudoMove},
     },
     notation::longalg::parse_long_alg,
 };
 
 pub fn stockfish_perft(
-    moves: &[Move],
+    moves: &[ChessMove],
     depth: usize,
 ) -> anyhow::Result<HashMap<(PseudoMove, Option<Piece>), usize>> {
     let mut res = HashMap::new();

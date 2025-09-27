@@ -14,7 +14,7 @@ use crate::{
         Color, Piece, Square,
         castling::{CastlingDetail, CastlingDetails, CastlingRights},
         metadata::Metadata,
-        moves::{Move, PseudoMove, Special},
+        moves::{ChessMove, PseudoMove, Special},
     },
 };
 
@@ -163,7 +163,7 @@ impl ZobristBoard {
     }
 
     #[inline]
-    pub fn delta(&self, mv: Move, details: CastlingDetails) -> ZobHash {
+    pub fn delta(&self, mv: ChessMove, details: CastlingDetails) -> ZobHash {
         let (act, pas) = self.active_passive(mv.piece.color());
 
         let movement = match mv.special {

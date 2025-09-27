@@ -2,12 +2,21 @@ use crate::{
     arrays::ArrayBoard,
     model::{
         Piece, Square,
-        moves::{Move, PseudoMove, Special},
+        moves::{ChessMove, PseudoMove, Special},
     },
 };
 
 impl Square {
-    pub fn str(self) -> &'static str {
+    pub fn from_str(s: &str) -> Option<Self> {
+        for (sq, ss) in Self::STRING.iter() {
+            if s == ss {
+                return Some(sq);
+            }
+        }
+        None
+    }
+
+    pub fn to_str(self) -> &'static str {
         Square::STRING.at(self)
     }
 
@@ -21,25 +30,4 @@ impl Square {
         ["a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"],
         ["a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"],
     ]);
-}
-
-impl PseudoMove {
-    pub fn longalg(self, x: Option<Piece>) -> String {
-        format!(
-            "{}{}{}",
-            self.from.str(),
-            self.to.str(),
-            x.map(Piece::as_str).unwrap_or("")
-        )
-    }
-}
-
-impl Move {
-    pub fn longalg(self) -> String {
-        match self.special {
-            Some(Special::Promotion(p)) => self.mv.longalg(Some(p)),
-            Some(Special::Null) => "0000".to_string(),
-            _ => self.mv.longalg(None),
-        }
-    }
 }
