@@ -1,4 +1,5 @@
 use crate::{
+    arrays::ArrayBoard,
     bits::{
         Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
@@ -248,4 +249,37 @@ fn test_knight_move_corner_case() {
             0b_00000000,
         ])
     );
+}
+
+#[test]
+fn en_passant_pawn_capture() {
+    let mut board = ArrayBoard::<Option<ColorPiece>>::new(None);
+
+    board.set(Square::a7, Some(ColorPiece::BlackPawn));
+    board.set(Square::b5, Some(ColorPiece::WhitePawn));
+    board.set(Square::h1, Some(ColorPiece::WhiteKing));
+    board.set(Square::h8, Some(ColorPiece::BlackKing));
+
+    let mut board = BitBoard::new(
+        &board,
+        Color::Black,
+        1,
+        CastlingRights::nil(),
+        None,
+        CLASSIC_CASTLING,
+    );
+
+    let mv = board
+        .apply_pseudomove(Square::a7.to(Square::a5).p())
+        .unwrap();
+
+    println!("({:?}).epc_opening() == {:?}", mv, mv.ep_opening());
+    println!();
+
+    let mut res = vec![];
+    board.moves(&mut res);
+
+    for mv in &res {
+        println!("{:?}", mv)
+    }
 }

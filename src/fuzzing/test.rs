@@ -304,7 +304,6 @@ fn stockfish_comparison_game(
     }
 }
 
-// #[test]
 pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: usize, step: usize) {
     let mut rng = pi();
 
@@ -320,34 +319,6 @@ pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: us
 }
 
 #[test]
-fn en_passant_pawn_capture() {
-    let mut board = ArrayBoard::<Option<ColorPiece>>::new(None);
-
-    board.set(Square::a7, Some(ColorPiece::BlackPawn));
-    board.set(Square::b5, Some(ColorPiece::WhitePawn));
-    board.set(Square::h1, Some(ColorPiece::WhiteKing));
-    board.set(Square::h8, Some(ColorPiece::BlackKing));
-
-    let mut board = BitBoard::new(
-        &board,
-        Color::Black,
-        1,
-        CastlingRights::nil(),
-        None,
-        CLASSIC_CASTLING,
-    );
-
-    let mv = board
-        .apply_pseudomove(Square::a7.to(Square::a5).p())
-        .unwrap();
-
-    println!("({:?}).epc_opening() == {:?}", mv, mv.ep_opening());
-    println!();
-
-    let mut res = vec![];
-    board.moves(&mut res);
-
-    for mv in &res {
-        println!("{:?}", mv)
-    }
+fn fuzz_against_stockfish() {
+    fuzz_stockfish_comparison(10, 0, 50, 3, 1);
 }

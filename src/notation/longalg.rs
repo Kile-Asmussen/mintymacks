@@ -46,7 +46,7 @@ impl PseudoMove {
     }
 
     pub fn parse(s: &str) -> Option<(PseudoMove, Option<Piece>)> {
-        let cs = regex!("([a-h][1-8])([a-h][1-8])([nbrq])?").captures(s)?;
+        let cs = regex!("([a-h][1-8])([a-h][1-8])([nbrq]?)").captures(s)?;
         let org = Square::from_str(&cs[1])?;
         let dst = Square::from_str(&cs[2])?;
         let prom = match &cs[3] {

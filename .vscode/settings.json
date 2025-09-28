@@ -1,0 +1,9 @@
+{
+    "rust-analyzer.cargo.extraArgs": [
+        "--release"
+    ],
+    "rust-analyzer.runnables.extraTestBinaryArgs": [
+        "--no-capture",
+        "--show-output"
+    ]
+}
