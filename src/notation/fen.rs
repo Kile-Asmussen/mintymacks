@@ -4,8 +4,39 @@ use anyhow::{Error, anyhow};
 
 use crate::{
     arrays::ArrayBoard,
-    model::{Color, ColorPiece, File, Square, castling::CastlingRights},
+    bits::board::BitBoard,
+    model::{
+        Color, ColorPiece, File, Square,
+        castling::{CLASSIC_CASTLING, CastlingRights},
+    },
 };
+
+pub fn parse_fen(fen: &str) -> anyhow::Result<BitBoard> {
+    let parts = fen.split(' ').collect::<Vec<_>>();
+
+    let n_parts = parts.len();
+    if n_parts > 6 {
+        return Err(anyhow!("Invalid FEN: Too many components ({n_parts})"));
+    } else if n_parts < 6 {
+        return Err(anyhow!("Invalid FEN: Too few components ({n_parts})"));
+    }
+
+    let board = parse_fen_board(parts[0])?;
+    let to_move = parse_fen_to_move(parts[1])?;
+    let castling_rights = parse_fen_castling_rights(parts[2])?;
+    let en_passant = parse_fen_en_passant_square(parts[3])?;
+    let halfmove = parse_fen_halfmove_clock(parts[4])?;
+    let turn = parse_fen_halfmove_clock(parts[5])?;
+
+    Ok(BitBoard::new(
+        &board,
+        to_move,
+        turn,
+        castling_rights,
+        en_passant,
+        CLASSIC_CASTLING,
+    ))
+}
 
 pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {
     u16::from_str_radix(hmc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed ply clock `{hmc}'"))
@@ -170,7 +201,7 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
             if n != 0 {
                 s += &n.to_string();
             }
-            s.push(letter_color_piece(c));
+            s.push(c.letter());
             n = 0;
         } else {
             n += 1;
@@ -192,20 +223,22 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
     res.join("/")
 }
 
-pub fn letter_color_piece(c: ColorPiece) -> char {
-    use ColorPiece::*;
-    match c {
-        WhitePawn => 'P',
-        WhiteKnight => 'N',
-        WhiteBishop => 'B',
-        WhiteRook => 'R',
-        WhiteQueen => 'Q',
-        WhiteKing => 'K',
-        BlackPawn => 'p',
-        BlackKnight => 'n',
-        BlackBishop => 'b',
-        BlackRook => 'r',
-        BlackQueen => 'q',
-        BlackKing => 'k',
+impl ColorPiece {
+    pub fn letter(self) -> char {
+        use ColorPiece::*;
+        match self {
+            WhitePawn => 'P',
+            WhiteKnight => 'N',
+            WhiteBishop => 'B',
+            WhiteRook => 'R',
+            WhiteQueen => 'Q',
+            WhiteKing => 'K',
+            BlackPawn => 'p',
+            BlackKnight => 'n',
+            BlackBishop => 'b',
+            BlackRook => 'r',
+            BlackQueen => 'q',
+            BlackKing => 'k',
+        }
     }
 }

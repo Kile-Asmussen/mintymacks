@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        Bits, Mask, bit,
+        Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
         jumps::KNIGHT_MOVES,
         mask,
@@ -192,7 +192,7 @@ fn test_moving() {
     let mut board = BitBoard::startpos();
     board.apply(ChessMove {
         piece: ColorPiece::WhitePawn,
-        mv: Square::d2.to(Square::d4),
+        pmv: Square::d2.to(Square::d4),
         cap: None,
         special: None,
         rights: CastlingRights::full(),

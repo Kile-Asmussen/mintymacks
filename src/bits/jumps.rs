@@ -1,13 +1,13 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{Mask, bit},
+    bits::{BoardMask, bit},
     model::{Color, Dir, Rank, Square},
 };
 
-pub const WHITE_PAWN_CAPTURE: ArrayBoard<Mask> = build_pawnboard(Color::White);
-pub const BLACK_PAWN_CAPTURE: ArrayBoard<Mask> = build_pawnboard(Color::Black);
+pub const WHITE_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::White);
+pub const BLACK_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::Black);
 
-pub const fn build_pawnboard(c: Color) -> ArrayBoard<Mask> {
+pub const fn build_pawnboard(c: Color) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
@@ -19,7 +19,7 @@ pub const fn build_pawnboard(c: Color) -> ArrayBoard<Mask> {
     res
 }
 
-pub const fn build_pawnmask(c: Color, sq: Square) -> Mask {
+pub const fn build_pawnmask(c: Color, sq: Square) -> BoardMask {
     let dir = match c {
         Color::White => Dir::North,
         Color::Black => Dir::South,
@@ -28,9 +28,9 @@ pub const fn build_pawnmask(c: Color, sq: Square) -> Mask {
     bit(sq.go(&[dir, Dir::East])) | bit(sq.go(&[dir, Dir::West]))
 }
 
-pub const KNIGHT_MOVES: ArrayBoard<Mask> = build_knightboard();
+pub const KNIGHT_MOVES: ArrayBoard<BoardMask> = build_knightboard();
 
-pub const fn build_knightboard() -> ArrayBoard<Mask> {
+pub const fn build_knightboard() -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
@@ -42,7 +42,7 @@ pub const fn build_knightboard() -> ArrayBoard<Mask> {
     res
 }
 
-pub const fn build_knightmask(sq: Square) -> Mask {
+pub const fn build_knightmask(sq: Square) -> BoardMask {
     bit(sq.go(&[Dir::North, Dir::NorthEast]))
         | bit(sq.go(&[Dir::North, Dir::NorthWest]))
         | bit(sq.go(&[Dir::West, Dir::NorthWest]))
@@ -53,9 +53,9 @@ pub const fn build_knightmask(sq: Square) -> Mask {
         | bit(sq.go(&[Dir::East, Dir::SouthEast]))
 }
 
-pub const KING_MOVES: ArrayBoard<Mask> = build_kingboard();
+pub const KING_MOVES: ArrayBoard<BoardMask> = build_kingboard();
 
-pub const fn build_kingboard() -> ArrayBoard<Mask> {
+pub const fn build_kingboard() -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
@@ -67,7 +67,7 @@ pub const fn build_kingboard() -> ArrayBoard<Mask> {
     res
 }
 
-pub const fn build_kingmask(sq: Square) -> Mask {
+pub const fn build_kingmask(sq: Square) -> BoardMask {
     bit(sq.go(&[Dir::North]))
         | bit(sq.go(&[Dir::NorthEast]))
         | bit(sq.go(&[Dir::East]))

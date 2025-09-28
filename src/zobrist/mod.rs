@@ -7,7 +7,7 @@ use rand::{Rng, SeedableRng};
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Bits, Mask, bit,
+        Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
     },
     model::{
@@ -25,7 +25,7 @@ pub fn zob<R: Rng>(rng: &mut R) -> ZobHash {
 }
 
 impl ArrayBoard<ZobHash> {
-    pub fn hash(&self, m: Mask) -> ZobHash {
+    pub fn hash(&self, m: BoardMask) -> ZobHash {
         Bits(m).map(|sq| self.at(sq)).fold(0, u64::bitxor)
     }
 
@@ -167,7 +167,7 @@ impl ZobristBoard {
         let (act, pas) = self.active_passive(mv.piece.color());
 
         let movement = match mv.special {
-            Some(Special::Promotion(p)) => act.pawns.at(mv.mv.from) ^ act.piece(p).at(mv.mv.to),
+            Some(Special::Promotion(p)) => act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to),
             Some(Special::CastlingEastward) => {
                 let cast = details.eastward.reify(mv.piece.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
@@ -177,7 +177,7 @@ impl ZobristBoard {
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
             Some(Special::Null) => ZobHash::MIN,
-            None => act.piece(mv.piece.piece()).at2(mv.mv),
+            None => act.piece(mv.piece.piece()).at2(mv.pmv),
         };
 
         let capture = if let Some((p, sq)) = mv.cap {

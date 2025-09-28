@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        self, Bits, Mask, bit,
+        self, Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
         jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         show_mask, slide_move_stop_negative, slide_move_stop_positive,
@@ -141,12 +141,12 @@ pub fn pawn_moves(
             Color::White => slide_move_stop_positive(
                 WHITE_PAWN_MOVES.at(from),
                 friendly.total() | enemy.total(),
-                Mask::MIN,
+                BoardMask::MIN,
             ),
             Color::Black => slide_move_stop_negative(
                 BLACK_PAWN_MOVES.at(from),
                 friendly.total() | enemy.total(),
-                Mask::MIN,
+                BoardMask::MIN,
             ),
         };
 
@@ -234,8 +234,8 @@ pub fn encode_castling_move(
     castling: CastlingDetail,
     special: Special,
     metadata: Metadata,
-    static_threats: Mask,
-    total: Mask,
+    static_threats: BoardMask,
+    total: BoardMask,
     res: &mut Vec<ChessMove>,
 ) {
     let cmv = castling.reify(metadata.to_move);
@@ -243,7 +243,7 @@ pub fn encode_castling_move(
         if metadata.castling_details.capture_own_rook {
             res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::King),
-                mv: cmv.king_move.from.to(cmv.rook_move.from),
+                pmv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
                 special: Some(special),
                 rights: metadata.castling_rights,
@@ -252,7 +252,7 @@ pub fn encode_castling_move(
         } else {
             res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::King),
-                mv: cmv.king_move,
+                pmv: cmv.king_move,
                 cap: None,
                 special: Some(special),
                 rights: metadata.castling_rights,
@@ -285,7 +285,7 @@ pub fn encode_piece_move(
     if (hypothetical_threat & kings) == 0 {
         res.push(ChessMove {
             piece: metadata.to_move.piece(piece),
-            mv,
+            pmv: mv,
             cap,
             special: None,
             rights: metadata.castling_rights,
@@ -318,7 +318,7 @@ pub fn encode_pawn_move(
             let special = *special;
             res.push(ChessMove {
                 piece: metadata.to_move.piece(Piece::Pawn),
-                mv,
+                pmv: mv,
                 cap,
                 special,
                 rights: metadata.castling_rights,

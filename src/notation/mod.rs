@@ -1,3 +1,4 @@
+pub mod algebraic;
 pub mod fen;
 pub mod longalg;
 pub mod squares;

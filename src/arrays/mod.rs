@@ -1,5 +1,5 @@
 use crate::{
-    bits::{Bits, Mask},
+    bits::{Bits, BoardMask},
     model::{ColorPiece, Square},
 };
 
@@ -19,7 +19,7 @@ impl<T: Copy> ArrayBoard<T> {
         self.0[sq.ix() as usize] = t
     }
 
-    pub const fn set_mask(&mut self, m: Mask, t: T) {
+    pub const fn set_mask(&mut self, m: BoardMask, t: T) {
         let mut it = Bits(m);
         while let Some(sq) = it.next() {
             self.set(sq, t);
@@ -86,9 +86,9 @@ impl<'a, T: Copy> Iterator for ByteBoardIter<'a, T> {
 }
 
 impl ArrayBoard<bool> {
-    pub const fn mask(&self) -> Mask {
+    pub const fn mask(&self) -> BoardMask {
         let mut it = self.iter();
-        let mut res = Mask::MIN;
+        let mut res = BoardMask::MIN;
         while let Some((sq, b)) = it.next() {
             if b {
                 res |= 1 << sq.ix();
@@ -99,9 +99,9 @@ impl ArrayBoard<bool> {
 }
 
 impl ArrayBoard<Option<ColorPiece>> {
-    pub const fn mask(&self, p: ColorPiece) -> Mask {
+    pub const fn mask(&self, p: ColorPiece) -> BoardMask {
         let mut it = self.iter();
-        let mut res = Mask::MIN;
+        let mut res = BoardMask::MIN;
         while let Some((sq, op)) = it.next() {
             if let Some(p2) = op {
                 if p as i8 == p2 as i8 {
@@ -113,10 +113,10 @@ impl ArrayBoard<Option<ColorPiece>> {
     }
 }
 
-impl ArrayBoard<Mask> {
-    pub const fn overlay(&self, m: Mask) -> Mask {
+impl ArrayBoard<BoardMask> {
+    pub const fn overlay(&self, m: BoardMask) -> BoardMask {
         let mut it = Bits(m);
-        let mut res = Mask::MIN;
+        let mut res = BoardMask::MIN;
         while let Some(sq) = it.next() {
             res |= self.at(sq);
         }

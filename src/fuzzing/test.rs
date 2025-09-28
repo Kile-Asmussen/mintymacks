@@ -207,7 +207,7 @@ fn stockfish_comparison_game(
 ) {
     let mut buf = vec![];
     let mut board = BitBoard::startpos();
-    let mut moves = board.make_moves(start);
+    let mut moves = board.apply_pseudomoves(start);
 
     if moves.len() != start.len() {
         panic!("Bad starting moves")
@@ -337,7 +337,9 @@ fn en_passant_pawn_capture() {
         CLASSIC_CASTLING,
     );
 
-    let mv = board.make_move(Square::a7.to(Square::a5).p()).unwrap();
+    let mv = board
+        .apply_pseudomove(Square::a7.to(Square::a5).p())
+        .unwrap();
 
     println!("({:?}).epc_opening() == {:?}", mv, mv.ep_opening());
     println!();

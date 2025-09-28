@@ -1,6 +1,6 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{Bits, Mask},
+    bits::{Bits, BoardMask},
     model::{Dir, File, Rank, Square},
 };
 

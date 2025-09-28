@@ -1,6 +1,6 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::Mask,
+    bits::BoardMask,
     model::{
         Color, ColorPiece, Piece, Square,
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
@@ -10,23 +10,23 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HalfBitBoard {
-    pub pawns: Mask,
-    pub knights: Mask,
-    pub bishops: Mask,
-    pub rooks: Mask,
-    pub queens: Mask,
-    pub kings: Mask,
+    pub pawns: BoardMask,
+    pub knights: BoardMask,
+    pub bishops: BoardMask,
+    pub rooks: BoardMask,
+    pub queens: BoardMask,
+    pub kings: BoardMask,
 }
 
 impl HalfBitBoard {
     pub const fn empty() -> Self {
         Self {
-            pawns: Mask::MIN,
-            knights: Mask::MIN,
-            bishops: Mask::MIN,
-            rooks: Mask::MIN,
-            queens: Mask::MIN,
-            kings: Mask::MIN,
+            pawns: BoardMask::MIN,
+            knights: BoardMask::MIN,
+            bishops: BoardMask::MIN,
+            rooks: BoardMask::MIN,
+            queens: BoardMask::MIN,
+            kings: BoardMask::MIN,
         }
     }
     pub const fn new(color: Color, board: &ArrayBoard<Option<ColorPiece>>) -> Self {
@@ -40,7 +40,7 @@ impl HalfBitBoard {
         }
     }
 
-    pub const fn total(&self) -> Mask {
+    pub const fn total(&self) -> BoardMask {
         self.pawns | self.knights | self.bishops | self.rooks | self.queens | self.kings
     }
 

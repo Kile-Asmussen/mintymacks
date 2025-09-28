@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        Mask,
+        BoardMask,
         board::{BitBoard, HalfBitBoard},
     },
     model::{
@@ -28,16 +28,16 @@ impl BitBoard {
         self.metadata.unapply(mv);
     }
 
-    pub fn make_move(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<ChessMove> {
+    pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<ChessMove> {
         let mut buf = vec![];
-        self.make_move_internal(mv, &mut buf)
+        self.pseudomove_internal(mv, &mut buf)
     }
 
-    pub fn make_moves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<ChessMove> {
+    pub fn apply_pseudomoves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<ChessMove> {
         let mut res = vec![];
         let mut buf = vec![];
         for mv in mvs {
-            if let Some(mv) = self.make_move_internal(*mv, &mut buf) {
+            if let Some(mv) = self.pseudomove_internal(*mv, &mut buf) {
                 res.push(mv);
             } else {
                 break;
@@ -46,14 +46,14 @@ impl BitBoard {
         return res;
     }
 
-    fn make_move_internal(
+    fn pseudomove_internal(
         &mut self,
         mv: (PseudoMove, Option<Piece>),
         buf: &mut Vec<ChessMove>,
     ) -> Option<ChessMove> {
         buf.clear();
         self.moves(buf);
-        if let Some(mv) = buf.iter().find(|m| m.matches(mv.0, mv.1)) {
+        if let Some(mv) = buf.iter().find(|m| m.simplify() == mv) {
             self.apply(*mv);
             Some(*mv)
         } else {
@@ -63,15 +63,22 @@ impl BitBoard {
 
     fn apply_no_metadata(&mut self, mv: ChessMove) {
         let cd = self.metadata.castling_details;
-        let (act, pas) = self.active_passive(mv.piece.color());
+        let (act, pas) = self.active_passive_mut(mv.piece.color());
         act.apply_active(cd, mv);
         pas.apply_passive(mv);
     }
 
-    fn active_passive(&mut self, color: Color) -> (&mut HalfBitBoard, &mut HalfBitBoard) {
+    fn active_passive_mut(&mut self, color: Color) -> (&mut HalfBitBoard, &mut HalfBitBoard) {
         match color {
             Color::White => (&mut self.white, &mut self.black),
             Color::Black => (&mut self.black, &mut self.white),
+        }
+    }
+
+    pub fn active_passive(&self, color: Color) -> (&HalfBitBoard, &HalfBitBoard) {
+        match color {
+            Color::White => (&self.white, &self.black),
+            Color::Black => (&self.black, &self.white),
         }
     }
 }
@@ -88,13 +95,13 @@ impl HalfBitBoard {
                     castling_move(self, castling.eastward, mv.piece.color())
                 }
                 Special::Promotion(p) => {
-                    self.pawns ^= mv.mv.from.bit();
-                    *self.piece(p) ^= mv.mv.to.bit();
+                    self.pawns ^= mv.pmv.from.bit();
+                    *self.piece(p) ^= mv.pmv.to.bit();
                 }
                 _ => {}
             }
         } else {
-            *self.piece(mv.piece.piece()) ^= mv.mv.bits()
+            *self.piece(mv.piece.piece()) ^= mv.pmv.bits()
         }
 
         #[inline]
@@ -112,7 +119,7 @@ impl HalfBitBoard {
         }
     }
 
-    pub fn piece(&mut self, p: Piece) -> &mut Mask {
+    pub fn piece(&mut self, p: Piece) -> &mut BoardMask {
         match p {
             Piece::Pawn => &mut self.pawns,
             Piece::Knight => &mut self.knights,

@@ -5,12 +5,9 @@ use std::{collections::HashMap, process::Command};
 
 use anyhow::anyhow;
 
-use crate::{
-    model::{
-        Piece,
-        moves::{ChessMove, PseudoMove},
-    },
-    notation::longalg::parse_long_alg,
+use crate::model::{
+    Piece,
+    moves::{ChessMove, PseudoMove},
 };
 
 pub fn stockfish_perft(
@@ -36,7 +33,7 @@ pub fn stockfish_perft(
     for line in output.trim_end().lines() {
         let split = line.split(":").collect::<Box<[_]>>();
         if let [mv, n] = split[..] {
-            let k = parse_long_alg(mv)
+            let k = PseudoMove::parse(mv)
                 .ok_or_else(|| anyhow!("Unrecognized line of stockfish output: {} (1)", line))?;
             let v = n
                 .trim()

@@ -8,9 +8,9 @@ pub mod threats;
 
 use crate::model::{File, Rank, Square, moves::PseudoMove};
 
-pub type Mask = u64;
+pub type BoardMask = u64;
 
-pub struct Bits(pub Mask);
+pub struct Bits(pub BoardMask);
 
 impl Bits {
     pub const fn next(&mut self) -> Option<Square> {
@@ -35,8 +35,8 @@ impl Iterator for Bits {
     }
 }
 
-pub const fn mask(board: [u8; 8]) -> Mask {
-    Mask::from_be_bytes([
+pub const fn mask(board: [u8; 8]) -> BoardMask {
+    BoardMask::from_be_bytes([
         board[0].reverse_bits(),
         board[1].reverse_bits(),
         board[2].reverse_bits(),
@@ -49,34 +49,34 @@ pub const fn mask(board: [u8; 8]) -> Mask {
 }
 
 impl Square {
-    pub const fn bit(self) -> Mask {
+    pub const fn bit(self) -> BoardMask {
         1 << self.ix()
     }
 }
 
-pub const fn bit(sq: Option<Square>) -> Mask {
+pub const fn bit(sq: Option<Square>) -> BoardMask {
     if let Some(sq) = sq {
         sq.bit()
     } else {
-        Mask::MIN
+        BoardMask::MIN
     }
 }
 
 impl PseudoMove {
-    pub const fn bits(self) -> Mask {
+    pub const fn bits(self) -> BoardMask {
         self.from.bit() ^ self.to.bit()
     }
 }
 
-pub const fn two_bits(mv: Option<PseudoMove>) -> Mask {
+pub const fn two_bits(mv: Option<PseudoMove>) -> BoardMask {
     if let Some(mv) = mv {
         mv.bits()
     } else {
-        Mask::MIN
+        BoardMask::MIN
     }
 }
 
-pub fn show_mask(m: Mask) -> String {
+pub fn show_mask(m: BoardMask) -> String {
     let m = m.to_be_bytes().map(u8::reverse_bits);
     format! {
 "mask([
@@ -93,10 +93,10 @@ pub fn show_mask(m: Mask) -> String {
 }
 
 pub const fn slide_move_stop_positive(
-    move_mask: Mask,
-    uncapturable: Mask,
-    capturable: Mask,
-) -> Mask {
+    move_mask: BoardMask,
+    uncapturable: BoardMask,
+    capturable: BoardMask,
+) -> BoardMask {
     let uncapturable_on_move_mask = move_mask & uncapturable;
     let capturable_on_move_mask = move_mask & capturable;
 
@@ -110,10 +110,10 @@ pub const fn slide_move_stop_positive(
 }
 
 pub const fn slide_move_stop_negative(
-    move_mask: Mask,
-    uncapturable: Mask,
-    capturable: Mask,
-) -> Mask {
+    move_mask: BoardMask,
+    uncapturable: BoardMask,
+    capturable: BoardMask,
+) -> BoardMask {
     slide_move_stop_positive(
         move_mask.reverse_bits(),
         uncapturable.reverse_bits(),

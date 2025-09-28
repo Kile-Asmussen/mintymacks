@@ -1,20 +1,24 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{Mask, bit, mask, show_mask},
+    bits::{BoardMask, bit, mask, show_mask},
     model::{Color, Dir, Rank, Square},
 };
 
-pub const RAYS_WEST: ArrayBoard<Mask> = build_slideboard(Dir::West, &Square::WEST);
-pub const RAYS_EAST: ArrayBoard<Mask> = build_slideboard(Dir::East, &Square::EAST);
-pub const RAYS_NORTH: ArrayBoard<Mask> = build_slideboard(Dir::North, &Square::NORTH);
-pub const RAYS_SOUTH: ArrayBoard<Mask> = build_slideboard(Dir::South, &Square::SOUTH);
+pub const RAYS_WEST: ArrayBoard<BoardMask> = build_slideboard(Dir::West, &Square::WEST);
+pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Dir::East, &Square::EAST);
+pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Dir::North, &Square::NORTH);
+pub const RAYS_SOUTH: ArrayBoard<BoardMask> = build_slideboard(Dir::South, &Square::SOUTH);
 
-pub const RAYS_NORTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
-pub const RAYS_NORTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
-pub const RAYS_SOUTHEAST: ArrayBoard<Mask> = build_slideboard(Dir::SouthEast, &Square::SOUTHEAST);
-pub const RAYS_SOUTHWEST: ArrayBoard<Mask> = build_slideboard(Dir::SouthWest, &Square::SOUTHWEST);
+pub const RAYS_NORTHEAST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
+pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
+pub const RAYS_SOUTHEAST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::SouthEast, &Square::SOUTHEAST);
+pub const RAYS_SOUTHWEST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::SouthWest, &Square::SOUTHWEST);
 
-pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<Mask> {
+pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
@@ -26,8 +30,8 @@ pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<Mask
     res
 }
 
-pub const fn build_slidemask(dir: Dir, max: i8, sq: Square) -> Mask {
-    let mut res = Mask::MIN;
+pub const fn build_slidemask(dir: Dir, max: i8, sq: Square) -> BoardMask {
+    let mut res = BoardMask::MIN;
     let mut n = 1;
     while let Some(s) = Square::new(sq.ix() + (dir as i8) * n)
         && n <= max
@@ -38,10 +42,10 @@ pub const fn build_slidemask(dir: Dir, max: i8, sq: Square) -> Mask {
     res
 }
 
-pub const WHITE_PAWN_MOVES: ArrayBoard<Mask> = build_pawnboard(Color::White);
-pub const BLACK_PAWN_MOVES: ArrayBoard<Mask> = build_pawnboard(Color::Black);
+pub const WHITE_PAWN_MOVES: ArrayBoard<BoardMask> = build_pawnboard(Color::White);
+pub const BLACK_PAWN_MOVES: ArrayBoard<BoardMask> = build_pawnboard(Color::Black);
 
-pub const fn build_pawnboard(c: Color) -> ArrayBoard<Mask> {
+pub const fn build_pawnboard(c: Color) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
@@ -53,7 +57,7 @@ pub const fn build_pawnboard(c: Color) -> ArrayBoard<Mask> {
     res
 }
 
-pub const fn build_pawnmask(c: Color, sq: Square) -> Mask {
+pub const fn build_pawnmask(c: Color, sq: Square) -> BoardMask {
     let start_rank = match c {
         Color::White => Rank::_2,
         Color::Black => Rank::_7,

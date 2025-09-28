@@ -1,5 +1,5 @@
 use crate::{
-    bits::{Mask, mask},
+    bits::{BoardMask, mask},
     model::{Color, File, Rank, Square, moves::PseudoMove},
 };
 
@@ -79,8 +79,8 @@ pub struct CastlingDetail {
 pub struct CastlingMove {
     pub rook_move: PseudoMove,
     pub king_move: PseudoMove,
-    pub threat_mask: Mask,
-    pub clear_mask: Mask,
+    pub threat_mask: BoardMask,
+    pub clear_mask: BoardMask,
 }
 
 impl CastlingDetail {
@@ -102,8 +102,8 @@ impl CastlingDetail {
             to: self.king_to.by(rank),
         };
 
-        let threat_mask: Mask;
-        let clear_mask: Mask;
+        let threat_mask: BoardMask;
+        let clear_mask: BoardMask;
 
         match c {
             Color::White => {
