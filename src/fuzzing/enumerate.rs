@@ -18,7 +18,7 @@ impl BitBoard {
             EnumerationResult {
                 time: Duration::ZERO,
                 depth,
-                moves: HashMap::new(),
+                moves: hash_map!{},
                 transpos: (0, 0),
             }
         } else {
@@ -28,7 +28,7 @@ impl BitBoard {
 
     fn enumerate_mut(&mut self, depth: usize) -> EnumerationResult {
         let now = Instant::now();
-        let mut moves = HashMap::new();
+        let mut moves = hash_map!{};
         let mut zobrist = HashMap::with_capacity(10usize.pow(depth as u32));
         let hasher = ZobristBoard::new();
         let hash = hasher.hash(self);

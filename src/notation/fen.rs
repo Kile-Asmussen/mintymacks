@@ -51,7 +51,7 @@ pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> 
         return Ok(None);
     }
 
-    if let Some(sq) = Square::from_str(eps) {
+    if let Some(sq) = Square::parse(eps) {
         return Ok(Some(sq));
     }
 

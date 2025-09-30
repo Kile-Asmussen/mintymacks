@@ -2,10 +2,12 @@ pub mod algebraic;
 pub mod fen;
 pub mod longalg;
 pub mod squares;
-mod tests;
+pub mod tests;
+pub mod pgn;
+pub mod uci;
 
 #[macro_export]
-macro_rules! regex {
+macro_rules! regexp {
     ($pat:literal) => {{
         use regex::Regex;
         use std::sync::LazyLock;
@@ -15,7 +17,9 @@ macro_rules! regex {
     }};
 }
 
+pub use regexp;
+
 #[test]
 fn test() {
-    assert!(regex!("a").is_match("a"));
+    assert!(regexp!("a").is_match("a"));
 }

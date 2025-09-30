@@ -14,7 +14,7 @@ pub fn stockfish_perft(
     moves: &[ChessMove],
     depth: usize,
 ) -> anyhow::Result<HashMap<(PseudoMove, Option<ChessPiece>), usize>> {
-    let mut res = HashMap::new();
+    let mut res = hash_map!{};
 
     let output = String::from_utf8(
         Command::new("./src/fuzzing/stockfish-perft.sh")

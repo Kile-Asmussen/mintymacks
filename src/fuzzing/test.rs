@@ -98,7 +98,7 @@ fn unmake_moves(rng: &mut SmallRng, ply: usize) {
 #[test]
 fn fuzz_zobrist_hashing() {
     let mut rng = pi();
-    let mut positions = HashMap::new();
+    let mut positions = hash_map!{};
 
     for _ in 0..10000 {
         zobrist_hashing_game(&mut rng, 100, &mut positions);

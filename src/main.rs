@@ -4,6 +4,9 @@
 #![feature(const_trait_impl)]
 #![feature(slice_partition_dedup)]
 #![feature(default_field_values)]
+#![feature(hash_map_macro)]
+#![feature(try_blocks)]
+#![feature(adt_const_params)]
 
 use std::{
     alloc::System,

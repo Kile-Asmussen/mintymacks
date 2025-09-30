@@ -4,18 +4,18 @@ use crate::{
         BoardFile, BoardRank, ChessPiece, Color, Square,
         moves::{ChessMove, SpecialMove},
     },
-    regex,
+    notation::regexp,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct AlgebraicMove {
     pub piece: ChessPiece,
-    pub file_origin: Option<BoardFile>,
-    pub rank_origin: Option<BoardRank>,
+    pub file_origin: Option<BoardFile> = None,
+    pub rank_origin: Option<BoardRank> = None,
     pub destination: Square,
-    pub capture: bool,
-    pub special: Option<SpecialMove>,
-    pub check_or_mate: Option<bool>,
+    pub capture: bool = false,
+    pub special: Option<SpecialMove> = None,
+    pub check_or_mate: Option<bool> = None,
 }
 
 impl AlgebraicMove {
@@ -30,14 +30,8 @@ impl AlgebraicMove {
             && self.destination == mv.pmv.to
             && self.capture == mv.cap.is_some()
             && self.special == mv.special
-            && self
-                .file_origin
-                .map(|r| r == mv.pmv.from.file_rank().0)
-                .unwrap_or(true)
-            && self
-                .rank_origin
-                .map(|f| f == mv.pmv.from.file_rank().1)
-                .unwrap_or(true)
+            && (self.file_origin.is_none() || self.file_origin == Some(mv.pmv.from.file_rank().0))
+            && (self.rank_origin.is_none() || self.rank_origin == Some(mv.pmv.from.file_rank().1))
     }
 
     pub fn to_string(self) -> String {
@@ -90,7 +84,7 @@ impl AlgebraicMove {
             None
         };
 
-        if regex!("^O-O-O[+#]?$").is_match(s) {
+        if regexp!("^O-O-O[+#]?$").is_match(s) {
             return Some(AlgebraicMove {
                 piece: ChessPiece::King,
                 file_origin: None,
@@ -102,7 +96,7 @@ impl AlgebraicMove {
             });
         }
 
-        if regex!("^O-O[+#]?$").is_match(s) {
+        if regexp!("^O-O[+#]?$").is_match(s) {
             return Some(AlgebraicMove {
                 piece: ChessPiece::King,
                 file_origin: None,
@@ -114,20 +108,38 @@ impl AlgebraicMove {
             });
         }
 
-        if let Some(c) = regex!("^(?:([a-h])x)?([a-h][1-8])(?:=([NBRQ]?))[+#]?$").captures(s) {
-            if let Some(b) = c.get(1) {
-                b.as_str();
-            }
+        if let Some(c) = regexp!("^((?:[a-h]x)?)([a-h][1-8])((?:=[NBRQ])?)[+#]?$").captures(s) {
+            let (_, [file_origin, destination, promotion]) = c.extract::<3>();
+            return Some(AlgebraicMove {
+                piece: ChessPiece::Pawn,
+                file_origin: BoardFile::parse(file_origin.trim_end_matches('x')),
+                destination: Square::parse(destination).unwrap(),
+                check_or_mate,
+                special: ChessPiece::parse(promotion.trim_start_matches('=')).map(SpecialMove::Promotion),
+                rank_origin: None,
+                capture: !file_origin.is_empty()
+            })
         }
 
-        if let Some(c) = regex!("^([NBRQK])([a-h])?([1-8])?(x)?([a-h][1-8])[+#]?$").captures(s) {}
+        if let Some(c) = regexp!("^([NBRQK])([a-h]?)([1-8]?)(x?)([a-h][1-8])[+#]?$").captures(s) {
+            let (_, [piece, file_origin, rank_origin, capture, destination]) = c.extract::<5>();
+            return Some(AlgebraicMove {
+                piece: ChessPiece::parse(piece).unwrap(),
+                file_origin: BoardFile::parse(file_origin),
+                rank_origin: BoardRank::parse(rank_origin),
+                destination: Square::parse(destination).unwrap(),
+                check_or_mate,
+                special: None,
+                capture: !capture.is_empty()
+            })
+        }
 
         return None;
     }
 }
 
 impl ChessPiece {
-    fn letter(self) -> char {
+    pub fn letter(self) -> char {
         match self {
             ChessPiece::Pawn => 'P',
             ChessPiece::Knight => 'N',
@@ -138,10 +150,10 @@ impl ChessPiece {
         }
     }
 
-    fn parse(l: &str) -> Option<Self> {
+    pub fn parse(l: &str) -> Option<Self> {
         Some(match l {
             "P" | "p" => ChessPiece::Pawn,
-            "K" | "k" => ChessPiece::Knight,
+            "N" | "n" => ChessPiece::Knight,
             "B" | "b" => ChessPiece::Bishop,
             "R" | "r" => ChessPiece::Rook,
             "Q" | "q" => ChessPiece::Queen,
@@ -152,7 +164,7 @@ impl ChessPiece {
 }
 
 impl BoardFile {
-    fn letter(self) -> char {
+    pub fn letter(self) -> char {
         match self {
             BoardFile::A => 'a',
             BoardFile::B => 'b',
@@ -164,10 +176,24 @@ impl BoardFile {
             BoardFile::H => 'h',
         }
     }
+
+    pub fn parse(f: &str) -> Option<Self> {
+        Some(match f {
+            "a" => BoardFile::A,
+            "b" => BoardFile::B,
+            "c" => BoardFile::C,
+            "d" => BoardFile::D,
+            "e" => BoardFile::E,
+            "f" => BoardFile::F,
+            "g" => BoardFile::G,
+            "h" => BoardFile::H,
+            _ => return None
+        })
+    }
 }
 
 impl BoardRank {
-    fn digit(self) -> char {
+    pub fn digit(self) -> char {
         match self {
             BoardRank::_1 => '1',
             BoardRank::_2 => '2',
@@ -179,19 +205,39 @@ impl BoardRank {
             BoardRank::_8 => '8',
         }
     }
+
+    pub fn parse(r: &str) -> Option<Self> {
+        Some(match r {
+            "1" => BoardRank::_1,
+            "2" => BoardRank::_2,
+            "3" => BoardRank::_3,
+            "4" => BoardRank::_4,
+            "5" => BoardRank::_5,
+            "6" => BoardRank::_6,
+            "7" => BoardRank::_7,
+            "8" => BoardRank::_8,
+            _ => return None
+        })
+    }
 }
 
 impl ChessMove {
     pub fn ambiguate(self, board: &BitBoard, moves: &[ChessMove]) -> AlgebraicMove {
         let mut guess = AlgebraicMove {
             piece: self.piece.piece(),
-            rank_origin: None,
-            file_origin: None,
+            rank_origin: Some(self.pmv.from.file_rank().1),
+            file_origin: Some(self.pmv.from.file_rank().0),
             destination: self.pmv.to,
             capture: self.cap.is_some(),
             special: self.special,
             check_or_mate: None,
         };
+
+        if self.special == Some(SpecialMove::CastlingEastward) {
+            guess.destination = Square::a1;
+            guess.rank_origin = None;
+            guess.file_origin = None;
+        }
 
         let (this, enemy) = board.active_passive(self.piece.color());
         let threats = this.threats(self.piece.color(), enemy.total(), Some(self.pmv), self.cap);
@@ -199,9 +245,20 @@ impl ChessMove {
             guess.check_or_mate = Some(false);
         }
 
+        if guess.check_or_mate.is_some() {
+            let mut board = board.clone();
+            board.apply(self);
+            let mut moves = vec![];
+            board.moves(&mut moves);
+            if moves.is_empty() {
+                guess.check_or_mate = Some(true);
+            }
+        }
+
         if self.piece.piece() == ChessPiece::Pawn {
             if guess.capture {
-                guess.file_origin = Some(self.pmv.to.file_rank().0)
+                guess.file_origin = Some(self.pmv.to.file_rank().0);
+                guess.rank_origin = None;
             }
 
             return guess;
@@ -213,27 +270,32 @@ impl ChessMove {
             return guess;
         }
 
-        if !unique(self, moves, guess) {
-            guess.file_origin = Some(self.pmv.from.file_rank().0)
+        let mut guess2 = guess;
+        let mut guess3 = guess;
+        let mut guess4 = guess;
+        guess2.file_origin = None;
+        guess3.rank_origin = None;
+        guess4.file_origin = None;
+        guess4.rank_origin = None;
+
+        if unique(moves, guess4){
+            return guess4;
         }
 
-        if !unique(self, moves, guess) {
-            guess.file_origin = None;
-            guess.rank_origin = Some(self.pmv.from.file_rank().1);
+        if unique(moves, guess2) {
+            return guess2;
         }
 
-        if !unique(self, moves, guess) {
-            guess.file_origin = Some(self.pmv.from.file_rank().0);
+        if unique(moves, guess3) {
+            return guess3;
         }
 
         return guess;
 
-        fn unique(current: ChessMove, moves: &[ChessMove], guess: AlgebraicMove) -> bool {
+        fn unique(moves: &[ChessMove], guess: AlgebraicMove) -> bool {
             moves
                 .into_iter()
-                .filter(|mv| **mv != current && guess.matches(**mv))
-                .count()
-                == 1
+                .filter(|mv| guess.matches(**mv)).count() == 1
         }
     }
 }

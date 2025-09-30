@@ -7,7 +7,7 @@ use crate::{
 };
 
 impl Square {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         for (sq, ss) in Self::STRING.iter() {
             if s == ss {
                 return Some(sq);

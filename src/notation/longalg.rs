@@ -1,11 +1,10 @@
 use std::str::Chars;
 
-use crate::regex;
-
 use crate::model::{
-    BoardFile, ChessPiece, BoardRank, Square,
+    BoardFile, BoardRank, ChessPiece, Square,
     moves::{ChessMove, PseudoMove, SpecialMove},
 };
+use crate::regexp;
 
 impl PseudoMove {
     pub fn longalg(self, x: Option<ChessPiece>) -> String {
@@ -46,9 +45,9 @@ impl PseudoMove {
     }
 
     pub fn parse(s: &str) -> Option<(PseudoMove, Option<ChessPiece>)> {
-        let cs = regex!("([a-h][1-8])([a-h][1-8])([nbrq]?)").captures(s)?;
-        let org = Square::from_str(&cs[1])?;
-        let dst = Square::from_str(&cs[2])?;
+        let cs = regexp!("([a-h][1-8])([a-h][1-8])([nbrq]?)").captures(s)?;
+        let org = Square::parse(&cs[1])?;
+        let dst = Square::parse(&cs[2])?;
         let prom = match &cs[3] {
             "n" => Some(ChessPiece::Knight),
             "b" => Some(ChessPiece::Bishop),
