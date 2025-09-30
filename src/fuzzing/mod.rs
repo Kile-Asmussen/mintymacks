@@ -6,14 +6,14 @@ use std::{collections::HashMap, process::Command};
 use anyhow::anyhow;
 
 use crate::model::{
-    Piece,
+    ChessPiece,
     moves::{ChessMove, PseudoMove},
 };
 
 pub fn stockfish_perft(
     moves: &[ChessMove],
     depth: usize,
-) -> anyhow::Result<HashMap<(PseudoMove, Option<Piece>), usize>> {
+) -> anyhow::Result<HashMap<(PseudoMove, Option<ChessPiece>), usize>> {
     let mut res = HashMap::new();
 
     let output = String::from_utf8(

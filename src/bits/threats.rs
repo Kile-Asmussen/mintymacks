@@ -3,7 +3,7 @@ use crate::{
         Bits, BoardMask, bit, board::HalfBitBoard, jumps, slide_move_stop_negative,
         slide_move_stop_positive, slides, two_bits,
     },
-    model::{Color, Piece, Square, moves::PseudoMove},
+    model::{Color, ChessPiece, Square, moves::PseudoMove},
 };
 
 pub fn pawn_threats(p: BoardMask, c: Color) -> BoardMask {
@@ -66,21 +66,21 @@ impl HalfBitBoard {
         c: Color,
         enemy: BoardMask,
         mv: Option<PseudoMove>,
-        cap: Option<(Piece, Square)>,
+        cap: Option<(ChessPiece, Square)>,
     ) -> BoardMask {
         let enemy = enemy ^ two_bits(mv);
         let friendly = self.total() ^ bit(cap.map(|(_, s)| s));
         let total = friendly | enemy;
 
-        return pawn_threats(self.pawns ^ is_cap(Piece::Pawn, cap), c)
-            | knight_threats(self.knights ^ is_cap(Piece::Knight, cap))
+        return pawn_threats(self.pawns ^ is_cap(ChessPiece::Pawn, cap), c)
+            | knight_threats(self.knights ^ is_cap(ChessPiece::Knight, cap))
             | king_threats(self.kings)
-            | rook_threats(self.rooks ^ is_cap(Piece::Rook, cap), total)
-            | bishop_threats(self.bishops ^ is_cap(Piece::Bishop, cap), total)
-            | queen_threats(self.queens ^ is_cap(Piece::Queen, cap), total);
+            | rook_threats(self.rooks ^ is_cap(ChessPiece::Rook, cap), total)
+            | bishop_threats(self.bishops ^ is_cap(ChessPiece::Bishop, cap), total)
+            | queen_threats(self.queens ^ is_cap(ChessPiece::Queen, cap), total);
 
         #[inline]
-        fn is_cap(is: Piece, cap: Option<(Piece, Square)>) -> u64 {
+        fn is_cap(is: ChessPiece, cap: Option<(ChessPiece, Square)>) -> u64 {
             match cap {
                 Some((p, sq)) if p == is => sq.bit(),
                 _ => BoardMask::MIN,

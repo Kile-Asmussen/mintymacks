@@ -32,14 +32,14 @@ impl Square {
         self.0.get() - 1
     }
 
-    pub const fn at(f: File, r: Rank) -> Self {
+    pub const fn at(f: BoardFile, r: BoardRank) -> Self {
         Self::new(f as i8 + r as i8).unwrap()
     }
 
-    pub const fn file_rank(self) -> (File, Rank) {
+    pub const fn file_rank(self) -> (BoardFile, BoardRank) {
         (
-            File::new(self.ix() & 0x7).unwrap(),
-            Rank::new(self.ix() >> 3).unwrap(),
+            BoardFile::new(self.ix() & 0x7).unwrap(),
+            BoardRank::new(self.ix() >> 3).unwrap(),
         )
     }
 
@@ -61,7 +61,7 @@ impl Debug for Square {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
-pub enum File {
+pub enum BoardFile {
     A = 0,
     B = 1,
     C = 2,
@@ -72,8 +72,8 @@ pub enum File {
     H = 7,
 }
 
-impl File {
-    pub const fn by(self, r: Rank) -> Square {
+impl BoardFile {
+    pub const fn by(self, r: BoardRank) -> Square {
         Square::at(self, r)
     }
 
@@ -91,7 +91,7 @@ impl File {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
-pub enum Rank {
+pub enum BoardRank {
     _1 = 0,
     _2 = 8,
     _3 = 16,
@@ -102,7 +102,7 @@ pub enum Rank {
     _8 = 56,
 }
 
-impl Rank {
+impl BoardRank {
     pub const fn ix(self) -> i8 {
         self as i8
     }
@@ -123,8 +123,8 @@ pub enum Color {
 }
 
 impl Color {
-    pub const fn piece(self, p: Piece) -> ColorPiece {
-        ColorPiece::new(self, p)
+    pub const fn piece(self, p: ChessPiece) -> ColoredChessPiece {
+        ColoredChessPiece::new(self, p)
     }
 
     pub const fn opposite(self) -> Color {
@@ -134,17 +134,17 @@ impl Color {
         }
     }
 
-    pub const fn rank(self) -> Rank {
+    pub const fn rank(self) -> BoardRank {
         match self {
-            Color::White => Rank::_1,
-            Color::Black => Rank::_8,
+            Color::White => BoardRank::_1,
+            Color::Black => BoardRank::_8,
         }
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
-pub enum Piece {
+pub enum ChessPiece {
     Pawn = 1,
     Knight = 2,
     Bishop = 3,
@@ -153,15 +153,15 @@ pub enum Piece {
     King = 6,
 }
 
-impl Piece {
-    pub const fn color(self, c: Color) -> ColorPiece {
-        ColorPiece::new(c, self)
+impl ChessPiece {
+    pub const fn color(self, c: Color) -> ColoredChessPiece {
+        ColoredChessPiece::new(c, self)
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i8)]
-pub enum ColorPiece {
+pub enum ColoredChessPiece {
     WhitePawn = 1,
     WhiteKnight = 2,
     WhiteBishop = 3,
@@ -176,10 +176,10 @@ pub enum ColorPiece {
     BlackKing = -6,
 }
 
-impl ColorPiece {
-    pub const fn piece(self) -> Piece {
-        use ColorPiece::*;
-        use Piece::*;
+impl ColoredChessPiece {
+    pub const fn piece(self) -> ChessPiece {
+        use ChessPiece::*;
+        use ColoredChessPiece::*;
         match self {
             WhitePawn | BlackPawn => Pawn,
             WhiteKnight | BlackKnight => Knight,
@@ -192,17 +192,17 @@ impl ColorPiece {
 
     pub const fn color(self) -> Color {
         use Color::*;
-        use ColorPiece::*;
+        use ColoredChessPiece::*;
         match self {
             WhitePawn | WhiteKnight | WhiteBishop | WhiteRook | WhiteQueen | WhiteKing => White,
             BlackPawn | BlackKnight | BlackBishop | BlackRook | BlackQueen | BlackKing => Black,
         }
     }
 
-    pub const fn new(c: Color, p: Piece) -> Self {
+    pub const fn new(c: Color, p: ChessPiece) -> Self {
+        use ChessPiece::*;
         use Color::*;
-        use ColorPiece::*;
-        use Piece::*;
+        use ColoredChessPiece::*;
         match (c, p) {
             (White, Pawn) => WhitePawn,
             (White, Knight) => WhiteKnight,
@@ -219,10 +219,10 @@ impl ColorPiece {
         }
     }
 
-    pub const fn split(self) -> (Color, Piece) {
+    pub const fn split(self) -> (Color, ChessPiece) {
+        use ChessPiece::*;
         use Color::*;
-        use ColorPiece::*;
-        use Piece::*;
+        use ColoredChessPiece::*;
         match self {
             WhitePawn => (White, Pawn),
             WhiteKnight => (White, Knight),

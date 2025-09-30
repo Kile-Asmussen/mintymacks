@@ -6,7 +6,7 @@ use std::{
 use crate::{
     bits::board::BitBoard,
     model::{
-        Piece,
+        ChessPiece,
         moves::{ChessMove, PseudoMove},
     },
     zobrist::{ZobHash, ZobristBoard},
@@ -103,7 +103,7 @@ impl BitBoard {
 pub struct EnumerationResult {
     pub time: Duration,
     pub depth: usize,
-    pub moves: HashMap<(PseudoMove, Option<Piece>), usize>,
+    pub moves: HashMap<(PseudoMove, Option<ChessPiece>), usize>,
     pub transpos: (usize, usize),
 }
 

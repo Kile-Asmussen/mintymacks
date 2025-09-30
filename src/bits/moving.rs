@@ -4,10 +4,10 @@ use crate::{
         board::{BitBoard, HalfBitBoard},
     },
     model::{
-        Color, ColorPiece, Piece, Rank, Square,
+        BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         metadata::{self, Metadata},
-        moves::{ChessMove, PseudoMove, Special},
+        moves::{ChessMove, PseudoMove, SpecialMove},
     },
 };
 
@@ -28,12 +28,15 @@ impl BitBoard {
         self.metadata.unapply(mv);
     }
 
-    pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<Piece>)) -> Option<ChessMove> {
+    pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<ChessPiece>)) -> Option<ChessMove> {
         let mut buf = vec![];
         self.pseudomove_internal(mv, &mut buf)
     }
 
-    pub fn apply_pseudomoves(&mut self, mvs: &[(PseudoMove, Option<Piece>)]) -> Vec<ChessMove> {
+    pub fn apply_pseudomoves(
+        &mut self,
+        mvs: &[(PseudoMove, Option<ChessPiece>)],
+    ) -> Vec<ChessMove> {
         let mut res = vec![];
         let mut buf = vec![];
         for mv in mvs {
@@ -48,7 +51,7 @@ impl BitBoard {
 
     fn pseudomove_internal(
         &mut self,
-        mv: (PseudoMove, Option<Piece>),
+        mv: (PseudoMove, Option<ChessPiece>),
         buf: &mut Vec<ChessMove>,
     ) -> Option<ChessMove> {
         buf.clear();
@@ -88,13 +91,13 @@ impl HalfBitBoard {
     pub fn apply_active(&mut self, castling: CastlingDetails, mv: ChessMove) {
         if let Some(sp) = mv.special {
             match sp {
-                Special::CastlingWestward => {
+                SpecialMove::CastlingWestward => {
                     castling_move(self, castling.westward, mv.piece.color())
                 }
-                Special::CastlingEastward => {
+                SpecialMove::CastlingEastward => {
                     castling_move(self, castling.eastward, mv.piece.color())
                 }
-                Special::Promotion(p) => {
+                SpecialMove::Promotion(p) => {
                     self.pawns ^= mv.pmv.from.bit();
                     *self.piece(p) ^= mv.pmv.to.bit();
                 }
@@ -119,14 +122,14 @@ impl HalfBitBoard {
         }
     }
 
-    pub fn piece(&mut self, p: Piece) -> &mut BoardMask {
+    pub fn piece(&mut self, p: ChessPiece) -> &mut BoardMask {
         match p {
-            Piece::Pawn => &mut self.pawns,
-            Piece::Knight => &mut self.knights,
-            Piece::Bishop => &mut self.bishops,
-            Piece::Rook => &mut self.rooks,
-            Piece::Queen => &mut self.queens,
-            Piece::King => &mut self.kings,
+            ChessPiece::Pawn => &mut self.pawns,
+            ChessPiece::Knight => &mut self.knights,
+            ChessPiece::Bishop => &mut self.bishops,
+            ChessPiece::Rook => &mut self.rooks,
+            ChessPiece::Queen => &mut self.queens,
+            ChessPiece::King => &mut self.kings,
         }
     }
 }

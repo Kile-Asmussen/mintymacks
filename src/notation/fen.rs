@@ -6,7 +6,7 @@ use crate::{
     arrays::ArrayBoard,
     bits::board::BitBoard,
     model::{
-        Color, ColorPiece, File, Square,
+        Color, ColoredChessPiece, BoardFile, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
     },
 };
@@ -98,7 +98,7 @@ pub fn parse_fen_to_move(bw: &str) -> anyhow::Result<Color> {
     })
 }
 
-pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColorPiece>>> {
+pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColoredChessPiece>>> {
     for c in board.chars() {
         if !"PNBRQKpnbrqk12345678/".contains(c) {
             return Err(Error::msg(format!(
@@ -170,8 +170,8 @@ pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColorPie
     Ok(res)
 }
 
-pub fn color_piece_letter(c: char) -> Option<ColorPiece> {
-    use ColorPiece::*;
+pub fn color_piece_letter(c: char) -> Option<ColoredChessPiece> {
+    use ColoredChessPiece::*;
     Some(match c {
         'P' => WhitePawn,
         'N' => WhiteKnight,
@@ -189,7 +189,7 @@ pub fn color_piece_letter(c: char) -> Option<ColorPiece> {
     })
 }
 
-pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
+pub fn render_fen_board(board: &ArrayBoard<Option<ColoredChessPiece>>) -> String {
     let mut res = Vec::with_capacity(8);
 
     let mut it = Some(Square::a1);
@@ -207,7 +207,7 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
             n += 1;
         }
 
-        if sq.file_rank().0 == File::H {
+        if sq.file_rank().0 == BoardFile::H {
             if n != 0 {
                 s += &n.to_string();
             }
@@ -223,9 +223,9 @@ pub fn render_fen_board(board: &ArrayBoard<Option<ColorPiece>>) -> String {
     res.join("/")
 }
 
-impl ColorPiece {
+impl ColoredChessPiece {
     pub fn letter(self) -> char {
-        use ColorPiece::*;
+        use ColoredChessPiece::*;
         match self {
             WhitePawn => 'P',
             WhiteKnight => 'N',

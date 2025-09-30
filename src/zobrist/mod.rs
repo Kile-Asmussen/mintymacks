@@ -11,10 +11,10 @@ use crate::{
         board::{BitBoard, HalfBitBoard},
     },
     model::{
-        Color, Piece, Square,
+        Color, ChessPiece, Square,
         castling::{CastlingDetail, CastlingDetails, CastlingRights},
         metadata::Metadata,
-        moves::{ChessMove, PseudoMove, Special},
+        moves::{ChessMove, PseudoMove, SpecialMove},
     },
 };
 
@@ -71,14 +71,14 @@ impl ZobristHalfBoard {
     }
 
     #[inline]
-    pub fn piece(&self, piece: Piece) -> &ArrayBoard<ZobHash> {
+    pub fn piece(&self, piece: ChessPiece) -> &ArrayBoard<ZobHash> {
         match piece {
-            Piece::Pawn => &self.pawns,
-            Piece::Knight => &self.knights,
-            Piece::Bishop => &self.bishops,
-            Piece::Rook => &self.rooks,
-            Piece::Queen => &self.queens,
-            Piece::King => &self.kings,
+            ChessPiece::Pawn => &self.pawns,
+            ChessPiece::Knight => &self.knights,
+            ChessPiece::Bishop => &self.bishops,
+            ChessPiece::Rook => &self.rooks,
+            ChessPiece::Queen => &self.queens,
+            ChessPiece::King => &self.kings,
         }
     }
 }
@@ -167,16 +167,16 @@ impl ZobristBoard {
         let (act, pas) = self.active_passive(mv.piece.color());
 
         let movement = match mv.special {
-            Some(Special::Promotion(p)) => act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to),
-            Some(Special::CastlingEastward) => {
+            Some(SpecialMove::Promotion(p)) => act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to),
+            Some(SpecialMove::CastlingEastward) => {
                 let cast = details.eastward.reify(mv.piece.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
-            Some(Special::CastlingWestward) => {
+            Some(SpecialMove::CastlingWestward) => {
                 let cast = details.westward.reify(mv.piece.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
-            Some(Special::Null) => ZobHash::MIN,
+            Some(SpecialMove::Null) => ZobHash::MIN,
             None => act.piece(mv.piece.piece()).at2(mv.pmv),
         };
 

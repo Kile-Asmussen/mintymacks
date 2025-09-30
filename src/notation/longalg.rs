@@ -3,57 +3,57 @@ use std::str::Chars;
 use crate::regex;
 
 use crate::model::{
-    File, Piece, Rank, Square,
-    moves::{ChessMove, PseudoMove, Special},
+    BoardFile, ChessPiece, BoardRank, Square,
+    moves::{ChessMove, PseudoMove, SpecialMove},
 };
 
 impl PseudoMove {
-    pub fn longalg(self, x: Option<Piece>) -> String {
+    pub fn longalg(self, x: Option<ChessPiece>) -> String {
         format!(
             "{}{}{}",
             self.from.to_str(),
             self.to.to_str(),
             x.map(|x| match x {
-                Piece::Pawn => "p",
-                Piece::Knight => "n",
-                Piece::Bishop => "b",
-                Piece::Rook => "r",
-                Piece::Queen => "q",
-                Piece::King => "k",
+                ChessPiece::Pawn => "p",
+                ChessPiece::Knight => "n",
+                ChessPiece::Bishop => "b",
+                ChessPiece::Rook => "r",
+                ChessPiece::Queen => "q",
+                ChessPiece::King => "k",
             })
             .unwrap_or("")
         )
     }
 
-    pub const fn q(self) -> (Self, Option<Piece>) {
-        (self, Some(Piece::Queen))
+    pub const fn q(self) -> (Self, Option<ChessPiece>) {
+        (self, Some(ChessPiece::Queen))
     }
 
-    pub const fn r(self) -> (Self, Option<Piece>) {
-        (self, Some(Piece::Rook))
+    pub const fn r(self) -> (Self, Option<ChessPiece>) {
+        (self, Some(ChessPiece::Rook))
     }
 
-    pub const fn b(self) -> (Self, Option<Piece>) {
-        (self, Some(Piece::Bishop))
+    pub const fn b(self) -> (Self, Option<ChessPiece>) {
+        (self, Some(ChessPiece::Bishop))
     }
 
-    pub const fn n(self) -> (Self, Option<Piece>) {
-        (self, Some(Piece::Knight))
+    pub const fn n(self) -> (Self, Option<ChessPiece>) {
+        (self, Some(ChessPiece::Knight))
     }
 
-    pub const fn p(self) -> (Self, Option<Piece>) {
+    pub const fn p(self) -> (Self, Option<ChessPiece>) {
         (self, None)
     }
 
-    pub fn parse(s: &str) -> Option<(PseudoMove, Option<Piece>)> {
+    pub fn parse(s: &str) -> Option<(PseudoMove, Option<ChessPiece>)> {
         let cs = regex!("([a-h][1-8])([a-h][1-8])([nbrq]?)").captures(s)?;
         let org = Square::from_str(&cs[1])?;
         let dst = Square::from_str(&cs[2])?;
         let prom = match &cs[3] {
-            "n" => Some(Piece::Knight),
-            "b" => Some(Piece::Bishop),
-            "r" => Some(Piece::Rook),
-            "q" => Some(Piece::Queen),
+            "n" => Some(ChessPiece::Knight),
+            "b" => Some(ChessPiece::Bishop),
+            "r" => Some(ChessPiece::Rook),
+            "q" => Some(ChessPiece::Queen),
             "" => None,
             _ => return None,
         };
@@ -71,8 +71,8 @@ impl Square {
 impl ChessMove {
     pub fn longalg(self) -> String {
         match self.special {
-            Some(Special::Promotion(p)) => self.pmv.longalg(Some(p)),
-            Some(Special::Null) => "0000".to_string(),
+            Some(SpecialMove::Promotion(p)) => self.pmv.longalg(Some(p)),
+            Some(SpecialMove::Null) => "0000".to_string(),
             _ => self.pmv.longalg(None),
         }
     }

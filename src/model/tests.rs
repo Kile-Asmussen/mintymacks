@@ -1,4 +1,4 @@
-use crate::model::{Color, ColorPiece, File, Piece, Rank, Square, moves::PseudoMove};
+use crate::model::{Color, ColoredChessPiece, BoardFile, ChessPiece, BoardRank, Square, moves::PseudoMove};
 
 #[cfg(test)]
 fn has_null_optimization<T>() {
@@ -9,9 +9,9 @@ fn has_null_optimization<T>() {
 fn nullopt() {
     has_null_optimization::<Square>();
     has_null_optimization::<Color>();
-    has_null_optimization::<Piece>();
-    has_null_optimization::<ColorPiece>();
-    has_null_optimization::<Rank>();
-    has_null_optimization::<File>();
+    has_null_optimization::<ChessPiece>();
+    has_null_optimization::<ColoredChessPiece>();
+    has_null_optimization::<BoardRank>();
+    has_null_optimization::<BoardFile>();
     has_null_optimization::<PseudoMove>();
 }

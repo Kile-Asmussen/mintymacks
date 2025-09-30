@@ -1,8 +1,8 @@
 use crate::{
     arrays::ArrayBoard,
     model::{
-        Piece, Square,
-        moves::{ChessMove, PseudoMove, Special},
+        ChessPiece, Square,
+        moves::{ChessMove, PseudoMove, SpecialMove},
     },
 };
 

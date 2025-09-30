@@ -1,6 +1,6 @@
 use crate::{
     bits::{Bits, BoardMask},
-    model::{ColorPiece, Square},
+    model::{ColoredChessPiece, Square},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -98,8 +98,8 @@ impl ArrayBoard<bool> {
     }
 }
 
-impl ArrayBoard<Option<ColorPiece>> {
-    pub const fn mask(&self, p: ColorPiece) -> BoardMask {
+impl ArrayBoard<Option<ColoredChessPiece>> {
+    pub const fn mask(&self, p: ColoredChessPiece) -> BoardMask {
         let mut it = self.iter();
         let mut res = BoardMask::MIN;
         while let Some((sq, op)) = it.next() {

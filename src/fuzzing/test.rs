@@ -18,7 +18,7 @@ use crate::{
     },
     fuzzing::stockfish_perft,
     model::{
-        Color, ColorPiece, Piece, Square,
+        Color, ColoredChessPiece, ChessPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         moves::PseudoMove,
     },
@@ -202,7 +202,7 @@ fn stockfish_comparison_game(
     ply: usize,
     skip_over: usize,
     depth: usize,
-    start: &[(PseudoMove, Option<Piece>)],
+    start: &[(PseudoMove, Option<ChessPiece>)],
     skip_this: bool,
 ) {
     let mut buf = vec![];

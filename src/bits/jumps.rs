@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{BoardMask, bit},
-    model::{Color, Dir, Rank, Square},
+    model::{BoardRank, Color, Dir, Square},
 };
 
 pub const WHITE_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::White);

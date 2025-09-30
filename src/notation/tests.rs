@@ -2,8 +2,8 @@ use crate::{
     arrays::ArrayBoard,
     bits::board::BitBoard,
     model::{
-        ColorPiece, File, Piece, Square,
-        moves::{PseudoMove, Special},
+        ColoredChessPiece, BoardFile, ChessPiece, Square,
+        moves::{PseudoMove, SpecialMove},
     },
     notation::{
         algebraic::AlgebraicMove,
@@ -23,7 +23,7 @@ fn fen_board_roundtrip() {
         "8/8/8/8/8/8/8/8".to_string()
     );
 
-    use ColorPiece::*;
+    use ColoredChessPiece::*;
 
     let startpos = ArrayBoard::setup([
         [
@@ -76,7 +76,7 @@ fn fen_board_roundtrip() {
 fn longalg_roundtrips() {
     assert_eq!(
         Some(Square::a7.to(Square::a8).q()),
-        PseudoMove::parse(&Square::a7.to(Square::a8).longalg(Some(Piece::Queen)))
+        PseudoMove::parse(&Square::a7.to(Square::a8).longalg(Some(ChessPiece::Queen)))
     );
 
     assert_eq!("a7a8q", {
@@ -89,12 +89,12 @@ fn longalg_roundtrips() {
 fn algebraic_roundtrip() {
     assert_eq!(
         Some(AlgebraicMove {
-            piece: Piece::Pawn,
-            file_origin: Some(File::E),
+            piece: ChessPiece::Pawn,
+            file_origin: Some(BoardFile::E),
             rank_origin: None,
             destination: Square::f8,
             capture: true,
-            special: Some(Special::Promotion(Piece::Rook)),
+            special: Some(SpecialMove::Promotion(ChessPiece::Rook)),
             check_or_mate: Some(false)
         }),
         AlgebraicMove::parse("exf8=R+")

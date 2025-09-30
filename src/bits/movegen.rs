@@ -10,10 +10,10 @@ use crate::{
         },
     },
     model::{
-        Color, ColorPiece, Piece, Rank, Square,
+        BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
         castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
         metadata::Metadata,
-        moves::{self, ChessMove, PseudoMove, Special},
+        moves::{self, ChessMove, PseudoMove, SpecialMove},
     },
 };
 
@@ -50,7 +50,14 @@ pub fn knight_moves(
 ) {
     for from in Bits(friendly.knights) {
         for dst in Bits(KNIGHT_MOVES.at(from) & !friendly.total()) {
-            encode_piece_move(from.to(dst), Piece::Knight, friendly, enemy, metadata, res)
+            encode_piece_move(
+                from.to(dst),
+                ChessPiece::Knight,
+                friendly,
+                enemy,
+                metadata,
+                res,
+            )
         }
     }
 }
@@ -69,7 +76,14 @@ pub fn rook_moves(
             | slide_move_stop_negative(RAYS_SOUTH.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            encode_piece_move(from.to(dst), Piece::Rook, friendly, enemy, metadata, res);
+            encode_piece_move(
+                from.to(dst),
+                ChessPiece::Rook,
+                friendly,
+                enemy,
+                metadata,
+                res,
+            );
         }
     }
 }
@@ -101,7 +115,14 @@ pub fn bishop_moves(
                 );
 
         for dst in Bits(mask) {
-            encode_piece_move(from.to(dst), Piece::Bishop, friendly, enemy, metadata, res);
+            encode_piece_move(
+                from.to(dst),
+                ChessPiece::Bishop,
+                friendly,
+                enemy,
+                metadata,
+                res,
+            );
         }
     }
 }
@@ -124,7 +145,14 @@ pub fn queen_moves(
             | slide_move_stop_negative(RAYS_SOUTHWEST.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
-            encode_piece_move(from.to(dst), Piece::Queen, friendly, enemy, metadata, res);
+            encode_piece_move(
+                from.to(dst),
+                ChessPiece::Queen,
+                friendly,
+                enemy,
+                metadata,
+                res,
+            );
         }
     }
 }
@@ -183,7 +211,7 @@ pub fn pawn_captures(
                 cap = metadata
                     .en_passant
                     .and_then(|sq| Square::new(sq.ix() - 8 * (metadata.to_move as i8)))
-                    .map(|sq| (Piece::Pawn, sq))
+                    .map(|sq| (ChessPiece::Pawn, sq))
             }
 
             encode_pawn_move(mv, cap, friendly, enemy, metadata, res);
@@ -202,14 +230,21 @@ pub fn king_moves(
 
     for from in Bits(friendly.kings) {
         for dst in Bits(KING_MOVES.at(from) & !static_threats & !friendly.total()) {
-            encode_piece_move(from.to(dst), Piece::King, friendly, enemy, metadata, res)
+            encode_piece_move(
+                from.to(dst),
+                ChessPiece::King,
+                friendly,
+                enemy,
+                metadata,
+                res,
+            )
         }
     }
 
     if metadata.castling_rights.westward(metadata.to_move) {
         encode_castling_move(
             metadata.castling_details.westward,
-            Special::CastlingWestward,
+            SpecialMove::CastlingWestward,
             metadata,
             static_threats,
             friendly.total() | enemy.total(),
@@ -220,7 +255,7 @@ pub fn king_moves(
     if metadata.castling_rights.eastward(metadata.to_move) {
         encode_castling_move(
             metadata.castling_details.eastward,
-            Special::CastlingEastward,
+            SpecialMove::CastlingEastward,
             metadata,
             static_threats,
             friendly.total() | enemy.total(),
@@ -232,7 +267,7 @@ pub fn king_moves(
 #[inline]
 pub fn encode_castling_move(
     castling: CastlingDetail,
-    special: Special,
+    special: SpecialMove,
     metadata: Metadata,
     static_threats: BoardMask,
     total: BoardMask,
@@ -242,7 +277,7 @@ pub fn encode_castling_move(
     if (cmv.threat_mask & static_threats) == 0 && (cmv.clear_mask & total) == 0 {
         if metadata.castling_details.capture_own_rook {
             res.push(ChessMove {
-                piece: metadata.to_move.piece(Piece::King),
+                piece: metadata.to_move.piece(ChessPiece::King),
                 pmv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
                 special: Some(special),
@@ -251,7 +286,7 @@ pub fn encode_castling_move(
             })
         } else {
             res.push(ChessMove {
-                piece: metadata.to_move.piece(Piece::King),
+                piece: metadata.to_move.piece(ChessPiece::King),
                 pmv: cmv.king_move,
                 cap: None,
                 special: Some(special),
@@ -265,7 +300,7 @@ pub fn encode_castling_move(
 #[inline]
 pub fn encode_piece_move(
     mv: PseudoMove,
-    piece: Piece,
+    piece: ChessPiece,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
@@ -276,7 +311,7 @@ pub fn encode_piece_move(
     let hypothetical_threat =
         enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
-    let kings = if piece == Piece::King {
+    let kings = if piece == ChessPiece::King {
         friendly.kings ^ mv.bits()
     } else {
         friendly.kings
@@ -297,7 +332,7 @@ pub fn encode_piece_move(
 #[inline]
 pub fn encode_pawn_move(
     mv: PseudoMove,
-    cap: Option<(Piece, Square)>,
+    cap: Option<(ChessPiece, Square)>,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
@@ -307,9 +342,9 @@ pub fn encode_pawn_move(
         enemy.threats(metadata.to_move.opposite(), friendly.total(), Some(mv), cap);
 
     if (hypothetical_threat & friendly.kings) == 0 {
-        let promotions = if let Rank::_1 | Rank::_8 = mv.to.file_rank().1 {
-            &[Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen]
-                .map(|p| Some(Special::Promotion(p)))[..]
+        let promotions = if let BoardRank::_1 | BoardRank::_8 = mv.to.file_rank().1 {
+            &[ChessPiece::Knight, ChessPiece::Bishop, ChessPiece::Rook, ChessPiece::Queen]
+                .map(|p| Some(SpecialMove::Promotion(p)))[..]
         } else {
             &[None][..]
         };
@@ -317,7 +352,7 @@ pub fn encode_pawn_move(
         for special in promotions {
             let special = *special;
             res.push(ChessMove {
-                piece: metadata.to_move.piece(Piece::Pawn),
+                piece: metadata.to_move.piece(ChessPiece::Pawn),
                 pmv: mv,
                 cap,
                 special,

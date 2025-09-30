@@ -10,7 +10,7 @@ use crate::{
         threats::{bishop_threats, knight_threats, rook_threats},
     },
     model::{
-        Color, ColorPiece, Square,
+        Color, ColoredChessPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         metadata::Metadata,
         moves::{ChessMove, PseudoMove},
@@ -192,7 +192,7 @@ fn test_movegen() {
 fn test_moving() {
     let mut board = BitBoard::startpos();
     board.apply(ChessMove {
-        piece: ColorPiece::WhitePawn,
+        piece: ColoredChessPiece::WhitePawn,
         pmv: Square::d2.to(Square::d4),
         cap: None,
         special: None,
@@ -253,12 +253,12 @@ fn test_knight_move_corner_case() {
 
 #[test]
 fn en_passant_pawn_capture() {
-    let mut board = ArrayBoard::<Option<ColorPiece>>::new(None);
+    let mut board = ArrayBoard::<Option<ColoredChessPiece>>::new(None);
 
-    board.set(Square::a7, Some(ColorPiece::BlackPawn));
-    board.set(Square::b5, Some(ColorPiece::WhitePawn));
-    board.set(Square::h1, Some(ColorPiece::WhiteKing));
-    board.set(Square::h8, Some(ColorPiece::BlackKing));
+    board.set(Square::a7, Some(ColoredChessPiece::BlackPawn));
+    board.set(Square::b5, Some(ColoredChessPiece::WhitePawn));
+    board.set(Square::h1, Some(ColoredChessPiece::WhiteKing));
+    board.set(Square::h8, Some(ColoredChessPiece::BlackKing));
 
     let mut board = BitBoard::new(
         &board,

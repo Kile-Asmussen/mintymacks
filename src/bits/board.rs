@@ -2,7 +2,7 @@ use crate::{
     arrays::ArrayBoard,
     bits::BoardMask,
     model::{
-        Color, ColorPiece, Piece, Square,
+        Color, ColoredChessPiece, ChessPiece, Square,
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
@@ -29,14 +29,14 @@ impl HalfBitBoard {
             kings: BoardMask::MIN,
         }
     }
-    pub const fn new(color: Color, board: &ArrayBoard<Option<ColorPiece>>) -> Self {
+    pub const fn new(color: Color, board: &ArrayBoard<Option<ColoredChessPiece>>) -> Self {
         Self {
-            pawns: board.mask(color.piece(Piece::Pawn)),
-            knights: board.mask(color.piece(Piece::Knight)),
-            bishops: board.mask(color.piece(Piece::Bishop)),
-            rooks: board.mask(color.piece(Piece::Rook)),
-            queens: board.mask(color.piece(Piece::Queen)),
-            kings: board.mask(color.piece(Piece::King)),
+            pawns: board.mask(color.piece(ChessPiece::Pawn)),
+            knights: board.mask(color.piece(ChessPiece::Knight)),
+            bishops: board.mask(color.piece(ChessPiece::Bishop)),
+            rooks: board.mask(color.piece(ChessPiece::Rook)),
+            queens: board.mask(color.piece(ChessPiece::Queen)),
+            kings: board.mask(color.piece(ChessPiece::King)),
         }
     }
 
@@ -44,32 +44,32 @@ impl HalfBitBoard {
         self.pawns | self.knights | self.bishops | self.rooks | self.queens | self.kings
     }
 
-    pub const fn at(&self, sq: Square) -> Option<Piece> {
+    pub const fn at(&self, sq: Square) -> Option<ChessPiece> {
         let sq = sq.bit();
         if (self.pawns & sq) != 0 {
-            Some(Piece::Pawn)
+            Some(ChessPiece::Pawn)
         } else if (self.knights & sq) != 0 {
-            Some(Piece::Knight)
+            Some(ChessPiece::Knight)
         } else if (self.bishops & sq) != 0 {
-            Some(Piece::Bishop)
+            Some(ChessPiece::Bishop)
         } else if (self.rooks & sq) != 0 {
-            Some(Piece::Rook)
+            Some(ChessPiece::Rook)
         } else if (self.queens & sq) != 0 {
-            Some(Piece::Queen)
+            Some(ChessPiece::Queen)
         } else if (self.kings & sq) != 0 {
-            Some(Piece::King)
+            Some(ChessPiece::King)
         } else {
             None
         }
     }
 
-    pub const fn render_to(&self, color: Color, board: &mut ArrayBoard<Option<ColorPiece>>) {
-        board.set_mask(self.pawns, Some(color.piece(Piece::Pawn)));
-        board.set_mask(self.knights, Some(color.piece(Piece::Knight)));
-        board.set_mask(self.bishops, Some(color.piece(Piece::Bishop)));
-        board.set_mask(self.rooks, Some(color.piece(Piece::Rook)));
-        board.set_mask(self.queens, Some(color.piece(Piece::Queen)));
-        board.set_mask(self.kings, Some(color.piece(Piece::King)));
+    pub const fn render_to(&self, color: Color, board: &mut ArrayBoard<Option<ColoredChessPiece>>) {
+        board.set_mask(self.pawns, Some(color.piece(ChessPiece::Pawn)));
+        board.set_mask(self.knights, Some(color.piece(ChessPiece::Knight)));
+        board.set_mask(self.bishops, Some(color.piece(ChessPiece::Bishop)));
+        board.set_mask(self.rooks, Some(color.piece(ChessPiece::Rook)));
+        board.set_mask(self.queens, Some(color.piece(ChessPiece::Queen)));
+        board.set_mask(self.kings, Some(color.piece(ChessPiece::King)));
     }
 }
 
@@ -87,7 +87,7 @@ fn bitmetadata_sizeof() {
 
 impl BitBoard {
     pub const fn new(
-        board: &ArrayBoard<Option<ColorPiece>>,
+        board: &ArrayBoard<Option<ColoredChessPiece>>,
         to_move: Color,
         turn: u16,
         castling_rights: CastlingRights,
@@ -108,7 +108,7 @@ impl BitBoard {
     }
 
     pub const fn startpos() -> Self {
-        use ColorPiece::*;
+        use ColoredChessPiece::*;
         Self::new(
             &ArrayBoard::setup([
                 [
@@ -146,14 +146,14 @@ impl BitBoard {
         )
     }
 
-    pub const fn render(&self) -> ArrayBoard<Option<ColorPiece>> {
+    pub const fn render(&self) -> ArrayBoard<Option<ColoredChessPiece>> {
         let mut res = ArrayBoard::new(None);
         self.white.render_to(Color::White, &mut res);
         self.black.render_to(Color::Black, &mut res);
         res
     }
 
-    pub const fn at(&self, sq: Square) -> Option<ColorPiece> {
+    pub const fn at(&self, sq: Square) -> Option<ColoredChessPiece> {
         if let Some(p) = self.white.at(sq) {
             Some(p.color(Color::White))
         } else if let Some(p) = self.black.at(sq) {

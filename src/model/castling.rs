@@ -1,6 +1,6 @@
 use crate::{
     bits::{BoardMask, mask},
-    model::{Color, File, Rank, Square, moves::PseudoMove},
+    model::{Color, BoardFile, BoardRank, Square, moves::PseudoMove},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -67,10 +67,10 @@ fn castling_sizeof() {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastlingDetail {
-    pub rook_from: File,
-    pub rook_to: File,
-    pub king_from: File,
-    pub king_to: File,
+    pub rook_from: BoardFile,
+    pub rook_to: BoardFile,
+    pub king_from: BoardFile,
+    pub king_to: BoardFile,
     pub threat_mask: u8,
     pub clear_mask: u8,
 }
@@ -85,11 +85,11 @@ pub struct CastlingMove {
 
 impl CastlingDetail {
     pub const fn reify(self, c: Color) -> CastlingMove {
-        let rank: Rank;
+        let rank: BoardRank;
 
         match c {
-            Color::White => rank = Rank::_1,
-            Color::Black => rank = Rank::_8,
+            Color::White => rank = BoardRank::_1,
+            Color::Black => rank = BoardRank::_8,
         };
 
         let rook_move = PseudoMove {
@@ -128,18 +128,18 @@ impl CastlingDetail {
 pub const CLASSIC_CASTLING: CastlingDetails = CastlingDetails {
     capture_own_rook: false,
     westward: CastlingDetail {
-        rook_from: File::A,
-        rook_to: File::D,
-        king_from: File::E,
-        king_to: File::C,
+        rook_from: BoardFile::A,
+        rook_to: BoardFile::D,
+        king_from: BoardFile::E,
+        king_to: BoardFile::C,
         threat_mask: 0b_00111000,
         clear_mask: 0b_01110000,
     },
     eastward: CastlingDetail {
-        rook_from: File::H,
-        rook_to: File::F,
-        king_from: File::E,
-        king_to: File::G,
+        rook_from: BoardFile::H,
+        rook_to: BoardFile::F,
+        king_from: BoardFile::E,
+        king_to: BoardFile::G,
         threat_mask: 0b_00001110,
         clear_mask: 0b_00000110,
     },

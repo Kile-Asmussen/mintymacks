@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{BoardMask, bit, mask, show_mask},
-    model::{Color, Dir, Rank, Square},
+    model::{Color, Dir, BoardRank, Square},
 };
 
 pub const RAYS_WEST: ArrayBoard<BoardMask> = build_slideboard(Dir::West, &Square::WEST);
@@ -59,8 +59,8 @@ pub const fn build_pawnboard(c: Color) -> ArrayBoard<BoardMask> {
 
 pub const fn build_pawnmask(c: Color, sq: Square) -> BoardMask {
     let start_rank = match c {
-        Color::White => Rank::_2,
-        Color::Black => Rank::_7,
+        Color::White => BoardRank::_2,
+        Color::Black => BoardRank::_7,
     };
 
     let dir = match c {

@@ -6,7 +6,7 @@ pub mod slides;
 pub mod tests;
 pub mod threats;
 
-use crate::model::{File, Rank, Square, moves::PseudoMove};
+use crate::model::{BoardFile, BoardRank, Square, moves::PseudoMove};
 
 pub type BoardMask = u64;
 

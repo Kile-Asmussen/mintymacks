@@ -1,26 +1,28 @@
 use crate::{
     bits::{BoardMask, board::BitBoard},
     model::{
-        Color, File, Piece, Rank, Square,
-        moves::{ChessMove, Special},
+        BoardFile, BoardRank, ChessPiece, Color, Square,
+        moves::{ChessMove, SpecialMove},
     },
     regex,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct AlgebraicMove {
-    pub piece: Piece,
-    pub file_origin: Option<File>,
-    pub rank_origin: Option<Rank>,
+    pub piece: ChessPiece,
+    pub file_origin: Option<BoardFile>,
+    pub rank_origin: Option<BoardRank>,
     pub destination: Square,
     pub capture: bool,
-    pub special: Option<Special>,
+    pub special: Option<SpecialMove>,
     pub check_or_mate: Option<bool>,
 }
 
 impl AlgebraicMove {
     pub fn matches(self, mv: ChessMove) -> bool {
-        if let Some(Special::CastlingEastward) | Some(Special::CastlingWestward) = self.special {
+        if let Some(SpecialMove::CastlingEastward) | Some(SpecialMove::CastlingWestward) =
+            self.special
+        {
             return mv.special == self.special;
         }
 
@@ -41,12 +43,12 @@ impl AlgebraicMove {
     pub fn to_string(self) -> String {
         let mut res = "".to_string();
 
-        if self.special == Some(Special::CastlingEastward) {
+        if self.special == Some(SpecialMove::CastlingEastward) {
             res = "O-O-O".to_string();
-        } else if self.special == Some(Special::CastlingWestward) {
+        } else if self.special == Some(SpecialMove::CastlingWestward) {
             res = "O-O".to_string();
         } else {
-            if self.piece != Piece::Pawn {
+            if self.piece != ChessPiece::Pawn {
                 res.push(self.piece.letter());
             }
 
@@ -64,7 +66,7 @@ impl AlgebraicMove {
 
             res += self.destination.to_str();
 
-            if let Some(Special::Promotion(p)) = self.special {
+            if let Some(SpecialMove::Promotion(p)) = self.special {
                 res.push('=');
                 res.push(p.letter());
             }
@@ -90,24 +92,24 @@ impl AlgebraicMove {
 
         if regex!("^O-O-O[+#]?$").is_match(s) {
             return Some(AlgebraicMove {
-                piece: Piece::King,
+                piece: ChessPiece::King,
                 file_origin: None,
                 rank_origin: None,
                 destination: Square::a1,
                 capture: false,
-                special: Some(Special::CastlingEastward),
+                special: Some(SpecialMove::CastlingEastward),
                 check_or_mate,
             });
         }
 
         if regex!("^O-O[+#]?$").is_match(s) {
             return Some(AlgebraicMove {
-                piece: Piece::King,
+                piece: ChessPiece::King,
                 file_origin: None,
                 rank_origin: None,
                 destination: Square::a1,
                 capture: false,
-                special: Some(Special::CastlingWestward),
+                special: Some(SpecialMove::CastlingWestward),
                 check_or_mate,
             });
         }
@@ -124,57 +126,57 @@ impl AlgebraicMove {
     }
 }
 
-impl Piece {
+impl ChessPiece {
     fn letter(self) -> char {
         match self {
-            Piece::Pawn => 'P',
-            Piece::Knight => 'N',
-            Piece::Bishop => 'B',
-            Piece::Rook => 'R',
-            Piece::Queen => 'Q',
-            Piece::King => 'K',
+            ChessPiece::Pawn => 'P',
+            ChessPiece::Knight => 'N',
+            ChessPiece::Bishop => 'B',
+            ChessPiece::Rook => 'R',
+            ChessPiece::Queen => 'Q',
+            ChessPiece::King => 'K',
         }
     }
 
     fn parse(l: &str) -> Option<Self> {
         Some(match l {
-            "P" | "p" => Piece::Pawn,
-            "K" | "k" => Piece::Knight,
-            "B" | "b" => Piece::Bishop,
-            "R" | "r" => Piece::Rook,
-            "Q" | "q" => Piece::Queen,
-            "K" | "k" => Piece::King,
+            "P" | "p" => ChessPiece::Pawn,
+            "K" | "k" => ChessPiece::Knight,
+            "B" | "b" => ChessPiece::Bishop,
+            "R" | "r" => ChessPiece::Rook,
+            "Q" | "q" => ChessPiece::Queen,
+            "K" | "k" => ChessPiece::King,
             _ => return None,
         })
     }
 }
 
-impl File {
+impl BoardFile {
     fn letter(self) -> char {
         match self {
-            File::A => 'a',
-            File::B => 'b',
-            File::C => 'c',
-            File::D => 'd',
-            File::E => 'e',
-            File::F => 'f',
-            File::G => 'g',
-            File::H => 'h',
+            BoardFile::A => 'a',
+            BoardFile::B => 'b',
+            BoardFile::C => 'c',
+            BoardFile::D => 'd',
+            BoardFile::E => 'e',
+            BoardFile::F => 'f',
+            BoardFile::G => 'g',
+            BoardFile::H => 'h',
         }
     }
 }
 
-impl Rank {
+impl BoardRank {
     fn digit(self) -> char {
         match self {
-            Rank::_1 => '1',
-            Rank::_2 => '2',
-            Rank::_3 => '3',
-            Rank::_4 => '4',
-            Rank::_5 => '5',
-            Rank::_6 => '6',
-            Rank::_7 => '7',
-            Rank::_8 => '8',
+            BoardRank::_1 => '1',
+            BoardRank::_2 => '2',
+            BoardRank::_3 => '3',
+            BoardRank::_4 => '4',
+            BoardRank::_5 => '5',
+            BoardRank::_6 => '6',
+            BoardRank::_7 => '7',
+            BoardRank::_8 => '8',
         }
     }
 }
@@ -197,7 +199,7 @@ impl ChessMove {
             guess.check_or_mate = Some(false);
         }
 
-        if self.piece.piece() == Piece::Pawn {
+        if self.piece.piece() == ChessPiece::Pawn {
             if guess.capture {
                 guess.file_origin = Some(self.pmv.to.file_rank().0)
             }
@@ -205,7 +207,9 @@ impl ChessMove {
             return guess;
         }
 
-        if let Some(Special::CastlingEastward) | Some(Special::CastlingWestward) = guess.special {
+        if let Some(SpecialMove::CastlingEastward) | Some(SpecialMove::CastlingWestward) =
+            guess.special
+        {
             return guess;
         }
 
