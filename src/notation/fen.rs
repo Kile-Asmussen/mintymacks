@@ -6,19 +6,20 @@ use crate::{
     arrays::ArrayBoard,
     bits::board::BitBoard,
     model::{
-        Color, ColoredChessPiece, BoardFile, Square,
-        castling::{CLASSIC_CASTLING, CastlingRights},
+        castling::{CastlingDetails, CastlingRights, CLASSIC_CASTLING}, BoardFile, Color, ColoredChessPiece, Square
     },
 };
 
-pub fn parse_fen(fen: &str) -> anyhow::Result<BitBoard> {
+type Result<T> = std::result::Result<T, String>;
+
+pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
     let parts = fen.split(' ').collect::<Vec<_>>();
 
     let n_parts = parts.len();
     if n_parts > 6 {
-        return Err(anyhow!("Invalid FEN: Too many components ({n_parts})"));
+        return Err(format!("Invalid FEN: Too many components ({n_parts})"));
     } else if n_parts < 6 {
-        return Err(anyhow!("Invalid FEN: Too few components ({n_parts})"));
+        return Err(format!("Invalid FEN: Too few components ({n_parts})"));
     }
 
     let board = parse_fen_board(parts[0])?;
@@ -26,27 +27,27 @@ pub fn parse_fen(fen: &str) -> anyhow::Result<BitBoard> {
     let castling_rights = parse_fen_castling_rights(parts[2])?;
     let en_passant = parse_fen_en_passant_square(parts[3])?;
     let halfmove = parse_fen_halfmove_clock(parts[4])?;
-    let turn = parse_fen_halfmove_clock(parts[5])?;
+    let turn = parse_fen_turn_counter(parts[5])?;
 
-    Ok(BitBoard::new(
+    Ok((BitBoard::new(
         &board,
         to_move,
         turn,
         castling_rights,
         en_passant,
         CLASSIC_CASTLING,
-    ))
+    ), halfmove))
 }
 
-pub fn parse_fen_halfmove_clock(hmc: &str) -> anyhow::Result<u16> {
-    u16::from_str_radix(hmc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed ply clock `{hmc}'"))
+pub fn parse_fen_halfmove_clock(hmc: &str) -> Result<u16> {
+    u16::from_str_radix(hmc, 10).map_err(|_| format!("Invalid FEN: Malformed halfmove clock `{hmc}'"))
 }
 
-pub fn parse_fen_turn_counter(tc: &str) -> anyhow::Result<u16> {
-    u16::from_str_radix(tc, 10).map_err(|_| anyhow!("Invalid FEN: Malformed turn counter `{tc}'"))
+pub fn parse_fen_turn_counter(tc: &str) -> Result<u16> {
+    u16::from_str_radix(tc, 10).map_err(|_| format!("Invalid FEN: Malformed turn counter `{tc}'"))
 }
 
-pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> {
+pub fn parse_fen_en_passant_square(eps: &str) -> Result<Option<Square>> {
     if eps == "-" {
         return Ok(None);
     }
@@ -55,12 +56,12 @@ pub fn parse_fen_en_passant_square(eps: &str) -> anyhow::Result<Option<Square>> 
         return Ok(Some(sq));
     }
 
-    return Err(anyhow!("Invalid FEN: Malformed en-passant square `{eps}'"));
+    return Err(format!("Invalid FEN: Malformed en-passant square `{eps}'"));
 }
 
-pub fn parse_fen_castling_rights(cr: &str) -> anyhow::Result<CastlingRights> {
+pub fn parse_fen_castling_rights(cr: &str) -> Result<CastlingRights> {
     if cr != "-" && !cr.chars().all(|c| "KQkq".contains(c)) || cr.len() > 4 {
-        return Err(anyhow!(
+        return Err(format!(
             "Invalid FEN: Malformed castling rights string `{cr}'"
         ));
     }
@@ -86,30 +87,30 @@ pub fn parse_fen_castling_rights(cr: &str) -> anyhow::Result<CastlingRights> {
     Ok(res)
 }
 
-pub fn parse_fen_to_move(bw: &str) -> anyhow::Result<Color> {
+pub fn parse_fen_to_move(bw: &str) -> Result<Color> {
     Ok(match bw {
         "w" => Color::White,
         "b" => Color::Black,
         _ => {
-            return Err(Error::msg(format!(
+            return Err(format!(
                 "Invalid FEN: unrecognized color to move {bw}"
-            )));
+            ));
         }
     })
 }
 
-pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColoredChessPiece>>> {
+pub fn parse_fen_board(board: &str) -> Result<ArrayBoard<Option<ColoredChessPiece>>> {
     for c in board.chars() {
         if !"PNBRQKpnbrqk12345678/".contains(c) {
-            return Err(Error::msg(format!(
+            return Err(format!(
                 "Invalid FEN: unrecognized character `{c}'"
-            )));
+            ));
         }
     }
 
     let splits = board.chars().filter(|c| c == &'/').count();
     if splits != 7 {
-        return Err(Error::msg(format!("Invalid FEN: number of ranks is not 8")));
+        return Err(format!("Invalid FEN: number of ranks is not 8"));
     }
 
     let mut ranks = Vec::with_capacity(8);
@@ -119,9 +120,9 @@ pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColoredC
 
     for rank in ranks {
         if rank.len() > 8 {
-            return Err(Error::msg(format!(
+            return Err(format!(
                 "Invalid FEN: rank not 8 squares `{rank}`"
-            )));
+            ));
         }
 
         let mut expanded_rank = String::with_capacity(8);
@@ -141,9 +142,9 @@ pub fn parse_fen_board(board: &str) -> anyhow::Result<ArrayBoard<Option<ColoredC
         }
 
         if expanded_rank.len() != 8 {
-            return Err(Error::msg(format!(
+            return Err(format!(
                 "Invalid FEN: rank not 8 squares `{rank}`"
-            )));
+            ));
         }
 
         expanded_ranks.push(expanded_rank);
@@ -187,6 +188,22 @@ pub fn color_piece_letter(c: char) -> Option<ColoredChessPiece> {
         'k' => BlackKing,
         _ => return None,
     })
+}
+
+pub fn render_fen(board: &BitBoard, halfmove: u16) -> String {
+    format!(
+        "{} {} {} {} {} {}",
+        render_fen_board(&board.render()),
+        board.metadata.to_move.letter(),
+        board.metadata.castling_rights.to_string(board.metadata.castling_details),
+        if let Some(sq) = board.metadata.en_passant {
+            sq.to_str()
+        } else {
+            "-"
+        },
+        halfmove,
+        board.metadata.turn
+    )
 }
 
 pub fn render_fen_board(board: &ArrayBoard<Option<ColoredChessPiece>>) -> String {
@@ -240,5 +257,47 @@ impl ColoredChessPiece {
             BlackQueen => 'q',
             BlackKing => 'k',
         }
+    }
+}
+
+impl Color {
+    pub fn letter(self) -> char {
+        match self {
+            Self::White => 'w',
+            Self::Black => 'b',
+        }
+    }
+}
+
+impl CastlingRights {
+    pub fn to_string(self, deets: CastlingDetails) -> String {
+        
+        let mut res = String::with_capacity(4);
+
+        // if deets.capture_own_rook {
+        //
+        // }
+
+        if self.westward(Color::White) {
+            res.push('K');
+        }
+
+        if self.eastward(Color::White) {
+            res.push('Q');
+        }
+
+        if self.westward(Color::Black) {
+            res.push('k');
+        }
+        
+        if self.eastward(Color::Black) {
+            res.push('q');
+        }
+
+        if res.is_empty() {
+            res.push('-');
+        }
+
+        res
     }
 }

@@ -66,7 +66,7 @@ fn fen_board_roundtrip() {
     );
 
     assert_eq!(
-        BitBoard::startpos(),
+        (BitBoard::startpos(), 0),
         parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap(),
     );
 }

@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{notation::uci::{literal_uci, parse_uci, rest_uci, token_uci, Line, LongAlg, Uci}, print_uci, regexp};
+use crate::{notation::uci::{literal_uci, parse_uci, token_uci, Line, LongAlg, Uci}, print_uci, regexp};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UciEngine {
@@ -162,14 +162,12 @@ impl Uci for IdString {
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        if let Some(input) = literal_uci("name", input)
-        && let Some((name, _)) = rest_uci(input) {
-            return Some((Self::Name(name), input));
+        if let Some(input) = literal_uci("name", input) {
+            return Some((Self::Name(input.join(" ")), &[]));
         }
 
-        if let Some(input) = literal_uci("author", input)
-        && let Some((name, _)) = rest_uci(input) {
-            return Some((Self::Author(name), input));
+        if let Some(input) = literal_uci("author", input) {
+            return Some((Self::Author(input.join(" ")), &[]));
         }
 
         None
@@ -531,8 +529,7 @@ impl Uci for StringType {
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        let (default, input) = rest_uci(input)?;
-        Some((Self { default, value: None }, input))
+        Some((Self { default: input.join(" "), value: None }, &[]))
     }
 }
 

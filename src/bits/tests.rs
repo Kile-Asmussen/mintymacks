@@ -134,7 +134,7 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
     let metadata = Metadata {
         to_move: c,
         castling_rights: cr,
-        turn: 0,
+        turn: 1,
         en_passant: epc,
         castling_details: CLASSIC_CASTLING,
     };

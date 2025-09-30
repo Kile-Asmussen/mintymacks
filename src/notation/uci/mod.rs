@@ -47,8 +47,12 @@ fn token_uci<'a>(input: &'a [&'a str]) -> Option<(String, &'a [&'a str])> {
     }
 }
 
-fn rest_uci<'a>(input: &'a [&'a str]) -> Option<(String, &'a [&'a str])> {
-    Some((input.iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" "), &[]))
+fn until_uci<'a>(stop: &'a str, input: &'a [&'a str]) -> Option<(&'a [&'a str], &'a [&'a str])> {
+    if let Some(pos) = input.iter().position(|s| *s == stop) {
+        Some((&input[..pos], &input[pos..]))
+    } else {
+        Some((input, &[]))
+    }
 }
 
 #[macro_export]
