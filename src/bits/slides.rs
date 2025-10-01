@@ -100,7 +100,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_EAST.at(Square::d4.reverse()).reverse_bits(),
+        RAYS_EAST.at(Square::d4.rotate()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -114,7 +114,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTH.at(Square::d4.reverse()).reverse_bits(),
+        RAYS_NORTH.at(Square::d4.rotate()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -156,7 +156,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTHWEST.at(Square::d4.reverse()).reverse_bits(),
+        RAYS_NORTHWEST.at(Square::d4.rotate()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -170,7 +170,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTHEAST.at(Square::d4.reverse()).reverse_bits(),
+        RAYS_NORTHEAST.at(Square::d4.rotate()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,

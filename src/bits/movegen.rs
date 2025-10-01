@@ -71,8 +71,8 @@ pub fn rook_moves(
     for from in Bits(friendly.rooks) {
         let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
             | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_EAST.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTH.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total());
+            | slide_move_stop_negative(RAYS_EAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
+            | slide_move_stop_negative(RAYS_NORTH.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -103,12 +103,12 @@ pub fn bishop_moves(
                     enemy.total(),
                 )
                 | slide_move_stop_negative(
-                    RAYS_NORTHWEST.at(from.reverse()).reverse_bits(),
+                    RAYS_NORTHWEST.at(from.rotate()).reverse_bits(),
                     friendly.total(),
                     enemy.total(),
                 )
                 | slide_move_stop_negative(
-                    RAYS_NORTHEAST.at(from.reverse()).reverse_bits(),
+                    RAYS_NORTHEAST.at(from.rotate()).reverse_bits(),
                     friendly.total(),
                     enemy.total(),
                 );
@@ -136,12 +136,12 @@ pub fn queen_moves(
     for from in Bits(friendly.queens) {
         let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
             | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_EAST.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTH.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total())
+            | slide_move_stop_negative(RAYS_EAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
+            | slide_move_stop_negative(RAYS_NORTH.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
             | slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
             | slide_move_stop_positive(RAYS_NORTHWEST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTHWEST.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTHEAST.at(from.reverse()).reverse_bits(), friendly.total(), enemy.total());
+            | slide_move_stop_negative(RAYS_NORTHWEST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
+            | slide_move_stop_negative(RAYS_NORTHEAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
             encode_piece_move(

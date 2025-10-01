@@ -52,27 +52,12 @@ impl Square {
         }
     }
 
-    pub const fn reverse(self) -> Self {
+    pub const fn rotate(self) -> Self {
         Self(unsafe { NonZeroI8::new_unchecked(65 - self.0.get()) })
     }
 
-    pub const fn flip(self) -> Self {
-        let (f, r) = self.file_rank();
-        let r = r.flip();
-        Self::at(f, r)
-    }
-
-    pub const fn flip2(self) -> Self {
-        let res = self.ix();
-        let res = (0x38 - (res & 0x38)) | (res & 7);
-        return Self::new(res).unwrap();
-    }
-}
-
-#[test]
-fn test_flip() {
-    for sq in Bits(BoardMask::MAX) {
-        assert_eq!(sq.flip(), sq.flip2());
+    pub const fn mirror(self) -> Self {
+        Self(unsafe { NonZeroI8::new_unchecked((0x38 ^ (self.0.get() - 1)) + 1) })
     }
 }
 
@@ -135,19 +120,6 @@ impl BoardRank {
         match ix {
             0..=7 => Some(unsafe { std::mem::transmute(ix * 8) }),
             _ => None,
-        }
-    }
-
-    pub const fn flip(self) -> Self {
-        match self {
-            Self::_1 => Self::_8,
-            Self::_2 => Self::_7,
-            Self::_3 => Self::_6,
-            Self::_4 => Self::_5,
-            Self::_5 => Self::_4,
-            Self::_6 => Self::_3,
-            Self::_7 => Self::_2,
-            Self::_8 => Self::_1,
         }
     }
 }

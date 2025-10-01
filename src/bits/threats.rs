@@ -28,8 +28,8 @@ pub fn rook_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     for sq in Bits(r) {
         res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
         res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
     }
     res
 }
@@ -39,8 +39,8 @@ pub fn bishop_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     for sq in Bits(r) {
         res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
         res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
     }
     res
 }
@@ -50,12 +50,12 @@ pub fn queen_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     for sq in Bits(r) {
         res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
         res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
         res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
         res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.reverse()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
     }
     res
 }
