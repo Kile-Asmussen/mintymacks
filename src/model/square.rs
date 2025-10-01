@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{Bits, BoardMask},
-    model::{Dir, BoardFile, BoardRank, Square},
+    bits::{mask, Bits, BoardMask},
+    model::{BoardFile, BoardRank, Dir, Square},
 };
 
 #[allow(non_upper_case_globals)]
@@ -80,15 +80,11 @@ impl Square {
 }
 
 impl Square {
-    pub const WEST: ArrayBoard<i8> = ArrayBoard::setup([[0, 1, 2, 3, 4, 5, 6, 7]; 8]);
 
     pub const EAST: ArrayBoard<i8> = ArrayBoard::setup([[7, 6, 5, 4, 3, 2, 1, 0]; 8]);
 
     pub const NORTH: ArrayBoard<i8> =
         ArrayBoard::setup([[0; 8], [1; 8], [2; 8], [3; 8], [4; 8], [5; 8], [6; 8], [7; 8]]);
-
-    pub const SOUTH: ArrayBoard<i8> =
-        ArrayBoard::setup([[7; 8], [6; 8], [5; 8], [4; 8], [3; 8], [2; 8], [1; 8], [0; 8]]);
 
     pub const NORTHEAST: ArrayBoard<i8> = ArrayBoard::setup([
         [0, 0, 0, 0, 0, 0, 0, 0],
@@ -112,27 +108,19 @@ impl Square {
         [0, 1, 2, 3, 4, 5, 6, 7],
     ]);
 
-    pub const SOUTHEAST: ArrayBoard<i8> = ArrayBoard::setup([
-        [7, 6, 5, 4, 3, 2, 1, 0],
-        [6, 6, 5, 4, 3, 2, 1, 0],
-        [5, 5, 5, 4, 3, 2, 1, 0],
-        [4, 4, 4, 4, 3, 2, 1, 0],
-        [3, 3, 3, 3, 3, 2, 1, 0],
-        [2, 2, 2, 2, 2, 2, 1, 0],
-        [1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
+    pub const EAST_EDGE : u64 = mask([
+        0b11111110; 8
     ]);
 
-    pub const SOUTHWEST: ArrayBoard<i8> = ArrayBoard::setup([
-        [0, 1, 2, 3, 4, 5, 6, 7],
-        [0, 1, 2, 3, 4, 5, 6, 6],
-        [0, 1, 2, 3, 4, 5, 5, 5],
-        [0, 1, 2, 3, 4, 4, 4, 4],
-        [0, 1, 2, 3, 3, 3, 3, 3],
-        [0, 1, 2, 2, 2, 2, 2, 2],
-        [0, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0],
+    pub const NORTH_EDGE : u64 = mask([
+        0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
     ]);
+
+    pub const SOUTH_EDGE : u64 = Self::NORTH_EDGE.reverse_bits();
+
+    pub const WEST_EDGE : u64 = Self::EAST_EDGE.reverse_bits();
+
+
 
     pub const fn go(self, mut dirs: &[Dir]) -> Option<Self> {
         if dirs.is_empty() {
@@ -141,21 +129,21 @@ impl Square {
             let dir = dirs[0];
             let dirs = &dirs[1..];
 
-            let n = (match dir {
-                Dir::North => Square::NORTH,
-                Dir::East => Square::EAST,
-                Dir::South => Square::SOUTH,
-                Dir::West => Square::WEST,
-                Dir::NorthEast => Square::NORTHEAST,
-                Dir::SouthEast => Square::SOUTHEAST,
-                Dir::SouthWest => Square::SOUTHWEST,
-                Dir::NorthWest => Square::NORTHWEST,
-            })
-            .at(self);
+            let edge = match dir {
+                Dir::North => Square::NORTH_EDGE,
+                Dir::East => Square::EAST_EDGE,
+                Dir::South => Square::SOUTH_EDGE,
+                Dir::West => Square::WEST_EDGE,
+                Dir::NorthEast => Square::NORTH_EDGE & Square::EAST_EDGE,
+                Dir::SouthEast => Square::SOUTH_EDGE & Square::EAST_EDGE,
+                Dir::SouthWest => Square::SOUTH_EDGE & Square::WEST_EDGE,
+                Dir::NorthWest => Square::NORTH_EDGE & Square::WEST_EDGE,
+            };
+
+            let n = edge & self.bit();
 
             if n != 0
-                && let Some(sq) = Square::new(self.ix() + dir as i8)
-            {
+            && let Some(sq) = Square::new(self.ix() + dir as i8) {
                 sq.go(dirs)
             } else {
                 None

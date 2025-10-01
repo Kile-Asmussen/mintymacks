@@ -4,19 +4,13 @@ use crate::{
     model::{Color, Dir, BoardRank, Square},
 };
 
-pub const RAYS_WEST: ArrayBoard<BoardMask> = build_slideboard(Dir::West, &Square::WEST);
 pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Dir::East, &Square::EAST);
 pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Dir::North, &Square::NORTH);
-pub const RAYS_SOUTH: ArrayBoard<BoardMask> = build_slideboard(Dir::South, &Square::SOUTH);
 
 pub const RAYS_NORTHEAST: ArrayBoard<BoardMask> =
     build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
 pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> =
     build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
-pub const RAYS_SOUTHEAST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::SouthEast, &Square::SOUTHEAST);
-pub const RAYS_SOUTHWEST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::SouthWest, &Square::SOUTHWEST);
 
 pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
@@ -106,7 +100,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_WEST.at(Square::d4),
+        RAYS_EAST.at(Square::d4.reverse()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -120,7 +114,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_SOUTH.at(Square::d4),
+        RAYS_NORTH.at(Square::d4.reverse()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -162,7 +156,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_SOUTHEAST.at(Square::d4),
+        RAYS_NORTHWEST.at(Square::d4.reverse()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
@@ -176,7 +170,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_SOUTHWEST.at(Square::d4),
+        RAYS_NORTHEAST.at(Square::d4.reverse()).reverse_bits(),
         mask([
             0b_00000000,
             0b_00000000,
