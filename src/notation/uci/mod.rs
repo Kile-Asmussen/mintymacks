@@ -2,6 +2,7 @@ use std::{collections::HashMap, io::Write, iter::Inspect};
 
 pub mod engine;
 pub mod gui;
+pub mod test;
 
 use crate::model::{moves::PseudoMove, ChessPiece};
 

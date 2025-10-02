@@ -18,7 +18,9 @@ impl UciEngine {
     pub fn to_string(&self) -> String {
         let mut res = vec![];
         self.print(&mut res);
-        res.join(" ")
+        let mut res= res.join(" ");
+        res.push('\n');
+        res
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
@@ -120,8 +122,8 @@ impl Uci for AuthResult {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BestMove {
-    best: LongAlg,
-    ponder: Option<LongAlg>,
+    pub best: LongAlg,
+    pub ponder: Option<LongAlg>,
 }
 
 impl Uci for BestMove {
@@ -427,8 +429,8 @@ impl Uci for OptionType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CheckType {
-    default: bool,
-    value: Option<bool>
+    pub default: bool,
+    pub value: Option<bool>
 }
 
 impl Uci for CheckType {
@@ -446,10 +448,10 @@ impl Uci for CheckType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SpinType {
-    default: i64,
-    min: i64,
-    max: i64,
-    value: Option<i64>
+    pub default: i64,
+    pub min: i64,
+    pub max: i64,
+    pub value: Option<i64>
 }
 
 impl Uci for SpinType {
@@ -463,8 +465,8 @@ impl Uci for SpinType {
 
         let input2 = literal_uci("min", input)?;
         let (min, input2) = parse_uci(input2)?;
-
-        let input3 = literal_uci("min", input)?;
+        
+        let input3 = literal_uci("max", input)?;
         let (max, input3) = parse_uci(input3)?;
 
         let inputs = [input1, input2, input3];
@@ -476,8 +478,9 @@ impl Uci for SpinType {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ComboType {
-    default: String,
-    variants: Vec<String>,
+    pub default: String,
+    pub value: Option<String>,
+    pub variants: Vec<String>,
 }
 
 impl Uci for ComboType {
@@ -492,8 +495,9 @@ impl Uci for ComboType {
         
         let mut variants = vec![];
         let mut input1 = input;
-        while let Some(rest) = literal_uci("var", input)
-        && let Some((var, rest)) = token_uci(input) {
+
+        while let Some(rest) = literal_uci("var", input1)
+        && let Some((var, rest)) = token_uci(rest) {
             variants.push(var);
             input1 = rest;
         }
@@ -512,15 +516,15 @@ impl Uci for ComboType {
         };
 
         Some((Self {
-            variants, default
+            variants, default, value: None
         }, input))
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StringType {
-    default: String,
-    value: Option<String>,
+    pub default: String,
+    pub value: Option<String>,
 }
 
 impl Uci for StringType {
