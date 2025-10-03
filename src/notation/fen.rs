@@ -1,7 +1,5 @@
 use std::ops::Index;
 
-use anyhow::{Error, anyhow};
-
 use crate::{
     arrays::ArrayBoard,
     bits::board::BitBoard,
