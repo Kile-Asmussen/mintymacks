@@ -1,18 +1,11 @@
 use crate::{
     bits::{
-        self, Bits, BoardMask, bit,
-        board::{BitBoard, HalfBitBoard},
-        jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        show_mask, slide_move_stop_negative, slide_move_stop_positive,
-        slides::{
-            BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, WHITE_PAWN_MOVES,
-        },
+        self, bit, board::{BitBoard, HalfBitBoard}, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, show_mask, slide_move_attacks, slide_move_stop_negative, slide_move_stop_positive, slides::{
+            BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES
+        }, Bits, BoardMask
     },
     model::{
-        BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
-        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
-        metadata::Metadata,
-        moves::{self, ChessMove, PseudoMove, SpecialMove},
+        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights}, metadata::Metadata, moves::{self, ChessMove, PseudoMove, SpecialMove}, BoardRank, ChessPiece, Color, ColoredChessPiece, Square
     },
 };
 
@@ -69,10 +62,15 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.rooks) {
-        let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_EAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTH.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total());
+        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), friendly.total() | enemy.total())
+        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), friendly.total() | enemy.total());
+
+        let mask = attacks & !friendly.total();
+
+        // let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_WEST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_SOUTH.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -95,23 +93,28 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.bishops) {
-        let mask =
-            slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
-                | slide_move_stop_positive(
-                    RAYS_NORTHWEST.at(from),
-                    friendly.total(),
-                    enemy.total(),
-                )
-                | slide_move_stop_negative(
-                    RAYS_NORTHWEST.at(from.rotate()).reverse_bits(),
-                    friendly.total(),
-                    enemy.total(),
-                )
-                | slide_move_stop_negative(
-                    RAYS_NORTHEAST.at(from.rotate()).reverse_bits(),
-                    friendly.total(),
-                    enemy.total(),
-                );
+        let attacks = slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), friendly.total() | enemy.total())
+        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), friendly.total() | enemy.total());
+
+        let mask = attacks & !friendly.total();
+
+        // let mask =
+        //     slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
+        //         | slide_move_stop_positive(
+        //             RAYS_NORTHWEST.at(from),
+        //             friendly.total(),
+        //             enemy.total(),
+        //         )
+        //         | slide_move_stop_negative(
+        //             RAYS_SOUTHEAST.at(from),
+        //             friendly.total(),
+        //             enemy.total(),
+        //         )
+        //         | slide_move_stop_negative(
+        //             RAYS_SOUTHWEST.at(from),
+        //             friendly.total(),
+        //             enemy.total(),
+        //         );
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -134,14 +137,21 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.queens) {
-        let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_EAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTH.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_positive(RAYS_NORTHWEST.at(from), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTHWEST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total())
-            | slide_move_stop_negative(RAYS_NORTHEAST.at(from.rotate()).reverse_bits(), friendly.total(), enemy.total());
+        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), friendly.total() | enemy.total())
+        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), friendly.total() | enemy.total())
+        | slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), friendly.total() | enemy.total())
+        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), friendly.total() | enemy.total());
+
+        let mask = attacks & !friendly.total();
+
+        // let mask = slide_move_stop_positive(RAYS_NORTH.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_positive(RAYS_EAST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_WEST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_SOUTH.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_positive(RAYS_NORTHEAST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_positive(RAYS_NORTHWEST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_SOUTHEAST.at(from), friendly.total(), enemy.total())
+        //     | slide_move_stop_negative(RAYS_SOUTHWEST.at(from), friendly.total(), enemy.total());
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -171,11 +181,24 @@ pub fn pawn_moves(
                 BoardMask::MIN,
             ),
             Color::Black => slide_move_stop_negative(
-                BLACK_PAWN_MOVES.at(from),
+                WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
                 friendly.total() | enemy.total(),
                 BoardMask::MIN,
             ),
         };
+
+        // let mask = match metadata.to_move {
+        //     Color::White => slide_move_attacks(
+        //         BoardMask::MIN,
+        //         WHITE_PAWN_MOVES.at(from),
+        //         friendly.total() | enemy.total(),
+        //     ),
+        //     Color::Black => slide_move_attacks(
+        //         WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
+        //         BoardMask::MIN,
+        //         friendly.total() | enemy.total(),
+        //     ),
+        // } & !(friendly.total() | enemy.total());
 
         for dst in Bits(mask) {
             let mv = from.to(dst);
@@ -195,12 +218,12 @@ pub fn pawn_captures(
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
             Color::White => {
-                WHITE_PAWN_CAPTURE.at(from) & (enemy.total() | bit(metadata.en_passant))
+                WHITE_PAWN_CAPTURE.at(from) 
             }
             Color::Black => {
-                BLACK_PAWN_CAPTURE.at(from) & (enemy.total() | bit(metadata.en_passant))
+                WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes()
             }
-        };
+        } & (enemy.total() | bit(metadata.en_passant));
 
         for dst in Bits(mask) {
             let mv = from.to(dst);

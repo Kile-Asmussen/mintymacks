@@ -36,5 +36,5 @@ mod zobrist;
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 fn main() {
-    BitBoard::startpos().enumerate(8).print();
+    BitBoard::startpos().enumerate(7).print();
 }

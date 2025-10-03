@@ -1,35 +1,35 @@
 use crate::{
     bits::{
-        Bits, BoardMask, bit, board::HalfBitBoard, jumps, slide_move_stop_negative,
-        slide_move_stop_positive, slides, two_bits,
+        bit, board::HalfBitBoard, jumps::{self, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, slide_move_attacks, slide_move_stop_negative, slide_move_stop_positive, slides::{self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST}, two_bits, Bits, BoardMask
     },
-    model::{Color, ChessPiece, Square, moves::PseudoMove},
+    model::{moves::PseudoMove, ChessPiece, Color, Square},
 };
 
 pub fn pawn_threats(p: BoardMask, c: Color) -> BoardMask {
-    let jumps = match c {
-        Color::White => &jumps::WHITE_PAWN_CAPTURE,
-        Color::Black => &jumps::BLACK_PAWN_CAPTURE,
-    };
-
-    jumps.overlay(p)
+    match c {
+        Color::White => WHITE_PAWN_CAPTURE.overlay(p),
+        Color::Black => WHITE_PAWN_CAPTURE.overlay(p.swap_bytes()).swap_bytes(),
+    }
 }
 
 pub fn knight_threats(n: BoardMask) -> BoardMask {
-    jumps::KNIGHT_MOVES.overlay(n)
+    KNIGHT_MOVES.overlay(n)
 }
 
 pub fn king_threats(k: BoardMask) -> BoardMask {
-    jumps::KING_MOVES.overlay(k)
+    KING_MOVES.overlay(k)
 }
 
 pub fn rook_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Bits(r) {
-        res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_attacks(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total);
+        res |= slide_move_attacks(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total);
+
+        // res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_WEST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTH.at(sq), BoardMask::MIN, total);
     }
     res
 }
@@ -37,10 +37,13 @@ pub fn rook_threats(r: BoardMask, total: BoardMask) -> BoardMask {
 pub fn bishop_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Bits(r) {
-        res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_attacks(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total);
+        res |= slide_move_attacks(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total);
+
+        // res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTHEAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTHWEST.at(sq), BoardMask::MIN, total);
     }
     res
 }
@@ -48,14 +51,19 @@ pub fn bishop_threats(r: BoardMask, total: BoardMask) -> BoardMask {
 pub fn queen_threats(r: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Bits(r) {
-        res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_EAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTH.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHWEST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
-        res |= slide_move_stop_negative(slides::RAYS_NORTHEAST.at(sq.rotate()).reverse_bits(), BoardMask::MIN, total);
+        res |= slide_move_attacks(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total);
+        res |= slide_move_attacks(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total);
+        res |= slide_move_attacks(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total);
+        res |= slide_move_attacks(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total);
+
+        // res |= slide_move_stop_positive(slides::RAYS_NORTH.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_positive(slides::RAYS_EAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_WEST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTH.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_positive(slides::RAYS_NORTHEAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_positive(slides::RAYS_NORTHWEST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTHEAST.at(sq), BoardMask::MIN, total);
+        // res |= slide_move_stop_negative(slides::RAYS_SOUTHWEST.at(sq), BoardMask::MIN, total);
     }
     res
 }

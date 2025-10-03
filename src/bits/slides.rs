@@ -4,34 +4,42 @@ use crate::{
     model::{Color, Dir, BoardRank, Square},
 };
 
-pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Dir::East, &Square::EAST);
-pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Dir::North, &Square::NORTH);
+pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Dir::East);
+pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Dir::North);
+pub const RAYS_WEST: ArrayBoard<BoardMask> = build_slideboard(Dir::West);
+pub const RAYS_SOUTH: ArrayBoard<BoardMask> = build_slideboard(Dir::South);
 
 pub const RAYS_NORTHEAST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::NorthEast, &Square::NORTHEAST);
-pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::NorthWest, &Square::NORTHWEST);
+    build_slideboard(Dir::NorthEast);
+pub const RAYS_SOUTHEAST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::SouthEast);
 
-pub const fn build_slideboard(dir: Dir, max: &ArrayBoard<i8>) -> ArrayBoard<BoardMask> {
+pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::NorthWest);
+pub const RAYS_SOUTHWEST: ArrayBoard<BoardMask> =
+    build_slideboard(Dir::SouthWest);
+
+pub const fn build_slideboard(dir: Dir) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
     let mut it = Some(Square::a1);
 
     while let Some(sq) = it {
-        res.set(sq, build_slidemask(dir, max.at(sq), sq));
+        res.set(sq, build_slidemask(dir, sq));
         it = sq.next();
     }
 
     res
 }
 
-pub const fn build_slidemask(dir: Dir, max: i8, sq: Square) -> BoardMask {
+pub const fn build_slidemask(dir: Dir, sq: Square) -> BoardMask {
     let mut res = BoardMask::MIN;
     let mut n = 1;
-    while let Some(s) = Square::new(sq.ix() + (dir as i8) * n)
-        && n <= max
+    let mut sq = sq.go(&[dir]);
+    while let Some(s) = sq
     {
         res |= s.bit();
         n += 1;
+        sq = s.go(&[dir])
     }
     res
 }
@@ -100,7 +108,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_EAST.at(Square::d4.rotate()).reverse_bits(),
+        RAYS_WEST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -114,7 +122,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTH.at(Square::d4.rotate()).reverse_bits(),
+        RAYS_SOUTH.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -156,7 +164,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTHWEST.at(Square::d4.rotate()).reverse_bits(),
+        RAYS_SOUTHEAST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,
@@ -170,7 +178,7 @@ fn slidemask_correct() {
     );
 
     assert_eq!(
-        RAYS_NORTHEAST.at(Square::d4.rotate()).reverse_bits(),
+        RAYS_SOUTHWEST.at(Square::d4),
         mask([
             0b_00000000,
             0b_00000000,

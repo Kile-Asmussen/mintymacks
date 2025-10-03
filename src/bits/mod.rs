@@ -6,7 +6,9 @@ pub mod slides;
 pub mod tests;
 pub mod threats;
 
-use crate::model::{BoardFile, BoardRank, Square, moves::PseudoMove};
+use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
+
+use crate::{arrays::ArrayBoard, bits::slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST}, model::{moves::PseudoMove, BoardFile, BoardRank, ChessPiece, Square}};
 
 pub type BoardMask = u64;
 
@@ -120,6 +122,53 @@ pub const fn slide_move_stop_negative(
         capturable.reverse_bits(),
     )
     .reverse_bits()
+}
+
+#[inline]
+pub const fn slide_move_attacks(
+    neg_ray: BoardMask,
+    pos_ray: BoardMask,
+    occupied: BoardMask
+) -> BoardMask {
+    let neg_hit = neg_ray & occupied;
+    let pos_hit = pos_ray & occupied;
+    let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
+    let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
+    return (neg_ray | pos_ray) & diff;
+}
+
+#[test]
+fn aergsrdtg() {
+    println!("{}", show_mask(RAYS_NORTH.at(Square::a1)));
+}
+
+#[test]
+fn slide_move_equivalence() {
+
+    let mut rng = SmallRng::from_seed(*b"3.141592653589793238462643383279");
+
+    for _ in 0..1000000 {
+        for rays in [&RAYS_NORTH, &RAYS_EAST, &RAYS_NORTHEAST, &RAYS_NORTHWEST] {   
+            slide_move_equiv(Square::new(rng.random_range(0..63)).unwrap(), 
+            rng.next_u64()
+            ,
+            rng.next_u64()
+            , rays);
+        }
+    }
+
+    fn slide_move_equiv(square: Square, friendly: BoardMask, enemy: BoardMask, rays: &ArrayBoard<BoardMask>) {
+
+        let friendly = friendly | square.bit();
+
+        let pos_ray = rays.at(square);
+        let neg_ray = rays.at(square.reverse()).reverse_bits();
+
+        let old = slide_move_stop_positive(pos_ray, friendly, enemy) | slide_move_stop_negative(neg_ray, friendly, enemy);
+        let new = slide_move_attacks(neg_ray, pos_ray, friendly | enemy) & !friendly;
+
+        assert_eq!(old, new);
+    } 
 }
 
 #[test]

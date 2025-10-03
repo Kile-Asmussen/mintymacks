@@ -28,7 +28,48 @@ fn parse_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(U, &'a [&'a str])
     }
 }
 
+fn parse_until_uci<'a, U : Uci, T : Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a [&'a str])> {
+    let mut res = vec![];
+    loop {
+        if input.is_empty() || T::parse_direct(input).is_some() {
+            break;
+        } else if let Some((val, rest)) = parse_uci(input) {
+            input = rest;
+            res.push(val);
+        } else {
+            break;
+        }
+    }
+    Some((res, input))
+}
+
+fn parse_many_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a [&'a str])> {
+        let mut res = vec![];
+    loop {
+        if input.is_empty() {
+            break;
+        } else if let Some((val, rest)) = parse_uci(input) {
+            input = rest;
+            res.push(val);
+        } else {
+            break;
+        }
+    }
+    Some((res, input))
+}
+
+
 fn literal_uci<'a>(lit: &'a str, mut input: &'a [&'a str]) -> Option<&'a [&'a str]> {
+    if input.is_empty() {
+            return None;
+    } else if input[0] == lit {
+        return Some((&input[1..]));
+    } else {
+        return None;
+    }
+}
+
+fn find_literal_uci<'a>(lit: &'a str, mut input: &'a [&'a str]) -> Option<&'a [&'a str]> {
     loop {
         if input.is_empty() {
             return None;
@@ -40,7 +81,7 @@ fn literal_uci<'a>(lit: &'a str, mut input: &'a [&'a str]) -> Option<&'a [&'a st
     }
 }
 
-fn token_uci<'a>(input: &'a [&'a str]) -> Option<(String, &'a [&'a str])> {
+fn next_uci_token<'a>(input: &'a [&'a str]) -> Option<(String, &'a [&'a str])> {
     if input.is_empty() {
         return None;
     } else {
@@ -48,7 +89,7 @@ fn token_uci<'a>(input: &'a [&'a str]) -> Option<(String, &'a [&'a str])> {
     }
 }
 
-fn until_uci<'a>(stop: &'a str, input: &'a [&'a str]) -> Option<(&'a [&'a str], &'a [&'a str])> {
+fn split_at_uci<'a>(stop: &'a str, input: &'a [&'a str]) -> Option<(&'a [&'a str], &'a [&'a str])> {
     if let Some(pos) = input.iter().position(|s| *s == stop) {
         Some((&input[..pos], &input[pos..]))
     } else {
@@ -146,23 +187,6 @@ impl<U : Uci> Uci for &[U] {
     }
 }
 
-impl<U : Uci> Uci for Vec<U> {
-    fn print(&self, output: &mut Vec<String>) {
-        for x in self {
-            x.print(output);
-        }
-    }
-
-    fn parse_direct<'a>(mut input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        let mut res = vec![];
-        while let Some((x, rest)) = parse_uci(input) {
-            res.push(x);
-            input = rest;
-        }
-        Some((res, input))
-    }
-}
-
 impl<U : Uci> Uci for Option<U> {
     fn print(&self, output: &mut Vec<String>) {
         match self {
@@ -171,13 +195,13 @@ impl<U : Uci> Uci for Option<U> {
         }
     }
 
-    fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        if let Some((res, rest)) = parse_uci(input) {
-            Some((Some(res), rest))
-        } else {
-            Some((None, input))
-        }
-    }
+    // fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
+    //     if let Some((res, rest)) = U::parse_direct(input) {
+    //         Some((Some(res), rest))
+    //     } else {
+    //         Some((None, input))
+    //     }
+    // }
 }
 
 pub type LongAlg = (PseudoMove, Option<ChessPiece>);

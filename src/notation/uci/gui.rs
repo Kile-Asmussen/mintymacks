@@ -1,10 +1,10 @@
 use core::time;
 use std::{fmt::Write, iter::Inspect};
 
-use crate::{bits::board::BitBoard, notation::{fen::{parse_fen, render_fen}, uci::{literal_uci, parse_uci, token_uci, until_uci, Line, Uci}}, print_uci};
+use crate::{bits::board::BitBoard, notation::{fen::{parse_fen, render_fen}, uci::{find_literal_uci, literal_uci, next_uci_token, parse_many_uci, parse_uci, split_at_uci, Line, Uci}}, print_uci};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum UciGui {
+pub enum UciGui {
     Uci(),
     Debug(bool),
     IsReady(),
@@ -44,7 +44,7 @@ impl Uci for UciGui {
             Self::Go(go_command) => print_uci!(output, "go", go_command),
             Self::PonderHit() => print_uci!(output, "ponderhit"),
             Self::Position(position_string, moves) if moves.is_empty() => print_uci!(output, "position", position_string),
-            Self::Position(position_string, moves) => print_uci!(output, "position", position_string, "moves", moves),
+            Self::Position(position_string, moves) => print_uci!(output, "position", position_string, "moves", &moves[..]),
             Self::Quit() => print_uci!(output, "quit"),
             Self::Register(registration) => print_uci!(output, "register", registration),
             Self::Stop() => print_uci!(output, "stop"),
@@ -77,36 +77,41 @@ impl Uci for UciGui {
         }
 
         if let Some(input) = literal_uci("debug", input) {
-            if let Some(input) = literal_uci("on", input) {
+            if let Some(input) = find_literal_uci("on", input) {
                 return Some((Self::Debug(true), input));
             }
 
-            if let Some(input) = literal_uci("off", input) {
-                return Some((Self::Debug(true), input));
+            if let Some(input) = find_literal_uci("off", input) {
+                return Some((Self::Debug(false), input));
             }
 
             return None;
         }
 
         if let Some(input) = literal_uci("setoption", input)
-        && let Some((name, input)) = token_uci(input) {
-            if let Some(input) = literal_uci("value", input) {
+        && let Some((name, input)) = next_uci_token(input) {
+            if let Some(input) = find_literal_uci("value", input) {
                 return Some((Self::SetOption(name, Some(input.join(" "))), &[]));
             }
 
             return Some((Self::SetOption(name, None), input));
         }
 
-        if let Some(input) = literal_uci("stop", input)
+        if let Some(input) = literal_uci("register", input)
         && let Some((registration, input)) = parse_uci(input) {
             return Some((Self::Register(registration), input));
+        }
+
+        if let Some(input) = literal_uci("go", input)
+        && let Some((go, input)) = parse_uci(input) {
+            return Some((Self::Go(go), input));
         }
 
         if let Some(input) = literal_uci("position", input)
         && let Some((position, input)) = parse_uci(input) {
 
-            if let Some(input) = literal_uci("moves", input)
-            && let Some((moves, input)) = parse_uci(input) {
+            if let Some(input) = find_literal_uci("moves", input)
+            && let Some((moves, input)) = parse_many_uci(input) {
                 return Some((Self::Position(position, moves), input));    
             }
 
@@ -119,7 +124,7 @@ impl Uci for UciGui {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum GoCommand {
+pub enum GoCommand {
     SearchMoves(Line),
     Ponder(),
     Time(TimeControl),
@@ -128,12 +133,13 @@ enum GoCommand {
     Mate(u64),
     Movetime(u64),
     Infinite(),
+    Perft(Option<u64>)
 }
 
 impl Uci for GoCommand {
     fn print(&self, output: &mut Vec<String>) {
         match self {
-            Self::SearchMoves(moves) => print_uci!(output, "searchmoves", moves),
+            Self::SearchMoves(moves) => print_uci!(output, "searchmoves", &moves[..]),
             Self::Ponder() => print_uci!(output, "ponder"),
             Self::Time(time_control) => print_uci!(output, time_control),
             Self::Depth(n) => print_uci!(output, "depth", n),
@@ -141,6 +147,7 @@ impl Uci for GoCommand {
             Self::Mate(n) => print_uci!(output, "mate", n),
             Self::Movetime(n) => print_uci!(output, "movetime", n),
             Self::Infinite() => print_uci!(output, "infinite"),
+            Self::Perft(n) => print_uci!(output, "perft", n)
         }
     }
 
@@ -173,17 +180,34 @@ impl Uci for GoCommand {
             return Some((Self::Movetime(n), input));
         }
 
+        if let Some(input) = literal_uci("perft", input) {
+            if let Some((n, input)) = parse_uci(input) {
+                return Some((Self::Perft(Some(n)), input));
+            } else {   
+                return Some((Self::Perft(None), input));
+            }
+        }
+
+        if let Some(input) = literal_uci("searchmoves", input)
+        && let Some((moves, input)) = parse_many_uci(input) {
+            return Some((Self::SearchMoves(moves), input));
+        }
+
+        if let Some((tc, input)) = parse_uci(input) {
+            return Some((Self::Time(tc), input))
+        }
+
         None
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct TimeControl {
-    wtime: u64,
-    btime: u64,
-    winc: u64,
-    binc: u64,
-    moves_to_go: u64
+pub struct TimeControl {
+    pub wtime: u64,
+    pub btime: u64,
+    pub winc: u64,
+    pub binc: u64,
+    pub moves_to_go: u64
 }
 
 impl Uci for TimeControl {
@@ -215,15 +239,15 @@ impl Uci for TimeControl {
             return None;
         }
 
-        let (wtime, input1) = literal_uci("wtime", input).and_then(|i| parse_uci(input)).unwrap_or((0, input));
+        let (wtime, input1) = find_literal_uci("wtime", input).and_then(|i| parse_uci(i)).unwrap_or((0, input));
 
-        let (btime, input2) = literal_uci("btime", input).and_then(|i| parse_uci(input)).unwrap_or((0, input));
+        let (btime, input2) = find_literal_uci("btime", input).and_then(|i| parse_uci(i)).unwrap_or((0, input));
 
-        let (winc, input3) = literal_uci("winc", input).and_then(|i| parse_uci(input)).unwrap_or((0, input));
+        let (winc, input3) = find_literal_uci("winc", input).and_then(|i| parse_uci(i)).unwrap_or((0, input));
 
-        let (binc, input4) = literal_uci("binc", input).and_then(|i| parse_uci(input)).unwrap_or((0, input));
+        let (binc, input4) = find_literal_uci("binc", input).and_then(|i| parse_uci(i)).unwrap_or((0, input));
 
-        let (moves_to_go, input5) = literal_uci("moves_to_go", input).and_then(|i| parse_uci(input)).unwrap_or((0, input));
+        let (moves_to_go, input5) = find_literal_uci("movestogo", input).and_then(|i| parse_uci(i)).unwrap_or((0, input));
 
         let inputs = [input1, input2, input3, input4, input5];
         let input = inputs.iter().min_by_key(|s| s.len())?;
@@ -233,7 +257,7 @@ impl Uci for TimeControl {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum PositionString {
+pub enum PositionString {
     Fen(BitBoard, u16),
     Startpos()
 }
@@ -252,7 +276,7 @@ impl Uci for PositionString {
         }
 
         if let Some(input) = literal_uci("fen", input)
-        && let Some((fen, input)) = until_uci("moves", input)
+        && let Some((fen, input)) = split_at_uci("moves", input)
         && let Some((fen, halfmove)) = parse_fen(&fen.join(" ")).ok() {
             return Some((Self::Fen(fen, halfmove), input))
         }
@@ -262,7 +286,7 @@ impl Uci for PositionString {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Registration {
+pub enum Registration {
     Later(),
     NameCode(String, String),
 }
@@ -281,8 +305,8 @@ impl Uci for Registration {
         }
 
         if let Some(input) = literal_uci("name", input)
-        && let Some((name, input)) = until_uci("code", input)
-        && let Some(input) = literal_uci("code", input) {
+        && let Some((name, input)) = split_at_uci("code", input)
+        && let Some(input) = find_literal_uci("code", input) {
             return Some((Self::NameCode(name.join(" "), input.join(" ")), input))
         }
 

@@ -1,4 +1,8 @@
-use crate::{bits::{Bits, BoardMask}, model::{BoardFile, BoardRank, ChessPiece}, notation::uci::{engine::*, literal_uci, parse_uci, token_uci, LongAlg, Uci}};
+use std::fmt::Debug;
+
+use rand::{rngs::SmallRng, Rng, SeedableRng};
+
+use crate::{bits::{Bits, BoardMask}, model::{BoardFile, BoardRank, ChessPiece, Square}, notation::uci::{engine::*, find_literal_uci, gui::{GoCommand, Registration, TimeControl, UciGui}, next_uci_token, parse_uci, LongAlg, Uci}};
 
 use super::engine;
 
@@ -6,26 +10,55 @@ fn roundtrip_render_parse_uci_engine(val: UciEngine) {
     assert_eq!(UciEngine::from_str(&val.to_string()), Some(val.clone()), "{}", val.to_string())
 }
 
-fn roundtrip_parse_uci_engine(val: &str) {
-    assert_eq!(UciEngine::from_str(val).map(|s| s.to_string()), Some(val.to_string()), );
+fn roundtrip_render_parse_uci_gui(val: UciGui) {
+    assert_eq!(UciGui::from_str(&val.to_string()), Some(val.clone()), "{}", val.to_string())
+}
+
+fn insert_random_errors<U: Uci + Clone + Examples + PartialEq + Debug, F: FnMut(&U) -> bool>(rng: &mut SmallRng, mut skip: F) {
+     for ex in U::examples() {
+        if skip(&ex) { continue; }
+        for _ in 0..10 {
+            let mut test = vec![];
+            ex.clone().print(&mut test);
+            for _ in 0..rng.random_range(1..=3) {
+                test.insert(rng.random_range(0..test.len()), "XXXX".to_string());
+            } 
+            let x = test.join(" ");
+            let mest = test.iter().map(|x| &x[..]).collect::<Vec<_>>();
+            assert_eq!(Some(ex.clone()), parse_uci(&mest[..]).map(|(x,_)|x), "{}", x);
+        }
+     }
 }
 
 #[test]
-fn test() {
-    let x = "b2b5 d2g1 e2e6 f2f1 f2f1q f2f1r f2f1b f2f1n g2c3 h2h7 score upperbound cp -1000".split(" ").collect::<Vec<_>>();
-
-    let (x, rest) : (Vec<LongAlg>, _) = parse_uci(&x).unwrap();
-
-    println!("{:?}", x);
-    println!("{:?}", rest);
-    
-}
-
-#[test]
-fn roundtrip_1() {
+fn roundtrip() {
     for ue in UciEngine::examples() {
         roundtrip_render_parse_uci_engine(ue)
     }
+
+    for ug in UciGui::examples() {
+        roundtrip_render_parse_uci_gui(ug)
+    }
+}
+
+#[test]
+fn resilience_tests() {
+
+    insert_random_errors::<UciEngine, _>(&mut SmallRng::from_seed(
+            *b"3.141592653589793238462643383279"),
+            |x| match x {
+                UciEngine::Id(_) => true,
+                _ => false
+            }
+        );
+
+    insert_random_errors::<UciGui, _>(&mut SmallRng::from_seed(
+            *b"3.141592653589793238462643383279"),
+            |x| match x {
+                UciGui::Register(_) => true,
+                _ => false
+            }
+        );
 }
 
 trait Examples : Sized {
@@ -53,10 +86,20 @@ impl Examples for UciEngine {
             res.push(Id(id));
         }
 
-        for id in InfoString::examples().chunks_exact(6) {
-            res.push(Info(vec![id[0].clone()]));
-            res.push(Info(vec![id[1].clone(), id[2].clone()]));
-            res.push(Info(vec![id[3].clone(), id[4].clone(), id[5].clone()]));
+        for id in InfoString::examples() {
+            res.push(Info(vec![id]));
+        }
+
+        for ids in InfoString::examples().chunks_exact(2) {
+            res.push(Info(ids.into_iter().map(Clone::clone).collect::<Vec<_>>()));
+        }
+
+        for ids in InfoString::examples().chunks_exact(3) {
+            res.push(Info(ids.into_iter().map(Clone::clone).collect::<Vec<_>>()));
+        }
+
+        for ids in InfoString::examples().chunks_exact(10) {
+            res.push(Info(ids.into_iter().map(Clone::clone).collect::<Vec<_>>()));
         }
 
         res
@@ -221,6 +264,71 @@ impl Examples for ScoreString {
             Centipawns(1000),
             MateIn(1),
             MateIn(11),
+        ]
+    }
+}
+
+
+impl Examples for UciGui {
+    fn examples() -> Vec<Self> {
+        use UciGui::*;
+        let mut res = vec![
+            Uci(),
+            IsReady(),
+            UciNewGame(),
+            PonderHit(),
+            Quit(),
+            Stop(),
+            Register(Registration::Later()),
+            Register(Registration::NameCode("hello there".to_string(), "benkenobi".to_string())),
+            Debug(false),
+            Debug(true),
+        ];
+
+        for go in GoCommand::examples() {
+            res.push(Go(go))
+        }
+        
+        res 
+    }
+}
+
+impl Examples for GoCommand {
+    fn examples() -> Vec<Self> {
+        use GoCommand::*;
+        let mut res = vec![
+            SearchMoves(LongAlg::examples()),
+            Ponder(),
+            Depth(1),
+            Depth(10),
+            Nodes(100),
+            Nodes(10000),
+            Mate(1),
+            Mate(10),
+            Infinite(),
+            Perft(None),
+            Perft(Some(10))
+        ];
+
+        for tc in TimeControl::examples() {
+            res.push(Time(tc));
+        }
+
+        res
+    }
+}
+
+impl Examples for TimeControl {
+    fn examples() -> Vec<Self> {
+        vec![
+            TimeControl { wtime: 100, btime: 100, winc: 000, binc: 000, moves_to_go: 00 },
+            TimeControl { wtime: 100, btime: 100, winc: 100, binc: 000, moves_to_go: 00 },
+            TimeControl { wtime: 100, btime: 100, winc: 000, binc: 100, moves_to_go: 00 },
+            TimeControl { wtime: 100, btime: 100, winc: 100, binc: 100, moves_to_go: 00 },
+            TimeControl { wtime: 100, btime: 100, winc: 000, binc: 000, moves_to_go: 10 },
+            TimeControl { wtime: 100, btime: 100, winc: 100, binc: 000, moves_to_go: 10 },
+            TimeControl { wtime: 100, btime: 100, winc: 000, binc: 100, moves_to_go: 10 },
+            TimeControl { wtime: 100, btime: 100, winc: 100, binc: 100, moves_to_go: 10 },
         ]
     }
 }
