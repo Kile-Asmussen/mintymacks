@@ -52,11 +52,6 @@ impl<T: Copy> ArrayBoard<T> {
     pub const fn iter<'a>(&'a self) -> ByteBoardIter<'a, T> {
         ByteBoardIter(Some(Square::a1), self)
     }
-
-    pub const fn reverse(mut self) -> Self {
-        self.0.reverse();
-        self
-    }
 }
 
 impl<'a, T: Copy> IntoIterator for &'a ArrayBoard<T> {

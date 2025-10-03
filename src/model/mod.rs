@@ -52,10 +52,6 @@ impl Square {
         }
     }
 
-    pub const fn reverse(self) -> Self {
-        Self(unsafe { NonZeroI8::new_unchecked(65 - self.0.get()) })
-    }
-
     pub const fn swap(self) -> Self {
         Self(unsafe { NonZeroI8::new_unchecked((0x38 ^ (self.0.get() - 1)) + 1) })
     }

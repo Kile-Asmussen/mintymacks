@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        bit, board::HalfBitBoard, jumps::{self, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, slide_move_attacks, slide_move_stop_negative, slide_move_stop_positive, slides::{self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST}, two_bits, Bits, BoardMask
+        bit, board::HalfBitBoard, jumps::{self, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, slide_move_attacks, slides::{self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST}, two_bits, Bits, BoardMask
     },
     model::{moves::PseudoMove, ChessPiece, Color, Square},
 };

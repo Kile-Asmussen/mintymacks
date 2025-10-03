@@ -94,36 +94,6 @@ pub fn show_mask(m: BoardMask) -> String {
 ])", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7]}
 }
 
-pub const fn slide_move_stop_positive(
-    move_mask: BoardMask,
-    uncapturable: BoardMask,
-    capturable: BoardMask,
-) -> BoardMask {
-    let uncapturable_on_move_mask = move_mask & uncapturable;
-    let capturable_on_move_mask = move_mask & capturable;
-
-    let allowed_by_uncapturable =
-        move_mask & ((uncapturable_on_move_mask.wrapping_sub(1)) & !uncapturable_on_move_mask);
-    let allowed_by_capturable =
-        move_mask & ((capturable_on_move_mask.wrapping_sub(1)) ^ capturable_on_move_mask);
-    let allowed = allowed_by_capturable & allowed_by_uncapturable;
-
-    allowed
-}
-
-pub const fn slide_move_stop_negative(
-    move_mask: BoardMask,
-    uncapturable: BoardMask,
-    capturable: BoardMask,
-) -> BoardMask {
-    slide_move_stop_positive(
-        move_mask.reverse_bits(),
-        uncapturable.reverse_bits(),
-        capturable.reverse_bits(),
-    )
-    .reverse_bits()
-}
-
 #[inline]
 pub const fn slide_move_attacks(
     neg_ray: BoardMask,
@@ -135,40 +105,6 @@ pub const fn slide_move_attacks(
     let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
     let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
     return (neg_ray | pos_ray) & diff;
-}
-
-#[test]
-fn aergsrdtg() {
-    println!("{}", show_mask(RAYS_NORTH.at(Square::a1)));
-}
-
-#[test]
-fn slide_move_equivalence() {
-
-    let mut rng = SmallRng::from_seed(*b"3.141592653589793238462643383279");
-
-    for _ in 0..1000000 {
-        for rays in [&RAYS_NORTH, &RAYS_EAST, &RAYS_NORTHEAST, &RAYS_NORTHWEST] {   
-            slide_move_equiv(Square::new(rng.random_range(0..63)).unwrap(), 
-            rng.next_u64()
-            ,
-            rng.next_u64()
-            , rays);
-        }
-    }
-
-    fn slide_move_equiv(square: Square, friendly: BoardMask, enemy: BoardMask, rays: &ArrayBoard<BoardMask>) {
-
-        let friendly = friendly | square.bit();
-
-        let pos_ray = rays.at(square);
-        let neg_ray = rays.at(square.reverse()).reverse_bits();
-
-        let old = slide_move_stop_positive(pos_ray, friendly, enemy) | slide_move_stop_negative(neg_ray, friendly, enemy);
-        let new = slide_move_attacks(neg_ray, pos_ray, friendly | enemy) & !friendly;
-
-        assert_eq!(old, new);
-    } 
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use crate::{
     bits::{
-        self, bit, board::{BitBoard, HalfBitBoard}, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, show_mask, slide_move_attacks, slide_move_stop_negative, slide_move_stop_positive, slides::{
+        self, bit, board::{BitBoard, HalfBitBoard}, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, show_mask, slide_move_attacks, slides::{
             BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES
         }, Bits, BoardMask
     },
@@ -175,30 +175,17 @@ pub fn pawn_moves(
 ) {
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
-            Color::White => slide_move_stop_positive(
+            Color::White => slide_move_attacks(
+                BoardMask::MIN,
                 WHITE_PAWN_MOVES.at(from),
                 friendly.total() | enemy.total(),
-                BoardMask::MIN,
             ),
-            Color::Black => slide_move_stop_negative(
+            Color::Black => slide_move_attacks(
                 WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
-                friendly.total() | enemy.total(),
                 BoardMask::MIN,
+                friendly.total() | enemy.total(),
             ),
-        };
-
-        // let mask = match metadata.to_move {
-        //     Color::White => slide_move_attacks(
-        //         BoardMask::MIN,
-        //         WHITE_PAWN_MOVES.at(from),
-        //         friendly.total() | enemy.total(),
-        //     ),
-        //     Color::Black => slide_move_attacks(
-        //         WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
-        //         BoardMask::MIN,
-        //         friendly.total() | enemy.total(),
-        //     ),
-        // } & !(friendly.total() | enemy.total());
+        } & !(friendly.total() | enemy.total());
 
         for dst in Bits(mask) {
             let mv = from.to(dst);
