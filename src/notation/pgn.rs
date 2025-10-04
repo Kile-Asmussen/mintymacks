@@ -1,9 +1,9 @@
-use std::{collections::HashMap, hash::Hash, time::Duration};
+use std::{collections::HashMap, hash::Hash, time::{Duration, Instant}};
 
 use crate::notation::{algebraic::{self, AlgebraicMove}, regexp};
 
-#[derive(Debug)]
-pub struct PGN {
+#[derive(Debug, Clone)]
+pub struct PGNHeaders {
     pub event: String,
     pub site: String,
     pub date: String,
@@ -18,6 +18,32 @@ pub struct PGN {
     pub mode: Option<String>,
     pub fen: Option<String>,
     pub tag_pairs: HashMap<String, String>,
+}
+
+impl Default for PGNHeaders {
+    fn default() -> Self {
+        Self {
+            event: "N/A".to_string(),
+            site: "N/A".to_string(),
+            date: chrono::Local::now().date_naive().format("yyyy-mm-dd").to_string(),
+            round: "N/A".to_string(),
+            white: "N/A".to_string(),
+            black: "N/A".to_string(),
+            result: "*".to_string(),
+            annotator: None,
+            ply_count: None,
+            time_control: None,
+            termination: None,
+            mode: None,
+            fen: None,
+            tag_pairs: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PGN {
+    pub headers: PGNHeaders,
     pub moves: Vec<MovePair>,
     pub end: String,
 }
@@ -26,22 +52,22 @@ impl PGN {
     pub fn to_string(&self) -> String {
         let mut res = String::new();
 
-        add_tag_pair(&mut res, "Event", Some(&self.event));
-        add_tag_pair(&mut res, "Site", Some(&self.site));
-        add_tag_pair(&mut res, "Date", Some(&self.date));
-        add_tag_pair(&mut res, "Round", Some(&self.round));
-        add_tag_pair(&mut res, "White", Some(&self.white));
-        add_tag_pair(&mut res, "Black", Some(&self.black));
-        add_tag_pair(&mut res, "Result", Some(&self.result));
+        add_tag_pair(&mut res, "Event", Some(&self.headers.event));
+        add_tag_pair(&mut res, "Site", Some(&self.headers.site));
+        add_tag_pair(&mut res, "Date", Some(&self.headers.date));
+        add_tag_pair(&mut res, "Round", Some(&self.headers.round));
+        add_tag_pair(&mut res, "White", Some(&self.headers.white));
+        add_tag_pair(&mut res, "Black", Some(&self.headers.black));
+        add_tag_pair(&mut res, "Result", Some(&self.headers.result));
 
-        add_tag_pair(&mut res, "Annotator", self.annotator.as_deref());
-        add_tag_pair(&mut res, "PlyCount", self.ply_count.as_deref());
-        add_tag_pair(&mut res, "TimeControl", self.time_control.as_deref());
-        add_tag_pair(&mut res, "Termination", self.termination.as_deref());
-        add_tag_pair(&mut res, "Mode", self.mode.as_deref());
-        add_tag_pair(&mut res, "Fen", self.fen.as_deref());
+        add_tag_pair(&mut res, "Annotator", self.headers.annotator.as_deref());
+        add_tag_pair(&mut res, "PlyCount", self.headers.ply_count.as_deref());
+        add_tag_pair(&mut res, "TimeControl", self.headers.time_control.as_deref());
+        add_tag_pair(&mut res, "Termination", self.headers.termination.as_deref());
+        add_tag_pair(&mut res, "Mode", self.headers.mode.as_deref());
+        add_tag_pair(&mut res, "Fen", self.headers.fen.as_deref());
 
-        for (k, v) in &self.tag_pairs {
+        for (k, v) in &self.headers.tag_pairs {
             add_tag_pair(&mut res, k, Some(v));
         }
         
@@ -77,20 +103,22 @@ impl PGN {
         (
             try {
                 PGN {
-                    event: tag_pairs.remove("Event")?,
-                    site: tag_pairs.remove("Site")?,
-                    date: tag_pairs.remove("Date")?,
-                    round: tag_pairs.remove("Round")?,
-                    white: tag_pairs.remove("White")?,
-                    black: tag_pairs.remove("Black")?,
-                    result: tag_pairs.remove("Result")?,
-                    annotator: tag_pairs.remove("Annotator"),
-                    ply_count: tag_pairs.remove("PlyCount"),
-                    time_control: tag_pairs.remove("TimeControl"),
-                    termination: tag_pairs.remove("Termination"),
-                    mode: tag_pairs.remove("Mode"),
-                    fen: tag_pairs.remove("FEN"),
-                    tag_pairs,
+                    headers: PGNHeaders {
+                        event: tag_pairs.remove("Event")?,
+                        site: tag_pairs.remove("Site")?,
+                        date: tag_pairs.remove("Date")?,
+                        round: tag_pairs.remove("Round")?,
+                        white: tag_pairs.remove("White")?,
+                        black: tag_pairs.remove("Black")?,
+                        result: tag_pairs.remove("Result")?,
+                        annotator: tag_pairs.remove("Annotator"),
+                        ply_count: tag_pairs.remove("PlyCount"),
+                        time_control: tag_pairs.remove("TimeControl"),
+                        termination: tag_pairs.remove("Termination"),
+                        mode: tag_pairs.remove("Mode"),
+                        fen: tag_pairs.remove("FEN"),
+                        tag_pairs,
+                    },
                     moves,
                     end,
                 }

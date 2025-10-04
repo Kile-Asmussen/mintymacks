@@ -11,7 +11,7 @@ use crate::{
 type Result<T> = std::result::Result<T, String>;
 
 pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
-    let parts = fen.split(' ').collect::<Vec<_>>();
+    let parts = fen.split(fen).collect::<Vec<&str>>();
 
     let n_parts = parts.len();
     if n_parts > 6 {
@@ -20,12 +20,21 @@ pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
         return Err(format!("Invalid FEN: Too few components ({n_parts})"));
     }
 
-    let board = parse_fen_board(parts[0])?;
-    let to_move = parse_fen_to_move(parts[1])?;
-    let castling_rights = parse_fen_castling_rights(parts[2])?;
-    let en_passant = parse_fen_en_passant_square(parts[3])?;
-    let halfmove = parse_fen_halfmove_clock(parts[4])?;
-    let turn = parse_fen_turn_counter(parts[5])?;
+    if let ([x], _) = &parts[..].as_chunks() {
+        parse_fen_raw(&x)
+    } else {
+        Err(format!("Invalid FEN: this error shouldn't happen"))
+    }
+}
+
+pub fn parse_fen_raw<S: AsRef<str>>(parts: &[S; 6]) -> Result<(BitBoard, u16)> {
+
+    let board = parse_fen_board(parts[0].as_ref())?;
+    let to_move = parse_fen_to_move(parts[1].as_ref())?;
+    let castling_rights = parse_fen_castling_rights(parts[2].as_ref())?;
+    let en_passant = parse_fen_en_passant_square(parts[3].as_ref())?;
+    let halfmove = parse_fen_halfmove_clock(parts[4].as_ref())?;
+    let turn = parse_fen_turn_counter(parts[5].as_ref())?;
 
     Ok((BitBoard::new(
         &board,

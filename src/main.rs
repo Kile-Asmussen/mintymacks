@@ -30,6 +30,7 @@ mod fuzzing;
 mod model;
 #[macro_use]
 mod notation;
+mod game;
 mod zobrist;
 
 #[global_allocator]

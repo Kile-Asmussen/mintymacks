@@ -164,6 +164,12 @@ impl BitBoard {
     }
 }
 
+impl Default for BitBoard {
+    fn default() -> Self {
+        Self::startpos()
+    }
+}
+
 #[test]
 fn bitboard_sizeof() {
     println!("size {}", size_of::<BitBoard>())

@@ -244,10 +244,13 @@ impl Uci for InfoString {
             return Some((Self::MultiVariation(n), input))
         }
 
-        if let Some(input) = literal_uci("score", input)
-        && let Some((sb, input)) = parse_uci(input)
-        && let Some((ss, input)) = parse_uci(input) {
-            return Some((Self::Score(sb, ss), input))
+        if let Some(input) = literal_uci("score", input) {
+            let (sb, input) = parse_uci(input).unwrap_or((ScoreBound::Precise, input));
+            if let Some((ss, input)) = parse_uci(input) {
+                return Some((Self::Score(sb, ss), input))
+            } else {
+                return None;
+            }
         }
 
         if let Some(input) = literal_uci("pv", input)
@@ -329,8 +332,6 @@ impl Uci for ScoreBound {
             Some((Self::Upper, input))
         } else if let Some(input) = literal_uci("lowerbound", input) {
             Some((Self::Lower, input))
-        } else if !input.iter().any(|c| ["upperbound", "lowerbound"].contains(c)) {
-            Some((Self::Precise, input))
         } else {
             None
         }

@@ -1,5 +1,5 @@
 use core::time;
-use std::{fmt::Write, iter::Inspect};
+use std::{array, fmt::Write, iter::Inspect};
 
 use crate::{bits::board::BitBoard, notation::{fen::{parse_fen, render_fen}, uci::{find_literal_uci, literal_uci, next_uci_token, parse_many_uci, parse_uci, split_at_uci, Line, Uci}}, print_uci};
 
@@ -258,14 +258,14 @@ impl Uci for TimeControl {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PositionString {
-    Fen(BitBoard, u16),
+    Fen([String; 6]),
     Startpos()
 }
 
 impl Uci for PositionString {
     fn print(&self, output: &mut Vec<String>) {
         match self {
-            Self::Fen(fen, halfmove) => print_uci!(output, "fen", render_fen(fen, *halfmove)),
+            Self::Fen(fen) => print_uci!(output, "fen", &fen[..]),
             Self::Startpos() => print_uci!(output, "startpos"),
         }
     }
@@ -276,9 +276,12 @@ impl Uci for PositionString {
         }
 
         if let Some(input) = literal_uci("fen", input)
-        && let Some((fen, input)) = split_at_uci("moves", input)
-        && let Some((fen, halfmove)) = parse_fen(&fen.join(" ")).ok() {
-            return Some((Self::Fen(fen, halfmove), input))
+        && let Some((fen, input)) = split_at_uci("moves", input) {
+            if let (&[x], _) = fen.as_chunks() {
+                return Some((Self::Fen(x.map(|s| s.to_string())), input))
+            } else {
+                return None;
+            }
         }
 
         None
