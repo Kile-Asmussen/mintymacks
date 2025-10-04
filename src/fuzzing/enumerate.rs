@@ -130,3 +130,8 @@ fn enumerate_3() {
 
     res.print();
 }
+
+#[test]
+fn enumerate_7() {
+    BitBoard::startpos().enumerate(7).print();
+}
