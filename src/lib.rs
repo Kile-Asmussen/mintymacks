@@ -16,8 +16,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use stats_alloc::{INSTRUMENTED_SYSTEM, Region, StatsAlloc};
-
 use crate::{
     bits::board::BitBoard,
     fuzzing::stockfish_perft,
@@ -33,9 +31,3 @@ mod notation;
 mod game;
 mod zobrist;
 
-#[global_allocator]
-static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
-
-fn main() {
-    BitBoard::startpos().enumerate(7).print();
-}
