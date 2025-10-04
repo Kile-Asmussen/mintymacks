@@ -6,6 +6,7 @@ pub mod slides;
 pub mod tests;
 pub mod threats;
 pub mod victory;
+pub mod movecount;
 
 use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
 

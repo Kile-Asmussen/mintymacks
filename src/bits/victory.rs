@@ -14,7 +14,10 @@ impl Victory {
 
         let (active, passive) =  board.active_passive(board.metadata.to_move);
 
-        if moves.is_empty() && (active.kings & passive.threats(board.metadata.to_move.opposite(), active.total(), None, None) != 0) {
+        if moves.is_empty() && (active.kings & passive.threats(board.metadata.to_move.opposite(), {
+            let this = &active;
+            this.total
+        }, None, None) != 0) {
             return Some(Self::from_color(board.metadata.to_move.opposite()));
         }
 

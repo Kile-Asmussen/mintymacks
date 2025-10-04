@@ -14,6 +14,13 @@ impl CastlingRights {
         Self(0b_00001111)
     }
 
+    pub const fn get(self, c: Color) -> u8 {
+        match c {
+            Color::White => self.0 & 3,
+            Color::Black => self.0 & 12,
+        }
+    }
+
     pub const fn westward(self, c: Color) -> bool {
         0 != match c {
             Color::White => self.0 & 1,

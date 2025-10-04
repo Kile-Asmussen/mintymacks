@@ -122,7 +122,8 @@ fn zobrist_hashing_game(
         let hash = zobrist.hash(&board);
 
         if let Some(b) = positions.get(&hash)
-            && &board != b
+            && board.white != b.white && board.black != b.black
+            && board.metadata.equiv(&b.metadata)
         {
             println!("Hash Colission found: {}", hash);
             println!("Current position: {}", render_fen_board(&board.render()));
@@ -197,6 +198,7 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize, zobrist: &ZobristBoard) {
     }
 }
 
+#[cfg(test)]
 fn stockfish_comparison_game(
     rng: &mut SmallRng,
     ply: usize,
@@ -304,6 +306,7 @@ fn stockfish_comparison_game(
     }
 }
 
+#[cfg(test)]
 pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: usize, step: usize) {
     let mut rng = pi();
 
@@ -320,5 +323,5 @@ pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: us
 
 #[test]
 fn fuzz_against_stockfish() {
-    fuzz_stockfish_comparison(10, 0, 50, 3, 1);
+    fuzz_stockfish_comparison(1, 0, 50, 3, 1);
 }

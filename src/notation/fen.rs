@@ -5,13 +5,13 @@ use crate::{
     bits::board::BitBoard,
     model::{
         castling::{CastlingDetails, CastlingRights, CLASSIC_CASTLING}, BoardFile, Color, ColoredChessPiece, Square
-    },
+    }, regexp,
 };
 
 type Result<T> = std::result::Result<T, String>;
 
 pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
-    let parts = fen.split(fen).collect::<Vec<&str>>();
+    let parts = regexp!(r"\s+").split(fen).collect::<Vec<&str>>();
 
     let n_parts = parts.len();
     if n_parts > 6 {

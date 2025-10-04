@@ -28,11 +28,13 @@ impl BitBoard {
         self.metadata.unapply(mv);
     }
 
+    #[cfg(test)]
     pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<ChessPiece>)) -> Option<ChessMove> {
         let mut buf = vec![];
         self.pseudomove_internal(mv, &mut buf)
     }
 
+    #[cfg(test)]
     pub fn apply_pseudomoves(
         &mut self,
         mvs: &[(PseudoMove, Option<ChessPiece>)],
@@ -49,6 +51,7 @@ impl BitBoard {
         return res;
     }
 
+    #[cfg(test)]
     fn pseudomove_internal(
         &mut self,
         mv: (PseudoMove, Option<ChessPiece>),
@@ -64,6 +67,7 @@ impl BitBoard {
         }
     }
 
+    #[inline]
     fn apply_no_metadata(&mut self, mv: ChessMove) {
         let cd = self.metadata.castling_details;
         let (act, pas) = self.active_passive_mut(mv.piece.color());
@@ -104,7 +108,8 @@ impl HalfBitBoard {
                 _ => {}
             }
         } else {
-            *self.piece(mv.piece.piece()) ^= mv.pmv.bits()
+            *self.piece(mv.piece.piece()) ^= mv.pmv.bits();
+            self.total ^= mv.pmv.bits();
         }
 
         #[inline]
@@ -119,6 +124,7 @@ impl HalfBitBoard {
     pub fn apply_passive(&mut self, mv: ChessMove) {
         if let Some((p, sq)) = mv.cap {
             *self.piece(p) ^= sq.bit();
+            self.total ^= sq.bit();
         }
     }
 
@@ -145,6 +151,7 @@ impl Metadata {
         }
     }
 
+    #[inline]
     fn unapply(&mut self, mv: ChessMove) {
         self.en_passant = mv.epc;
         self.castling_rights = mv.rights;

@@ -16,6 +16,7 @@ pub struct HalfBitBoard {
     pub rooks: BoardMask,
     pub queens: BoardMask,
     pub kings: BoardMask,
+    pub total: BoardMask
 }
 
 impl HalfBitBoard {
@@ -27,22 +28,24 @@ impl HalfBitBoard {
             rooks: BoardMask::MIN,
             queens: BoardMask::MIN,
             kings: BoardMask::MIN,
+            total: BoardMask::MIN,
         }
     }
     pub const fn new(color: Color, board: &ArrayBoard<Option<ColoredChessPiece>>) -> Self {
-        Self {
+        let mut res = Self {
             pawns: board.mask(color.piece(ChessPiece::Pawn)),
             knights: board.mask(color.piece(ChessPiece::Knight)),
             bishops: board.mask(color.piece(ChessPiece::Bishop)),
             rooks: board.mask(color.piece(ChessPiece::Rook)),
             queens: board.mask(color.piece(ChessPiece::Queen)),
             kings: board.mask(color.piece(ChessPiece::King)),
-        }
+            total: 0,
+        };
+        res.total = res.pawns | res.knights | res.bishops | res.rooks | res.queens | res.kings;
+        res
     }
 
-    pub const fn total(&self) -> BoardMask {
-        self.pawns | self.knights | self.bishops | self.rooks | self.queens | self.kings
-    }
+    
 
     pub const fn at(&self, sq: Square) -> Option<ChessPiece> {
         let sq = sq.bit();

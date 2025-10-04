@@ -18,4 +18,11 @@ impl Metadata {
     pub fn ply(&self) -> u16 {
         (self.turn - 1) * 2 + if self.to_move == Color::Black { 1 } else { 0 }
     }
+
+    pub fn equiv(&self, other: &Self) -> bool {
+        self.to_move == other.to_move
+        && self.castling_rights == other.castling_rights
+        && self.castling_details == other.castling_details
+        && self.en_passant == other.en_passant
+    }
 }

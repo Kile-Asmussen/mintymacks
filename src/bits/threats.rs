@@ -77,7 +77,10 @@ impl HalfBitBoard {
         cap: Option<(ChessPiece, Square)>,
     ) -> BoardMask {
         let enemy = enemy ^ two_bits(mv);
-        let friendly = self.total() ^ bit(cap.map(|(_, s)| s));
+        let friendly = ({
+            let this = &self;
+            this.total
+        }) ^ bit(cap.map(|(_, s)| s));
         let total = friendly | enemy;
 
         return pawn_threats(self.pawns ^ is_cap(ChessPiece::Pawn, cap), c)
