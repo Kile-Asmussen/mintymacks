@@ -541,10 +541,11 @@ pub struct StringType {
 
 impl Uci for StringType {
     fn print(&self, output: &mut Vec<String>) {
-        print_uci!(output, self.default);
+        print_uci!(output, "default", self.default);
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
+        let input = literal_uci("default", input)?;
         Some((Self { default: input.join(" "), value: None }, &[]))
     }
 }
