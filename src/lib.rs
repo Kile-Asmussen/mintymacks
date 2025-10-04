@@ -22,10 +22,10 @@ use crate::{
     model::{Square, castling::CastlingRights, moves::ChessMove},
 };
 
-mod arrays;
-mod bits;
-mod fuzzing;
-mod model;
+pub mod arrays;
+pub mod bits;
+pub mod fuzzing;
+pub mod model;
 #[macro_use]
-mod notation;
-mod zobrist;
+pub mod notation;
+pub mod zobrist;
