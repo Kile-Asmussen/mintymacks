@@ -38,7 +38,7 @@ impl Uci for UciGui {
             Self::Uci() => print_uci!(output, "uci"),
             Self::Debug(b) => print_uci!(output, "debug", (if *b { "on" } else { "off" }) ),
             Self::IsReady() => print_uci!(output, "isready"),
-            Self::SetOption(name, value) => print_uci!(output, "setoption", "name", name, "value", value),
+            Self::SetOption(name, value) => print_uci!(output, "setoption", "name", name, value),
             Self::UciNewGame() => print_uci!(output, "ucinewgame"),
             Self::Go(go_command) => print_uci!(output, "go", go_command),
             Self::PonderHit() => print_uci!(output, "ponderhit"),
@@ -88,13 +88,10 @@ impl Uci for UciGui {
         }
 
         if let Some(input) = literal_uci("setoption", input)
-        && let Some((name, input)) = next_uci_token(input) {
-            if let Some(input) = find_literal_uci("value", input)
-            && let Some((optval, input)) = parse_uci(input) {
-                return Some((Self::SetOption(name, optval), input));
-            }
-
-            return None;
+        && let Some(input) = literal_uci("name", input)
+        && let Some((name, input)) = next_uci_token(input)
+        && let Some((optval, input)) = parse_uci(input) {
+            return Some((Self::SetOption(name, optval), input));
         }
 
         if let Some(input) = literal_uci("register", input)
@@ -135,21 +132,23 @@ impl Uci for OptVal {
     fn print(&self, output: &mut Vec<String>) {
         match self {
             Self::Button() => {}
-            Self::Check(b) => print_uci!(output, b),
-            Self::StringOrCombo(s) => print_uci!(output, s),
-            Self::Spin(n) => print_uci!(output, n),
+            Self::Check(b) => print_uci!(output, "value", b),
+            Self::StringOrCombo(s) => print_uci!(output, "value", s),
+            Self::Spin(n) => print_uci!(output, "value", n),
         }
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        if let Some((b, input)) = parse_uci(input) {
-            return Some((Self::Check(b), input));
-        } else if let Some((n, input)) = parse_uci(input) {
-            return Some((Self::Spin(n), input))
-        } else if input.is_empty() {
-            return Some((Self::Button(), &[]));
+        if let Some(input) = literal_uci("value", input) {
+            if let Some((b, input)) = parse_uci(input) {
+                return Some((Self::Check(b), input));
+            } else if let Some((n, input)) = parse_uci(input) {
+                return Some((Self::Spin(n), input))
+            } else {
+                return Some((Self::StringOrCombo(input.join(" ")), &[]))
+            }
         } else {
-            return Some((Self::StringOrCombo(input.join(" ")), &[]))
+            return Some((Self::Button(), input));
         }
     }
 }

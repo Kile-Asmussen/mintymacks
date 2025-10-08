@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 
-use crate::{bits::{Bits, BoardMask}, model::{BoardFile, BoardRank, ChessPiece, Square}, notation::uci::{engine::*, find_literal_uci, gui::{GoCommand, Registration, TimeControl, UciGui}, next_uci_token, parse_uci, LongAlg, Uci}};
+use crate::{bits::{Bits, BoardMask}, model::{BoardFile, BoardRank, ChessPiece, Square}, notation::uci::{engine::*, find_literal_uci, gui::{GoCommand, OptVal, Registration, TimeControl, UciGui}, next_uci_token, parse_uci, LongAlg, Uci}};
 
 use super::engine;
 
@@ -56,6 +56,7 @@ fn resilience_tests() {
             *b"3.141592653589793238462643383279"),
             |x| match x {
                 UciGui::Register(_) => true,
+                UciGui::SetOption(_, _) => true,
                 _ => false
             }
         );
@@ -285,11 +286,26 @@ impl Examples for UciGui {
             Debug(true),
         ];
 
+        for opt in OptVal::examples() {
+            res.push(SetOption("spam".to_string(), opt))
+        }
+
         for go in GoCommand::examples() {
             res.push(Go(go))
         }
         
         res 
+    }
+}
+
+impl Examples for OptVal {
+    fn examples() -> Vec<Self> {
+        vec![
+            OptVal::Button(),
+            OptVal::StringOrCombo("foo bar".to_string()),
+            OptVal::StringOrCombo("baz".to_string()),
+            OptVal::Spin(22),
+        ]
     }
 }
 
