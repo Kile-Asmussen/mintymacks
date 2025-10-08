@@ -1,6 +1,12 @@
 use std::ops::Deref;
 
-use crate::{notation::uci::{find_literal_uci, literal_uci, next_uci_token, parse_many_uci, parse_uci, parse_until_uci, Line, LongAlg, Uci}, print_uci, regexp};
+use crate::{
+    notation::uci::{
+        Line, LongAlg, Uci, find_literal_uci, literal_uci, next_uci_token, parse_many_uci,
+        parse_uci, parse_until_uci,
+    },
+    print_uci, regexp,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UciEngine {
@@ -18,7 +24,7 @@ impl UciEngine {
     pub fn to_string(&self) -> String {
         let mut res = vec![];
         self.print(&mut res);
-        let mut res= res.join(" ");
+        let mut res = res.join(" ");
         res.push('\n');
         res
     }
@@ -54,32 +60,38 @@ impl Uci for UciEngine {
         }
 
         if let Some(input) = literal_uci("option", input)
-        && let Some((option, input)) = parse_uci(input) {
+            && let Some((option, input)) = parse_uci(input)
+        {
             return Some((Self::Option(option), input));
         }
 
         if let Some(input) = literal_uci("info", input)
-        && let Some((option, input)) = parse_many_uci(input) {
+            && let Some((option, input)) = parse_many_uci(input)
+        {
             return Some((Self::Info(option), input));
         }
 
         if let Some(input) = literal_uci("id", input)
-        && let Some((option, input)) = parse_uci(input) {
+            && let Some((option, input)) = parse_uci(input)
+        {
             return Some((Self::Id(option), input));
         }
 
         if let Some(input) = literal_uci("bestmove", input)
-        && let Some((option, input)) = parse_uci(input) {
+            && let Some((option, input)) = parse_uci(input)
+        {
             return Some((Self::BestMove(option), input));
         }
 
         if let Some(input) = literal_uci("registration", input)
-        && let Some((option, input)) = parse_uci(input) {
+            && let Some((option, input)) = parse_uci(input)
+        {
             return Some((Self::Registration(option), input));
         }
 
         if let Some(input) = literal_uci("copyprotection", input)
-        && let Some((option, input)) = parse_uci(input) {
+            && let Some((option, input)) = parse_uci(input)
+        {
             return Some((Self::CopyProtection(option), input));
         }
 
@@ -91,16 +103,19 @@ impl Uci for UciEngine {
 pub enum AuthResult {
     Checking,
     Error,
-    Ok
+    Ok,
 }
 
 impl Uci for AuthResult {
     fn print(&self, output: &mut Vec<String>) {
-        print_uci!(output, match self {
-            Self::Checking => "checking",
-            Self::Error => "error",
-            Self::Ok => "ok",
-        });
+        print_uci!(
+            output,
+            match self {
+                Self::Checking => "checking",
+                Self::Error => "error",
+                Self::Ok => "ok",
+            }
+        );
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
@@ -136,10 +151,10 @@ impl Uci for BestMove {
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         let (best, input) = parse_uci(input)?;
-        
-        let (ponder, input) =
-        if let Some(input) = find_literal_uci("ponder", input)
-        && let Some((mv, input)) = parse_uci(input) {
+
+        let (ponder, input) = if let Some(input) = find_literal_uci("ponder", input)
+            && let Some((mv, input)) = parse_uci(input)
+        {
             (Some(mv), input)
         } else {
             (None, input)
@@ -205,7 +220,9 @@ impl Uci for InfoString {
             Self::Nodes(n) => print_uci!(output, "nodes", n),
             Self::MultiVariation(n) => print_uci!(output, "multipv", n),
             Self::PrincipleVariation(line) => print_uci!(output, "pv", &line[..]),
-            Self::Score(score_bound, score_string) => print_uci!(output, "score", score_bound, score_string),
+            Self::Score(score_bound, score_string) => {
+                print_uci!(output, "score", score_bound, score_string)
+            }
             Self::CurrentMove(mv) => print_uci!(output, "currmove", mv),
             Self::CurrentMoveNumber(n) => print_uci!(output, "currmovenumber", n),
             Self::HashFullPermill(n) => print_uci!(output, "hashfull", n),
@@ -214,96 +231,115 @@ impl Uci for InfoString {
             Self::ShredderTableBaseHits(n) => print_uci!(output, "sbhits", n),
             Self::CpuLoadPermill(n) => print_uci!(output, "cpuload", n),
             Self::Refutation(mv, line) => print_uci!(output, "refutation", mv, &line[..]),
-            Self::CurrLine(cpu, line) => print_uci!(output, "currline", if *cpu != 0 { Some(*cpu) } else { None }, &line[..]),
+            Self::CurrLine(cpu, line) => print_uci!(
+                output,
+                "currline",
+                if *cpu != 0 { Some(*cpu) } else { None },
+                &line[..]
+            ),
         }
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         if let Some(input) = literal_uci("depth", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::Depth(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::Depth(n), input));
         }
 
         if let Some(input) = literal_uci("seldepth", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::SelDepth(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::SelDepth(n), input));
         }
 
         if let Some(input) = literal_uci("time", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::Time(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::Time(n), input));
         }
 
         if let Some(input) = literal_uci("nodes", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::Nodes(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::Nodes(n), input));
         }
 
         if let Some(input) = literal_uci("multipv", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::MultiVariation(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::MultiVariation(n), input));
         }
 
         if let Some(input) = literal_uci("score", input) {
             let (sb, input) = parse_uci(input).unwrap_or((ScoreBound::Precise, input));
             if let Some((ss, input)) = parse_uci(input) {
-                return Some((Self::Score(sb, ss), input))
+                return Some((Self::Score(sb, ss), input));
             } else {
                 return None;
             }
         }
 
         if let Some(input) = literal_uci("pv", input)
-        && let Some((pv, input)) = parse_until_uci::<LongAlg, InfoString>(input) {
-            return Some((Self::PrincipleVariation(pv), input))
+            && let Some((pv, input)) = parse_until_uci::<LongAlg, InfoString>(input)
+        {
+            return Some((Self::PrincipleVariation(pv), input));
         }
 
         if let Some(input) = literal_uci("currmove", input)
-        && let Some((mv, input)) = parse_uci(input) {
-            return Some((Self::CurrentMove(mv), input))
+            && let Some((mv, input)) = parse_uci(input)
+        {
+            return Some((Self::CurrentMove(mv), input));
         }
 
         if let Some(input) = literal_uci("currmovenumber", input)
-        && let Some((mv, input)) = parse_uci(input) {
-            return Some((Self::CurrentMoveNumber(mv), input))
+            && let Some((mv, input)) = parse_uci(input)
+        {
+            return Some((Self::CurrentMoveNumber(mv), input));
         }
 
         if let Some(input) = literal_uci("hashfull", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::HashFullPermill(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::HashFullPermill(n), input));
         }
 
         if let Some(input) = literal_uci("nps", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::NodesPerSecond(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::NodesPerSecond(n), input));
         }
 
         if let Some(input) = literal_uci("tbhits", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::TableBaseHits(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::TableBaseHits(n), input));
         }
 
         if let Some(input) = literal_uci("sbhits", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::ShredderTableBaseHits(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::ShredderTableBaseHits(n), input));
         }
 
         if let Some(input) = literal_uci("cpuload", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::CpuLoadPermill(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::CpuLoadPermill(n), input));
         }
 
         if let Some(input) = literal_uci("refutation", input)
-        && let Some((mv, input)) = parse_uci(input)
-        && let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input) {
-            return Some((Self::Refutation(mv, line), input))
+            && let Some((mv, input)) = parse_uci(input)
+            && let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input)
+        {
+            return Some((Self::Refutation(mv, line), input));
         }
 
         if let Some(input) = literal_uci("currline", input) {
-
-            if let Some((cpu, input)) = parse_uci::<u64>(input) 
-            && let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input) {
-                return Some((Self::CurrLine(cpu, line), input))
+            if let Some((cpu, input)) = parse_uci::<u64>(input)
+                && let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input)
+            {
+                return Some((Self::CurrLine(cpu, line), input));
             } else if let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input) {
                 return Some((Self::CurrLine(0, line), input));
             }
@@ -315,7 +351,9 @@ impl Uci for InfoString {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScoreBound {
-    Upper, Lower, Precise
+    Upper,
+    Lower,
+    Precise,
 }
 
 impl Uci for ScoreBound {
@@ -354,13 +392,15 @@ impl Uci for ScoreString {
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         if let Some(input) = literal_uci("cp", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::Centipawns(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::Centipawns(n), input));
         }
 
         if let Some(input) = literal_uci("mate", input)
-        && let Some((n, input)) = parse_uci(input) {
-            return Some((Self::MateIn(n), input))
+            && let Some((n, input)) = parse_uci(input)
+        {
+            return Some((Self::MateIn(n), input));
         }
 
         None
@@ -393,7 +433,7 @@ pub enum OptionType {
     Spin(SpinType),
     Combo(ComboType),
     Button(ButtonType),
-    String(StringType)
+    String(StringType),
 }
 
 impl Uci for OptionType {
@@ -408,31 +448,34 @@ impl Uci for OptionType {
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        
         if let Some(input) = literal_uci("check", input)
-        && let Some((t, input)) = parse_uci(input) {
-            return Some((Self::Check(t), input))
+            && let Some((t, input)) = parse_uci(input)
+        {
+            return Some((Self::Check(t), input));
         }
 
         if let Some(input) = literal_uci("spin", input)
-        && let Some((t, input)) = parse_uci(input) {
-            return Some((Self::Spin(t), input))
+            && let Some((t, input)) = parse_uci(input)
+        {
+            return Some((Self::Spin(t), input));
         }
 
-
         if let Some(input) = literal_uci("combo", input)
-        && let Some((t, input)) = parse_uci(input) {
-            return Some((Self::Combo(t), input))
+            && let Some((t, input)) = parse_uci(input)
+        {
+            return Some((Self::Combo(t), input));
         }
 
         if let Some(input) = literal_uci("button", input)
-        && let Some((t, input)) = parse_uci(input) {
-            return Some((Self::Button(t), input))
+            && let Some((t, input)) = parse_uci(input)
+        {
+            return Some((Self::Button(t), input));
         }
 
         if let Some(input) = literal_uci("string", input)
-        && let Some((t, input)) = parse_uci(input) {
-            return Some((Self::String(t), input))
+            && let Some((t, input)) = parse_uci(input)
+        {
+            return Some((Self::String(t), input));
         }
 
         return None;
@@ -442,19 +485,29 @@ impl Uci for OptionType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CheckType {
     pub default: bool,
-    pub value: Option<bool>
+    pub value: Option<bool>,
 }
 
 impl Uci for CheckType {
     fn print(&self, output: &mut Vec<String>) {
-        print_uci!(output, "default", (if self.default { "true" } else { "false" }))
+        print_uci!(
+            output,
+            "default",
+            (if self.default { "true" } else { "false" })
+        )
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         let input = literal_uci("default", input)?;
         let (default, input) = parse_uci(input)?;
 
-        Some((Self { default, value: None }, input))
+        Some((
+            Self {
+                default,
+                value: None,
+            },
+            input,
+        ))
     }
 }
 
@@ -463,12 +516,20 @@ pub struct SpinType {
     pub default: i64,
     pub min: i64,
     pub max: i64,
-    pub value: Option<i64>
+    pub value: Option<i64>,
 }
 
 impl Uci for SpinType {
     fn print(&self, output: &mut Vec<String>) {
-        print_uci!(output, "default", self.default, "min", self.min, "max", self.max);
+        print_uci!(
+            output,
+            "default",
+            self.default,
+            "min",
+            self.min,
+            "max",
+            self.max
+        );
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
@@ -477,14 +538,22 @@ impl Uci for SpinType {
 
         let input2 = find_literal_uci("min", input)?;
         let (min, input2) = parse_uci(input2)?;
-        
+
         let input3 = find_literal_uci("max", input)?;
         let (max, input3) = parse_uci(input3)?;
 
         let inputs = [input1, input2, input3];
         let input = inputs.iter().min_by_key(|s| s.len())?;
 
-        Some((Self { default, min, max, value: None }, input))
+        Some((
+            Self {
+                default,
+                min,
+                max,
+                value: None,
+            },
+            input,
+        ))
     }
 }
 
@@ -504,12 +573,12 @@ impl Uci for ComboType {
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-        
         let mut variants = vec![];
         let mut input1 = input;
 
         while let Some(rest) = find_literal_uci("var", input1)
-        && let Some((var, rest)) = next_uci_token(rest) {
+            && let Some((var, rest)) = next_uci_token(rest)
+        {
             variants.push(var);
             input1 = rest;
         }
@@ -527,9 +596,14 @@ impl Uci for ComboType {
             input2
         };
 
-        Some((Self {
-            variants, default, value: None
-        }, input))
+        Some((
+            Self {
+                variants,
+                default,
+                value: None,
+            },
+            input,
+        ))
     }
 }
 
@@ -546,7 +620,13 @@ impl Uci for StringType {
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         let input = literal_uci("default", input)?;
-        Some((Self { default: input.join(" "), value: None }, &[]))
+        Some((
+            Self {
+                default: input.join(" "),
+                value: None,
+            },
+            &[],
+        ))
     }
 }
 
@@ -554,9 +634,7 @@ impl Uci for StringType {
 pub struct ButtonType;
 
 impl Uci for ButtonType {
-    fn print(&self, output: &mut Vec<String>) {
-        
-    }
+    fn print(&self, output: &mut Vec<String>) {}
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         Some((Self, input))

@@ -10,5 +10,10 @@
     "rust-analyzer.rustfmt.extraArgs": [
         "+nightly"
     ],
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "rust-analyzer.rustfmt.overrideCommand": [
+        "rustfmt",
+        "--edition",
+        "2024"
+    ]
 }

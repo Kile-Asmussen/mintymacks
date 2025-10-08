@@ -115,10 +115,11 @@ impl AlgebraicMove {
                 file_origin: BoardFile::parse(file_origin.trim_end_matches('x')),
                 destination: Square::parse(destination).unwrap(),
                 check_or_mate,
-                special: ChessPiece::parse(promotion.trim_start_matches('=')).map(SpecialMove::Promotion),
+                special: ChessPiece::parse(promotion.trim_start_matches('='))
+                    .map(SpecialMove::Promotion),
                 rank_origin: None,
-                capture: !file_origin.is_empty()
-            })
+                capture: !file_origin.is_empty(),
+            });
         }
 
         if let Some(c) = regexp!("^([NBRQK])([a-h]?)([1-8]?)(x?)([a-h][1-8])[+#]?$").captures(s) {
@@ -130,15 +131,15 @@ impl AlgebraicMove {
                 destination: Square::parse(destination).unwrap(),
                 check_or_mate,
                 special: None,
-                capture: !capture.is_empty()
-            })
+                capture: !capture.is_empty(),
+            });
         }
 
         return None;
     }
 }
 
-impl PartialOrd for AlgebraicMove {    
+impl PartialOrd for AlgebraicMove {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
@@ -199,7 +200,7 @@ impl BoardFile {
             "f" => BoardFile::F,
             "g" => BoardFile::G,
             "h" => BoardFile::H,
-            _ => return None
+            _ => return None,
         })
     }
 }
@@ -228,7 +229,7 @@ impl BoardRank {
             "6" => BoardRank::_6,
             "7" => BoardRank::_7,
             "8" => BoardRank::_8,
-            _ => return None
+            _ => return None,
         })
     }
 }
@@ -252,10 +253,15 @@ impl ChessMove {
         }
 
         let (this, enemy) = board.active_passive(self.piece.color());
-        let threats = this.threats(self.piece.color(), {
-            let this = &enemy;
-            this.total
-        }, Some(self.pmv), self.cap);
+        let threats = this.threats(
+            self.piece.color(),
+            {
+                let this = &enemy;
+                this.total
+            },
+            Some(self.pmv),
+            self.cap,
+        );
         if threats & enemy.kings != BoardMask::MIN {
             guess.check_or_mate = Some(false);
         }
@@ -293,7 +299,7 @@ impl ChessMove {
         guess4.file_origin = None;
         guess4.rank_origin = None;
 
-        if unique(moves, guess4){
+        if unique(moves, guess4) {
             return guess4;
         }
 
@@ -308,9 +314,7 @@ impl ChessMove {
         return guess;
 
         fn unique(moves: &[ChessMove], guess: AlgebraicMove) -> bool {
-            moves
-                .into_iter()
-                .filter(|mv| guess.matches(**mv)).count() == 1
+            moves.into_iter().filter(|mv| guess.matches(**mv)).count() == 1
         }
     }
 }
