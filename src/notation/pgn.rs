@@ -15,13 +15,13 @@ pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
 
 #[derive(Debug, Clone)]
 pub struct PGNHeaders {
-    pub event: String,
-    pub site: String,
-    pub date: String,
-    pub round: String,
-    pub white: String,
-    pub black: String,
-    pub result: String,
+    pub event: Option<String>,
+    pub site: Option<String>,
+    pub date: Option<String>,
+    pub round: Option<String>,
+    pub white: Option<String>,
+    pub black: Option<String>,
+    pub result: Option<String>,
     pub annotator: Option<String>,
     pub ply_count: Option<String>,
     pub time_control: Option<String>,
@@ -37,13 +37,13 @@ pub struct PGNHeaders {
 impl Default for PGNHeaders {
     fn default() -> Self {
         Self {
-            event: "N/A".to_string(),
-            site: "N/A".to_string(),
-            date: chrono::Local::now().date_naive().format("yyyy-mm-dd").to_string(),
-            round: "N/A".to_string(),
-            white: "N/A".to_string(),
-            black: "N/A".to_string(),
-            result: "*".to_string(),
+            event: None,
+            site: None,
+            date: None,
+            round: None,
+            white: None,
+            black: None,
+            result: None,
             annotator: None,
             ply_count: None,
             time_control: None,
@@ -62,14 +62,13 @@ impl PGNHeaders {
     fn from_tag_pairs(mut tag_pairs: HashMap<String, String>) -> Self {
         let mut res = Self::default();
 
-        res.event = tag_pairs.remove("Event").unwrap_or(res.event);
-        res.site = tag_pairs.remove("Site").unwrap_or(res.site);
-        res.date = tag_pairs.remove("Date").unwrap_or(res.date);
-        res.round = tag_pairs.remove("Round").unwrap_or(res.round);
-        res.white = tag_pairs.remove("White").unwrap_or(res.white);
-        res.black = tag_pairs.remove("Black").unwrap_or(res.black);
-        res.result = tag_pairs.remove("Result").unwrap_or(res.result);
-
+        res.event = tag_pairs.remove("Event");
+        res.site = tag_pairs.remove("Site");
+        res.date = tag_pairs.remove("Date");
+        res.round = tag_pairs.remove("Round");
+        res.white = tag_pairs.remove("White");
+        res.black = tag_pairs.remove("Black");
+        res.result = tag_pairs.remove("Result");
         res.annotator = tag_pairs.remove("Annotator");
         res.ply_count = tag_pairs.remove("PlyCount");
         res.time_control = tag_pairs.remove("TimeControl");
@@ -95,13 +94,13 @@ pub struct PGN {
 impl PGN {
     pub fn to_string(&self, res: &mut String) {
 
-        add_tag_pair(res, "Event", Some(&self.headers.event));
-        add_tag_pair(res, "Site", Some(&self.headers.site));
-        add_tag_pair(res, "Date", Some(&self.headers.date));
-        add_tag_pair(res, "Round", Some(&self.headers.round));
-        add_tag_pair(res, "White", Some(&self.headers.white));
-        add_tag_pair(res, "Black", Some(&self.headers.black));
-        add_tag_pair(res, "Result", Some(&self.headers.result));
+        add_tag_pair(res, "Event", self.headers.event.as_deref());
+        add_tag_pair(res, "Site", self.headers.site.as_deref());
+        add_tag_pair(res, "Date", self.headers.date.as_deref());
+        add_tag_pair(res, "Round", self.headers.round.as_deref());
+        add_tag_pair(res, "White", self.headers.white.as_deref());
+        add_tag_pair(res, "Black", self.headers.black.as_deref());
+        add_tag_pair(res, "Result", self.headers.result.as_deref());
 
         add_tag_pair(res, "Annotator", self.headers.annotator.as_deref());
         add_tag_pair(res, "PlyCount", self.headers.ply_count.as_deref());

@@ -239,6 +239,6 @@ fn pgn_full() {
     }
 
     assert_eq!(pgn.end, "1/2-1/2");
-    assert_eq!(pgn.headers.event, "F/S Return Match");
+    assert_eq!(pgn.headers.event.as_deref(), Some("F/S Return Match"));
     assert_eq!(pgn.moves.len(), 43);
 }
