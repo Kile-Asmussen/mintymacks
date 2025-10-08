@@ -1,6 +1,17 @@
-use std::{collections::HashMap, hash::Hash, time::{Duration, Instant}};
+use std::{collections::HashMap, default, hash::Hash, time::{Duration, Instant}};
 
 use crate::notation::{algebraic::{self, AlgebraicMove}, regexp};
+
+pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
+    let mut res = vec![];
+
+    while let (Some(pgn), rest) = PGN::parse(file) {
+        res.push(pgn);
+        file = rest;
+    }
+
+    res
+}
 
 #[derive(Debug, Clone)]
 pub struct PGNHeaders {
@@ -15,6 +26,9 @@ pub struct PGNHeaders {
     pub ply_count: Option<String>,
     pub time_control: Option<String>,
     pub termination: Option<String>,
+    pub opening: Option<String>,
+    pub variation: Option<String>,
+    pub eco: Option<String>,
     pub mode: Option<String>,
     pub fen: Option<String>,
     pub tag_pairs: HashMap<String, String>,
@@ -33,11 +47,41 @@ impl Default for PGNHeaders {
             annotator: None,
             ply_count: None,
             time_control: None,
+            opening: None,
+            variation: None,
+            eco: None,
             termination: None,
             mode: None,
             fen: None,
             tag_pairs: HashMap::new(),
         }
+    }
+}
+
+impl PGNHeaders {
+    fn from_tag_pairs(mut tag_pairs: HashMap<String, String>) -> Self {
+        let mut res = Self::default();
+
+        res.event = tag_pairs.remove("Event").unwrap_or(res.event);
+        res.site = tag_pairs.remove("Site").unwrap_or(res.site);
+        res.date = tag_pairs.remove("Date").unwrap_or(res.date);
+        res.round = tag_pairs.remove("Round").unwrap_or(res.round);
+        res.white = tag_pairs.remove("White").unwrap_or(res.white);
+        res.black = tag_pairs.remove("Black").unwrap_or(res.black);
+        res.result = tag_pairs.remove("Result").unwrap_or(res.result);
+
+        res.annotator = tag_pairs.remove("Annotator");
+        res.ply_count = tag_pairs.remove("PlyCount");
+        res.time_control = tag_pairs.remove("TimeControl");
+        res.termination = tag_pairs.remove("Termination");
+        res.mode = tag_pairs.remove("Mode");
+        res.fen = tag_pairs.remove("FEN");
+        res.opening = tag_pairs.remove("Opening");
+        res.variation = tag_pairs.remove("Variation");
+        res.eco = tag_pairs.remove("ECO");
+        res.tag_pairs = tag_pairs;
+
+        res
     }
 }
 
@@ -49,41 +93,42 @@ pub struct PGN {
 }
 
 impl PGN {
-    pub fn to_string(&self) -> String {
-        let mut res = String::new();
+    pub fn to_string(&self, res: &mut String) {
 
-        add_tag_pair(&mut res, "Event", Some(&self.headers.event));
-        add_tag_pair(&mut res, "Site", Some(&self.headers.site));
-        add_tag_pair(&mut res, "Date", Some(&self.headers.date));
-        add_tag_pair(&mut res, "Round", Some(&self.headers.round));
-        add_tag_pair(&mut res, "White", Some(&self.headers.white));
-        add_tag_pair(&mut res, "Black", Some(&self.headers.black));
-        add_tag_pair(&mut res, "Result", Some(&self.headers.result));
+        add_tag_pair(res, "Event", Some(&self.headers.event));
+        add_tag_pair(res, "Site", Some(&self.headers.site));
+        add_tag_pair(res, "Date", Some(&self.headers.date));
+        add_tag_pair(res, "Round", Some(&self.headers.round));
+        add_tag_pair(res, "White", Some(&self.headers.white));
+        add_tag_pair(res, "Black", Some(&self.headers.black));
+        add_tag_pair(res, "Result", Some(&self.headers.result));
 
-        add_tag_pair(&mut res, "Annotator", self.headers.annotator.as_deref());
-        add_tag_pair(&mut res, "PlyCount", self.headers.ply_count.as_deref());
-        add_tag_pair(&mut res, "TimeControl", self.headers.time_control.as_deref());
-        add_tag_pair(&mut res, "Termination", self.headers.termination.as_deref());
-        add_tag_pair(&mut res, "Mode", self.headers.mode.as_deref());
-        add_tag_pair(&mut res, "Fen", self.headers.fen.as_deref());
+        add_tag_pair(res, "Annotator", self.headers.annotator.as_deref());
+        add_tag_pair(res, "PlyCount", self.headers.ply_count.as_deref());
+        add_tag_pair(res, "TimeControl", self.headers.time_control.as_deref());
+        add_tag_pair(res, "Termination", self.headers.termination.as_deref());
+        add_tag_pair(res, "Mode", self.headers.mode.as_deref());
+        add_tag_pair(res, "Fen", self.headers.fen.as_deref());
+        
+        add_tag_pair(res, "ECO", self.headers.eco.as_deref());
+        add_tag_pair(res, "Opening", self.headers.opening.as_deref());
+        add_tag_pair(res, "Variation", self.headers.opening.as_deref());
 
         for (k, v) in &self.headers.tag_pairs {
-            add_tag_pair(&mut res, k, Some(v));
+            add_tag_pair(res, k, Some(v));
         }
         
-        res += "\n";
+        *res += "\n";
 
         for mv in &self.moves {
-            res += &mv.to_string();
+            *res += &mv.to_string();
         }
 
         if !self.end.is_empty() {
             res.push(' ');
-            res += &self.end;
-            res += "\n\n"
+            *res += &self.end;
+            *res += "\n\n"
         }
-
-        return res;
 
         fn add_tag_pair(res: &mut String, name: &str, value: Option<&str>) {
             if let Some(value) = value {
@@ -93,44 +138,41 @@ impl PGN {
         }
     }
 
-    pub fn parse(file: &str) -> (Option<Self>, &str) {
-        let (mut tag_pairs, file) = Self::parse_tag_pairs(file);
+    pub fn parse(orig_file: &str) -> (Option<Self>, &str) {
+        let (mut tag_pairs, file) = Self::parse_tag_pairs(orig_file);
+
+        if tag_pairs.is_empty() {
+            return (None, orig_file);
+        }
 
         let (moves, file) = Self::parse_game(file);
 
+        if moves.is_empty() {
+            return (None, orig_file);
+        }
+
         let (end, file) = Self::parse_end(file);
 
-        (
-            try {
-                PGN {
-                    headers: PGNHeaders {
-                        event: tag_pairs.remove("Event")?,
-                        site: tag_pairs.remove("Site")?,
-                        date: tag_pairs.remove("Date")?,
-                        round: tag_pairs.remove("Round")?,
-                        white: tag_pairs.remove("White")?,
-                        black: tag_pairs.remove("Black")?,
-                        result: tag_pairs.remove("Result")?,
-                        annotator: tag_pairs.remove("Annotator"),
-                        ply_count: tag_pairs.remove("PlyCount"),
-                        time_control: tag_pairs.remove("TimeControl"),
-                        termination: tag_pairs.remove("Termination"),
-                        mode: tag_pairs.remove("Mode"),
-                        fen: tag_pairs.remove("FEN"),
-                        tag_pairs,
-                    },
-                    moves,
-                    end,
-                }
-            },
-            file
-        )
+        let Some(end) = end else {
+            return (None, orig_file);
+        };
+
+        let default = PGNHeaders::default();
+
+        let res = PGN {
+            headers: PGNHeaders::from_tag_pairs(tag_pairs),
+            moves,
+            end,
+        };
+
+        (Some(res), file)
+            
     }
 
     pub fn parse_tag_pairs(mut file: &str) -> (HashMap<String, String>, &str) {
         let mut res = hash_map!{};
 
-        while let Some(c) = regexp!(r#"\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
+        while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();
             res.insert(tag.to_string(), value.to_string());
             file = &file[matched.len()..];
@@ -152,12 +194,12 @@ impl PGN {
         (res, file)
     }
 
-    pub fn parse_end(file: &str) -> (String, &str) {
-        if let Some(c) = regexp!(r"\s+(1-0|0-1|1/2-1/2|)").captures(file) {
+    pub fn parse_end(file: &str) -> (Option<String>, &str) {
+        if let Some(c) = regexp!(r"\s+(\*|1-0|0-1|1/2-1/2)").captures(file) {
             let (full, [cap]) = c.extract::<1>();
-            (cap.to_string(), &file[full.len()..])
+            (Some(cap.to_string()), &file[full.len()..])
         } else {
-            ("".to_string(), file)
+            (None, file)
         }
     }
 }

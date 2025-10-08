@@ -28,4 +28,5 @@ pub mod fuzzing;
 pub mod model;
 #[macro_use]
 pub mod notation;
+pub mod openings;
 pub mod zobrist;
