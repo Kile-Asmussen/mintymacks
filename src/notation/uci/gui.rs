@@ -125,31 +125,31 @@ impl Uci for UciGui {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OptVal {
-    Check(),
-    Bool(bool),
-    String(String),
+    Button(),
+    Check(bool),
+    StringOrCombo(String),
     Spin(u64)
 }
 
 impl Uci for OptVal {
     fn print(&self, output: &mut Vec<String>) {
         match self {
-            Self::Check() => {}
-            Self::Bool(b) => print_uci!(output, b),
-            Self::String(s) => print_uci!(output, s),
+            Self::Button() => {}
+            Self::Check(b) => print_uci!(output, b),
+            Self::StringOrCombo(s) => print_uci!(output, s),
             Self::Spin(n) => print_uci!(output, n),
         }
     }
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         if let Some((b, input)) = parse_uci(input) {
-            return Some((Self::Bool(b), input));
+            return Some((Self::Check(b), input));
         } else if let Some((n, input)) = parse_uci(input) {
             return Some((Self::Spin(n), input))
         } else if input.is_empty() {
-            return Some((Self::Check(), &[]));
+            return Some((Self::Button(), &[]));
         } else {
-            return Some((Self::String(input.join(" ")), &[]))
+            return Some((Self::StringOrCombo(input.join(" ")), &[]))
         }
     }
 }
