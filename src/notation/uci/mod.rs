@@ -194,14 +194,6 @@ impl<U : Uci> Uci for Option<U> {
             Self::None => {}
         }
     }
-
-    // fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
-    //     if let Some((res, rest)) = U::parse_direct(input) {
-    //         Some((Some(res), rest))
-    //     } else {
-    //         Some((None, input))
-    //     }
-    // }
 }
 
 pub type LongAlg = (PseudoMove, Option<ChessPiece>);

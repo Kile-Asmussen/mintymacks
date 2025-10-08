@@ -8,7 +8,7 @@ pub enum UciGui {
     Uci(),
     Debug(bool),
     IsReady(),
-    SetOption(String, Option<String>),
+    SetOption(String, OptVal),
     UciNewGame(),
     Go(GoCommand),
     PonderHit(),
@@ -38,8 +38,7 @@ impl Uci for UciGui {
             Self::Uci() => print_uci!(output, "uci"),
             Self::Debug(b) => print_uci!(output, "debug", (if *b { "on" } else { "off" }) ),
             Self::IsReady() => print_uci!(output, "isready"),
-            Self::SetOption(name, None) => print_uci!(output, "setoption", "name", name),
-            Self::SetOption(name, Some(value)) => print_uci!(output, "setoption", "name", name, "value", value),
+            Self::SetOption(name, value) => print_uci!(output, "setoption", "name", name, "value", value),
             Self::UciNewGame() => print_uci!(output, "ucinewgame"),
             Self::Go(go_command) => print_uci!(output, "go", go_command),
             Self::PonderHit() => print_uci!(output, "ponderhit"),
@@ -90,11 +89,12 @@ impl Uci for UciGui {
 
         if let Some(input) = literal_uci("setoption", input)
         && let Some((name, input)) = next_uci_token(input) {
-            if let Some(input) = find_literal_uci("value", input) {
-                return Some((Self::SetOption(name, Some(input.join(" "))), &[]));
+            if let Some(input) = find_literal_uci("value", input)
+            && let Some((optval, input)) = parse_uci(input) {
+                return Some((Self::SetOption(name, optval), input));
             }
 
-            return Some((Self::SetOption(name, None), input));
+            return None;
         }
 
         if let Some(input) = literal_uci("register", input)
@@ -120,6 +120,37 @@ impl Uci for UciGui {
 
 
         None
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OptVal {
+    Check(),
+    Bool(bool),
+    String(String),
+    Spin(u64)
+}
+
+impl Uci for OptVal {
+    fn print(&self, output: &mut Vec<String>) {
+        match self {
+            Self::Check() => {}
+            Self::Bool(b) => print_uci!(output, b),
+            Self::String(s) => print_uci!(output, s),
+            Self::Spin(n) => print_uci!(output, n),
+        }
+    }
+
+    fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
+        if let Some((b, input)) = parse_uci(input) {
+            return Some((Self::Bool(b), input));
+        } else if let Some((n, input)) = parse_uci(input) {
+            return Some((Self::Spin(n), input))
+        } else if input.is_empty() {
+            return Some((Self::Check(), &[]));
+        } else {
+            return Some((Self::String(input.join(" ")), &[]))
+        }
     }
 }
 
