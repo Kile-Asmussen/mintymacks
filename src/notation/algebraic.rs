@@ -138,6 +138,18 @@ impl AlgebraicMove {
     }
 }
 
+impl PartialOrd for AlgebraicMove {    
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for AlgebraicMove {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.to_string().cmp(&other.to_string())
+    }
+}
+
 impl ChessPiece {
     pub fn letter(self) -> char {
         match self {
