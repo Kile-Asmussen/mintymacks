@@ -23,13 +23,13 @@ pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
     }
 
     if let ([x], _) = &parts[..].as_chunks() {
-        parse_fen_raw(&x)
+        parse_fen_6(&x)
     } else {
         Err(format!("Invalid FEN: this error shouldn't happen"))
     }
 }
 
-pub fn parse_fen_raw<S: AsRef<str>>(parts: &[S; 6]) -> Result<(BitBoard, u16)> {
+pub fn parse_fen_6<S: AsRef<str>>(parts: &[S; 6]) -> Result<(BitBoard, u16)> {
     let board = parse_fen_board(parts[0].as_ref())?;
     let to_move = parse_fen_to_move(parts[1].as_ref())?;
     let castling_rights = parse_fen_castling_rights(parts[2].as_ref())?;
@@ -207,10 +207,13 @@ pub fn color_piece_letter(c: char) -> Option<ColoredChessPiece> {
 }
 
 pub fn render_fen(board: &BitBoard, halfmove: u16) -> String {
-    format!(
-        "{} {} {} {} {} {}",
+    render_fen6(board, halfmove).join(" ")
+}
+
+pub fn render_fen6(board: &BitBoard, halfmove: u16) -> [String; 6] {
+    [
         render_fen_board(&board.render()),
-        board.metadata.to_move.letter(),
+        board.metadata.to_move.letter().to_string(),
         board
             .metadata
             .castling_rights
@@ -219,10 +222,11 @@ pub fn render_fen(board: &BitBoard, halfmove: u16) -> String {
             sq.to_str()
         } else {
             "-"
-        },
-        halfmove,
-        board.metadata.turn
-    )
+        }
+        .to_string(),
+        halfmove.to_string(),
+        board.metadata.turn.to_string(),
+    ]
 }
 
 pub fn render_fen_board(board: &ArrayBoard<Option<ColoredChessPiece>>) -> String {
