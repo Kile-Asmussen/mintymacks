@@ -38,9 +38,9 @@ impl AlgebraicMove {
         let mut res = "".to_string();
 
         if self.special == Some(SpecialMove::CastlingEastward) {
-            res = "O-O-O".to_string();
-        } else if self.special == Some(SpecialMove::CastlingWestward) {
             res = "O-O".to_string();
+        } else if self.special == Some(SpecialMove::CastlingWestward) {
+            res = "O-O-O".to_string();
         } else {
             if self.piece != ChessPiece::Pawn {
                 res.push(self.piece.letter());
