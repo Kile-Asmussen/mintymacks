@@ -6,4 +6,7 @@
    - Move sequence (longalg, algebraic, full, movepairs)
    - Load from PGN, load/render to UCI position, etc.
 
-4. Generic Engine-like trait to make players engines
+4. Generic Engine-like trait
+   - make stupid/small engines
+   - web connection
+   - make players "engines"
