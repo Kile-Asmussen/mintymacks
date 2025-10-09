@@ -32,7 +32,7 @@ use crate::{
         pgn::load_pgn_file,
         uci::gui::UciGui,
     },
-    zobrist::{self, ZobHash, ZobristBoard},
+    zobrist::{self, ZOBHASHER, ZobHash, ZobristBoard},
 };
 
 fn pi() -> SmallRng {
@@ -121,14 +121,12 @@ fn zobrist_hashing_game(
     ply: usize,
     positions: &mut HashMap<ZobHash, BitBoard>,
 ) {
-    let zobrist = ZobristBoard::new();
-
     let mut buf = vec![];
 
     let mut board = BitBoard::startpos();
 
     for _ in 0..ply {
-        let hash = zobrist.hash(&board);
+        let hash = ZOBHASHER.hash(&board);
 
         if let Some(b) = positions.get(&hash)
             && board.white != b.white
@@ -164,18 +162,17 @@ fn zobrist_hashing_game(
 #[test]
 fn fuzz_zobrist_delta() {
     let mut rng = pi();
-    let zobrist = ZobristBoard::new();
 
     for _ in 0..100 {
-        zobrist_delta_game(&mut rng, 50, &zobrist);
+        zobrist_delta_game(&mut rng, 50);
     }
 }
 
-fn zobrist_delta_game(rng: &mut SmallRng, ply: usize, zobrist: &ZobristBoard) {
+fn zobrist_delta_game(rng: &mut SmallRng, ply: usize) {
     let mut buf = vec![];
     let mut moves = vec![];
     let mut board = BitBoard::startpos();
-    let mut hash = zobrist.hash(&board);
+    let mut hash = ZOBHASHER.hash(&board);
 
     for _ in 0..ply {
         buf.clear();
@@ -185,8 +182,8 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize, zobrist: &ZobristBoard) {
             let mv = *mv;
             moves.push(mv);
             board.apply(mv);
-            hash ^= zobrist.delta(mv, board.metadata.castling_details);
-            let reference = zobrist.hash(&board);
+            hash ^= ZOBHASHER.delta(mv, board.metadata.castling_details);
+            let reference = ZOBHASHER.hash(&board);
 
             if hash != reference {
                 println!("Hash mismatch! {:X} != {:X}", hash, reference);

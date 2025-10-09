@@ -11,12 +11,16 @@ use crate::{
         board::{BitBoard, HalfBitBoard},
     },
     model::{
-        Color, ChessPiece, Square,
+        ChessPiece, Color, Square,
         castling::{CastlingDetail, CastlingDetails, CastlingRights},
         metadata::Metadata,
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
 };
+
+lazy_static::lazy_static! {
+    pub static ref ZOBHASHER: ZobristBoard = ZobristBoard::new();
+}
 
 pub type ZobHash = u64;
 
@@ -167,7 +171,9 @@ impl ZobristBoard {
         let (act, pas) = self.active_passive(mv.piece.color());
 
         let movement = match mv.special {
-            Some(SpecialMove::Promotion(p)) => act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to),
+            Some(SpecialMove::Promotion(p)) => {
+                act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to)
+            }
             Some(SpecialMove::CastlingEastward) => {
                 let cast = details.eastward.reify(mv.piece.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)

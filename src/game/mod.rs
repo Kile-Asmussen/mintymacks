@@ -8,10 +8,8 @@ use crate::{
         pgn::{PGN, PGNHeaders},
     },
     profile::Profile,
-    zobrist::{ZobHash, ZobristBoard},
+    zobrist::{ZOBHASHER, ZobHash},
 };
-
-static ZOBHASHER: LazyLock<ZobristBoard> = LazyLock::new(ZobristBoard::new);
 
 pub struct GameState {
     pub board: BitBoard,

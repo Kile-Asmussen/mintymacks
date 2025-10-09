@@ -1,7 +1,4 @@
 
-1. Move over tokio code for engine and engine profile handling
-2. Serde impls?
-
 3. Full gamestate representation
    - Seen positions
    - Halfmove clock
@@ -9,4 +6,4 @@
    - Move sequence (longalg, algebraic, full, movepairs)
    - Load from PGN, load/render to UCI position, etc.
 
-4.  
+4. Generic Engine-like trait to make players engines
