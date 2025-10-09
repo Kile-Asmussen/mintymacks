@@ -298,10 +298,10 @@ impl ChessMove {
         let mut guess2 = guess;
         let mut guess3 = guess;
         let mut guess4 = guess;
-        guess2.file_origin = None;
-        guess3.rank_origin = None;
-        guess4.file_origin = None;
+        guess2.rank_origin = None;
+        guess3.file_origin = None;
         guess4.rank_origin = None;
+        guess4.file_origin = None;
 
         if unique(moves, guess4) {
             return guess4;
