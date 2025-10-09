@@ -2,7 +2,7 @@ use crate::{
     arrays::ArrayBoard,
     bits::BoardMask,
     model::{
-        Color, ColoredChessPiece, ChessPiece, Square,
+        ChessPiece, Color, ColoredChessPiece, Square,
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
@@ -16,7 +16,7 @@ pub struct HalfBitBoard {
     pub rooks: BoardMask,
     pub queens: BoardMask,
     pub kings: BoardMask,
-    pub total: BoardMask
+    pub total: BoardMask,
 }
 
 impl HalfBitBoard {
@@ -45,7 +45,10 @@ impl HalfBitBoard {
         res
     }
 
-    
+    #[cfg(test)]
+    pub const fn overlap(&self) -> BoardMask {
+        self.pawns & self.knights & self.bishops & self.rooks & self.queens & self.kings
+    }
 
     pub const fn at(&self, sq: Square) -> Option<ChessPiece> {
         let sq = sq.bit();

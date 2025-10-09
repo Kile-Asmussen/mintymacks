@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use rand::{SeedableRng, rngs::SmallRng, seq::IndexedRandom};
+use rand::{RngCore, SeedableRng, rngs::SmallRng, seq::IndexedRandom};
 
 use anyhow::anyhow;
 
@@ -18,7 +18,7 @@ use crate::{
     },
     fuzzing::stockfish_perft,
     model::{
-        Color, ColoredChessPiece, ChessPiece, Square,
+        ChessPiece, Color, ColoredChessPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         moves::PseudoMove,
     },
@@ -98,7 +98,7 @@ fn unmake_moves(rng: &mut SmallRng, ply: usize) {
 #[test]
 fn fuzz_zobrist_hashing() {
     let mut rng = pi();
-    let mut positions = hash_map!{};
+    let mut positions = hash_map! {};
 
     for _ in 0..10000 {
         zobrist_hashing_game(&mut rng, 100, &mut positions);
@@ -122,7 +122,8 @@ fn zobrist_hashing_game(
         let hash = zobrist.hash(&board);
 
         if let Some(b) = positions.get(&hash)
-            && board.white != b.white && board.black != b.black
+            && board.white != b.white
+            && board.black != b.black
             && board.metadata.equiv(&b.metadata)
         {
             println!("Hash Colission found: {}", hash);
@@ -287,9 +288,11 @@ fn stockfish_comparison_game(
     }
 
     if problems.len() > 0 {
+        use crate::notation::fen::render_fen;
+
         println!();
         println!("Perft mismatch!");
-        println!("FEN: {}", render_fen_board(&board.render()));
+        println!("FEN: {}", render_fen(&board, 0));
 
         for p in problems {
             println!("- {}", p);
@@ -307,14 +310,19 @@ fn stockfish_comparison_game(
 }
 
 #[cfg(test)]
-pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: usize, step: usize) {
-    let mut rng = pi();
-
+pub fn fuzz_stockfish_comparison(
+    rng: &mut SmallRng,
+    n: usize,
+    skip_to: usize,
+    ply: usize,
+    depth: usize,
+    step: usize,
+) {
     println!("Playing {n} random games and comparing to stockfish...");
 
     for i in 1..=n {
         println!("\n### Game {i} ###");
-        stockfish_comparison_game(&mut rng, ply - 1, step - 1, depth, &[], i < skip_to);
+        stockfish_comparison_game(rng, ply - 1, step - 1, depth, &[], i < skip_to);
     }
 
     println!();
@@ -323,5 +331,40 @@ pub fn fuzz_stockfish_comparison(n: usize, skip_to: usize, ply: usize, depth: us
 
 #[test]
 fn fuzz_against_stockfish() {
-    fuzz_stockfish_comparison(1, 0, 50, 3, 1);
+    let mut rng = pi();
+    rng.next_u64();
+    fuzz_stockfish_comparison(&mut rng, 10, 0, 48, 3, 1);
+}
+
+#[test]
+fn cornercase() {
+    stockfish_comparison_game(
+        &mut pi(),
+        1,
+        0,
+        1,
+        &[
+            Square::e2.to(Square::e4).p(),
+            Square::c7.to(Square::c5).p(),
+            //
+            Square::g1.to(Square::f3).p(),
+            Square::b8.to(Square::c6).p(),
+            //
+            Square::c2.to(Square::c3).p(),
+            Square::e7.to(Square::e6).p(),
+            //
+            Square::d2.to(Square::d4).p(),
+            Square::d7.to(Square::d5).p(),
+            //
+            Square::e4.to(Square::e5).p(),
+            Square::d8.to(Square::b6).p(),
+            //
+            Square::f1.to(Square::d3).p(),
+            Square::c5.to(Square::d4).p(),
+            //
+            Square::e1.to(Square::g1).p(),
+            Square::c8.to(Square::d7).p(),
+        ],
+        false,
+    );
 }

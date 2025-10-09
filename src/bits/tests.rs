@@ -9,13 +9,17 @@ use crate::{
         show_mask, slides,
         threats::{bishop_threats, knight_threats, rook_threats},
     },
+    fuzzing::stockfish_perft,
     model::{
         Color, ColoredChessPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
         metadata::Metadata,
         moves::{ChessMove, PseudoMove},
     },
-    notation::fen,
+    notation::{
+        algebraic,
+        fen::{self, parse_fen, parse_fen_board, render_fen},
+    },
 };
 
 #[test]
@@ -282,4 +286,64 @@ fn en_passant_pawn_capture() {
     for mv in &res {
         println!("{:?}", mv)
     }
+}
+
+#[test]
+fn solve_this_debackle() {
+    let fen = "r3kbnr/pp1b1ppp/1qn1p3/3pP3/3p4/2PB1N2/PP3PPP/RNBQ1RK1 w kq - 0 8";
+    let (board, _) = parse_fen(fen).unwrap();
+
+    let mut board2 = BitBoard::startpos();
+    let movehist = board2.apply_pseudomoves(&[
+        Square::e2.to(Square::e4).p(),
+        Square::c7.to(Square::c5).p(),
+        //
+        Square::g1.to(Square::f3).p(),
+        Square::b8.to(Square::c6).p(),
+        //
+        Square::c2.to(Square::c3).p(),
+        Square::e7.to(Square::e6).p(),
+        //
+        Square::d2.to(Square::d4).p(),
+        Square::d7.to(Square::d5).p(),
+        //
+        Square::e4.to(Square::e5).p(),
+        Square::d8.to(Square::b6).p(),
+        //
+        Square::f1.to(Square::d3).p(),
+        Square::c5.to(Square::d4).p(),
+        //
+        Square::e1.to(Square::g1).p(),
+        Square::c8.to(Square::d7).p(),
+    ]);
+
+    assert_eq!(movehist.len(), 14);
+
+    assert_eq!(render_fen(&board, 0), render_fen(&board2, 0));
+
+    assert_eq!(board.white, board2.white, "WHITE");
+    assert_eq!(board.black, board2.black, "BLACK");
+    assert_eq!(board.metadata, board2.metadata);
+
+    println!("X {}", show_mask(board.white.total));
+    println!("x {}", show_mask(board2.white.total));
+
+    return;
+
+    board.enumerate(1).print();
+
+    let mut moves = vec![];
+    board.moves(&mut moves);
+
+    let mut alg = vec![];
+
+    for m in &moves {
+        let m = *m;
+        alg.push(m.ambiguate(&board, &moves).to_string());
+        print!("{} ({}), ", alg.last().unwrap(), m.longalg())
+    }
+    println!("");
+
+    assert!(alg.contains(&"Re1".to_string()));
+    assert!(alg.contains(&"Rg1".to_string()));
 }

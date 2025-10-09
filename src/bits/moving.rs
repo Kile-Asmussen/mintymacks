@@ -117,6 +117,7 @@ impl HalfBitBoard {
             let cmv = cd.reify(c);
             _self.kings ^= cmv.king_move.bits();
             _self.rooks ^= cmv.rook_move.bits();
+            _self.total ^= cmv.king_move.bits() ^ cmv.rook_move.bits();
         }
     }
 
