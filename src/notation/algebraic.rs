@@ -280,7 +280,7 @@ impl ChessMove {
 
         if self.piece.piece() == ChessPiece::Pawn {
             if guess.capture {
-                guess.file_origin = Some(self.pmv.to.file_rank().0);
+                guess.file_origin = Some(self.pmv.from.file_rank().0);
             } else {
                 guess.file_origin = None;
             }
