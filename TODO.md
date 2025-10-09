@@ -1,15 +1,12 @@
 
-1. Fuzz Zobrist hashing
-2. Fuzz move undo
-3. Fuzz move gen count against stockfish
-4. Implement perft and compare to stockfish
-5. Implement state tracking
-    * History of irreversible moves
-    * History of hashed board positions sans active player
-6. Fuzz hashed boards
-7. Determine draw conditions
-    * Insufficient checkmating material
-    * 75 move forced draw
-    * Threefold repetition
-8. Expand to full UCI spec
-9. Minimax algorithm
+1. Move over tokio code for engine and engine profile handling
+2. Serde impls?
+
+3. Full gamestate representation
+   - Seen positions
+   - Halfmove clock
+   - Current bitboard & hash & color-agnostic hash
+   - Move sequence (longalg, algebraic, full, movepairs)
+   - Load from PGN, load/render to UCI position, etc.
+
+4.  
