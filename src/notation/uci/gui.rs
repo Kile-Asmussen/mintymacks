@@ -1,6 +1,8 @@
 use core::time;
 use std::{array, fmt::Write, iter::Inspect};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     bits::board::BitBoard,
     notation::{
@@ -35,10 +37,13 @@ impl UciGui {
         res.join(" ")
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn from_str(s: String) -> Result<Self, String> {
         let input = s.split_whitespace().collect::<Vec<_>>();
-        let (res, _) = parse_uci(&input[..])?;
-        Some(res)
+        if let Some((res, _)) = parse_uci(&input[..]) {
+            Ok(res)
+        } else {
+            return Err(s);
+        }
     }
 }
 
@@ -137,11 +142,15 @@ impl Uci for UciGui {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OptVal {
+    #[serde(untagged)]
     Button(),
+    #[serde(untagged)]
     Check(bool),
+    #[serde(untagged)]
     StringOrCombo(String),
+    #[serde(untagged)]
     Spin(i64),
 }
 

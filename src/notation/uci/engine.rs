@@ -29,10 +29,13 @@ impl UciEngine {
         res
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn from_string(s: String) -> Self {
         let input = s.split_whitespace().collect::<Vec<_>>();
-        let (res, _) = parse_uci(&input[..])?;
-        Some(res)
+        if let Some((res, _)) = parse_uci(&input[..]) {
+            res
+        } else {
+            Self::Info(vec![InfoString::String(s)])
+        }
     }
 }
 
@@ -207,6 +210,7 @@ pub enum InfoString {
     TableBaseHits(u64),
     ShredderTableBaseHits(u64),
     CpuLoadPermill(u64),
+    String(String),
     Refutation(LongAlg, Line),
     CurrLine(u64, Line),
 }
@@ -237,6 +241,7 @@ impl Uci for InfoString {
                 if *cpu != 0 { Some(*cpu) } else { None },
                 &line[..]
             ),
+            Self::String(s) => print_uci!(output, "string", s),
         }
     }
 
@@ -343,6 +348,10 @@ impl Uci for InfoString {
             } else if let Some((line, input)) = parse_until_uci::<LongAlg, InfoString>(input) {
                 return Some((Self::CurrLine(0, line), input));
             }
+        }
+
+        if let Some(input) = literal_uci("string", input) {
+            return Some((Self::String(input.join(" ")), &[]));
         }
 
         None

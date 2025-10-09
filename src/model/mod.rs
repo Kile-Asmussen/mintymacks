@@ -11,7 +11,7 @@ use std::num::NonZeroI8;
 use crate::arrays::ArrayBoard;
 use crate::bits::{Bits, BoardMask};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Square(NonZeroI8);
 
@@ -64,7 +64,7 @@ impl Debug for Square {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum BoardFile {
     A = 0,
@@ -94,7 +94,7 @@ impl BoardFile {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum BoardRank {
     _1 = 0,
@@ -120,11 +120,11 @@ impl BoardRank {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum Color {
-    White = 1,
     Black = -1,
+    White = 1,
 }
 
 impl Color {
@@ -147,7 +147,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum ChessPiece {
     Pawn = 1,
@@ -164,21 +164,21 @@ impl ChessPiece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum ColoredChessPiece {
+    BlackKing = -6,
+    BlackQueen = -5,
+    BlackRook = -4,
+    BlackBishop = -3,
+    BlackKnight = -2,
+    BlackPawn = -1,
     WhitePawn = 1,
     WhiteKnight = 2,
     WhiteBishop = 3,
     WhiteRook = 4,
     WhiteQueen = 5,
     WhiteKing = 6,
-    BlackPawn = -1,
-    BlackKnight = -2,
-    BlackBishop = -3,
-    BlackRook = -4,
-    BlackQueen = -5,
-    BlackKing = -6,
 }
 
 impl ColoredChessPiece {
@@ -245,23 +245,23 @@ impl ColoredChessPiece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum Dir {
-    North = 8,
-    East = 1,
-    South = -8,
-    West = -1,
-    NorthEast = 9,
-    SouthEast = -7,
     SouthWest = -9,
+    South = -8,
+    SouthEast = -7,
+    West = -1,
+    East = 1,
     NorthWest = 7,
+    North = 8,
+    NorthEast = 9,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum Victory {
+    BlackWins = -1,
+    Draw = 0,
     WhiteWins = 1,
-    BlackWins = 2,
-    Draw = 3,
 }

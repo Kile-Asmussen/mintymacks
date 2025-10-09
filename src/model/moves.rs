@@ -3,7 +3,7 @@ use crate::model::{
     castling::{self, CastlingDetails, CastlingMove, CastlingRights},
 };
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub struct PseudoMove {
     pub from: Square,
     pub to: Square,

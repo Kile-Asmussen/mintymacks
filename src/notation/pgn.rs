@@ -100,6 +100,14 @@ pub struct PGN {
 }
 
 impl PGN {
+    pub fn new() -> Self {
+        PGN {
+            headers: PGNHeaders::default(),
+            moves: vec![],
+            end: "*".to_string(),
+        }
+    }
+
     pub fn to_string(&self, res: &mut String, newlines: bool) {
         add_tag_pair(res, "Event", self.headers.event.as_deref());
         add_tag_pair(res, "Site", self.headers.site.as_deref());

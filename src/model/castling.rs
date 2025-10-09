@@ -1,6 +1,6 @@
 use crate::{
     bits::{BoardMask, mask},
-    model::{Color, BoardFile, BoardRank, Square, moves::PseudoMove},
+    model::{BoardFile, BoardRank, Color, Square, moves::PseudoMove},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -12,6 +12,10 @@ impl CastlingRights {
     }
     pub const fn full() -> Self {
         Self(0b_00001111)
+    }
+
+    pub const fn new(wooo: bool, woo: bool, booo: bool, boo: bool) -> Self {
+        Self((booo as u8) << 3 | (boo as u8) << 2 | (wooo as u8) << 1 | woo as u8)
     }
 
     pub const fn get(self, c: Color) -> u8 {

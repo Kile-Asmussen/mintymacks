@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap, btree_map},
     time::{Duration, Instant},
 };
 
@@ -9,6 +9,7 @@ use crate::{
         ChessPiece,
         moves::{ChessMove, PseudoMove},
     },
+    utils::tree_map,
     zobrist::{ZobHash, ZobristBoard},
 };
 
@@ -18,7 +19,7 @@ impl BitBoard {
             EnumerationResult {
                 time: Duration::ZERO,
                 depth,
-                moves: hash_map!{},
+                moves: tree_map! {},
                 transpos: (0, 0),
             }
         } else {
@@ -28,7 +29,7 @@ impl BitBoard {
 
     fn enumerate_mut(&mut self, depth: usize) -> EnumerationResult {
         let now = Instant::now();
-        let mut moves = hash_map!{};
+        let mut moves = tree_map! {};
         let mut zobrist = HashMap::with_capacity(10usize.pow(depth as u32));
         let hasher = ZobristBoard::new();
         let hash = hasher.hash(self);
@@ -103,7 +104,7 @@ impl BitBoard {
 pub struct EnumerationResult {
     pub time: Duration,
     pub depth: usize,
-    pub moves: HashMap<(PseudoMove, Option<ChessPiece>), usize>,
+    pub moves: BTreeMap<(PseudoMove, Option<ChessPiece>), usize>,
     pub transpos: (usize, usize),
 }
 
