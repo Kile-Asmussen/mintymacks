@@ -1,5 +1,5 @@
 use crate::model::{
-    Color, ColoredChessPiece, BoardFile, ChessPiece, BoardRank, Square,
+    BoardFile, BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
     castling::{self, CastlingDetails, CastlingMove, CastlingRights},
 };
 
@@ -90,6 +90,10 @@ impl ChessMove {
         }
 
         rights
+    }
+
+    pub const fn irreversible(self) -> bool {
+        self.piece.piece() as i8 == ChessPiece::Pawn as i8 || self.cap.is_some()
     }
 }
 
