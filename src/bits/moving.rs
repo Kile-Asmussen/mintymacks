@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::notation::algebraic::AlgebraicMove;
 use crate::{
     bits::{
         BoardMask,
@@ -26,6 +28,26 @@ impl BitBoard {
     pub fn unapply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
+    }
+
+    #[cfg(test)]
+    pub fn apply_algebraic(&mut self, mv: AlgebraicMove) -> Option<ChessMove> {
+        let mut buf = vec![];
+        self.algebraic_internal(mv, &mut buf)
+    }
+
+    #[cfg(test)]
+    pub fn apply_algebraics(&mut self, mvs: &[AlgebraicMove]) -> Vec<ChessMove> {
+        let mut res = vec![];
+        let mut buf = vec![];
+        for mv in mvs {
+            if let Some(mv) = self.algebraic_internal(*mv, &mut buf) {
+                res.push(mv);
+            } else {
+                break;
+            }
+        }
+        return res;
     }
 
     #[cfg(test)]
@@ -59,11 +81,62 @@ impl BitBoard {
     ) -> Option<ChessMove> {
         buf.clear();
         self.moves(buf);
-        if let Some(mv) = buf.iter().find(|m| m.simplify() == mv) {
+        let matches = buf
+            .iter()
+            .filter(|m| mv == m.simplify())
+            .map(|mv| *mv)
+            .collect::<Vec<_>>();
+
+        if let [mv] = &matches[..] {
             self.apply(*mv);
             Some(*mv)
         } else {
             None
+        }
+    }
+
+    #[cfg(test)]
+    fn algebraic_internal(
+        &mut self,
+        mv: AlgebraicMove,
+        buf: &mut Vec<ChessMove>,
+    ) -> Option<ChessMove> {
+        buf.clear();
+        self.moves(buf);
+        let matches = buf
+            .iter()
+            .filter(|m| mv.matches(**m))
+            .map(|mv| *mv)
+            .collect::<Vec<_>>();
+
+        if let [mv] = &matches[..] {
+            self.apply(*mv);
+            Some(*mv)
+        } else {
+            use crate::notation::fen::render_fen;
+            assert!(
+                matches.len() < 1,
+                "Move {} had {} matches, {}",
+                mv.to_string(),
+                matches.len(),
+                matches
+                    .iter()
+                    .map(|cm| cm.longalg())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            assert!(
+                matches.len() > 1,
+                "Move {} had 0 matches\n{}\n{}",
+                mv.to_string(),
+                render_fen(self, 0),
+                buf.iter()
+                    .map(|m| m.ambiguate(self, &buf).to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+
+            return None;
         }
     }
 
@@ -96,14 +169,15 @@ impl HalfBitBoard {
         if let Some(sp) = mv.special {
             match sp {
                 SpecialMove::CastlingWestward => {
-                    castling_move(self, castling.westward, mv.piece.color())
+                    castling_move(self, castling.westward, mv.piece.color());
                 }
                 SpecialMove::CastlingEastward => {
-                    castling_move(self, castling.eastward, mv.piece.color())
+                    castling_move(self, castling.eastward, mv.piece.color());
                 }
                 SpecialMove::Promotion(p) => {
                     self.pawns ^= mv.pmv.from.bit();
                     *self.piece(p) ^= mv.pmv.to.bit();
+                    self.total ^= mv.pmv.bits();
                 }
                 _ => {}
             }

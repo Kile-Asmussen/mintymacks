@@ -91,7 +91,7 @@ impl AlgebraicMove {
                 rank_origin: None,
                 destination: Square::a1,
                 capture: false,
-                special: Some(SpecialMove::CastlingEastward),
+                special: Some(SpecialMove::CastlingWestward),
                 check_or_mate,
             });
         }
@@ -103,7 +103,7 @@ impl AlgebraicMove {
                 rank_origin: None,
                 destination: Square::a1,
                 capture: false,
-                special: Some(SpecialMove::CastlingWestward),
+                special: Some(SpecialMove::CastlingEastward),
                 check_or_mate,
             });
         }

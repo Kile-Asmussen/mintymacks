@@ -144,6 +144,14 @@ impl PGN {
         }
     }
 
+    pub fn move_list(&self) -> Vec<AlgebraicMove> {
+        self.moves
+            .iter()
+            .flat_map(|mp| mp.white.iter().chain(mp.black.iter()))
+            .map(|mv| *mv)
+            .collect()
+    }
+
     pub fn parse(orig_file: &str) -> (Option<Self>, &str) {
         let (mut tag_pairs, file) = Self::parse_tag_pairs(orig_file);
 
