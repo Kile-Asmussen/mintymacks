@@ -113,29 +113,6 @@ impl BitBoard {
             self.apply(*mv);
             Some(*mv)
         } else {
-            use crate::notation::fen::render_fen;
-            assert!(
-                matches.len() < 1,
-                "Move {} had {} matches, {}",
-                mv.to_string(),
-                matches.len(),
-                matches
-                    .iter()
-                    .map(|cm| cm.longalg())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-            assert!(
-                matches.len() > 1,
-                "Move {} had 0 matches\n{}\n{}",
-                mv.to_string(),
-                render_fen(self, 0),
-                buf.iter()
-                    .map(|m| m.ambiguate(self, &buf).to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-
             return None;
         }
     }
