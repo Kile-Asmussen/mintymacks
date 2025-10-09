@@ -1,6 +1,14 @@
-use std::{collections::HashMap, default, hash::Hash, time::{Duration, Instant}};
+use std::{
+    collections::HashMap,
+    default,
+    hash::Hash,
+    time::{Duration, Instant},
+};
 
-use crate::notation::{algebraic::{self, AlgebraicMove}, regexp};
+use crate::notation::{
+    algebraic::{self, AlgebraicMove},
+    regexp,
+};
 
 pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
     let mut res = vec![];
@@ -93,7 +101,6 @@ pub struct PGN {
 
 impl PGN {
     pub fn to_string(&self, res: &mut String) {
-
         add_tag_pair(res, "Event", self.headers.event.as_deref());
         add_tag_pair(res, "Site", self.headers.site.as_deref());
         add_tag_pair(res, "Date", self.headers.date.as_deref());
@@ -108,7 +115,7 @@ impl PGN {
         add_tag_pair(res, "Termination", self.headers.termination.as_deref());
         add_tag_pair(res, "Mode", self.headers.mode.as_deref());
         add_tag_pair(res, "Fen", self.headers.fen.as_deref());
-        
+
         add_tag_pair(res, "ECO", self.headers.eco.as_deref());
         add_tag_pair(res, "Opening", self.headers.opening.as_deref());
         add_tag_pair(res, "Variation", self.headers.opening.as_deref());
@@ -116,15 +123,15 @@ impl PGN {
         for (k, v) in &self.headers.tag_pairs {
             add_tag_pair(res, k, Some(v));
         }
-        
+
         *res += "\n";
 
         for mv in &self.moves {
             *res += &mv.to_string();
+            res.push(' ');
         }
 
         if !self.end.is_empty() {
-            res.push(' ');
             *res += &self.end;
             *res += "\n\n"
         }
@@ -165,11 +172,10 @@ impl PGN {
         };
 
         (Some(res), file)
-            
     }
 
     pub fn parse_tag_pairs(mut file: &str) -> (HashMap<String, String>, &str) {
-        let mut res = hash_map!{};
+        let mut res = hash_map! {};
 
         while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();
@@ -230,7 +236,7 @@ impl MovePair {
         if self.white_nag != 0 {
             res += &format!(" ${}", self.white_nag);
         }
-        
+
         if let Some(ref white_comment) = self.white_comment {
             res += &format!(" {{{}}}", white_comment);
         }
@@ -260,14 +266,13 @@ impl PartialEq for MovePair {
 
 impl MovePair {
     pub fn parse_pair(mut tokens: &[GameToken]) -> (Option<MovePair>, &[GameToken]) {
-
         let mut turn = 0;
-        let mut white : Option<Option<AlgebraicMove>> = None;
+        let mut white: Option<Option<AlgebraicMove>> = None;
         let mut white_nag = 0;
-        let mut white_comment : Option<String> = None;
-        let mut black : Option<AlgebraicMove> = None;
+        let mut white_comment: Option<String> = None;
+        let mut black: Option<AlgebraicMove> = None;
         let mut black_nag = 0;
-        let mut black_comment : Option<String> = None;
+        let mut black_comment: Option<String> = None;
 
         loop {
             if tokens.is_empty() {
@@ -276,27 +281,49 @@ impl MovePair {
 
             match &tokens[0] {
                 GameToken::TurnCounter(n) if turn == 0 => turn = *n,
-                GameToken::TurnCounter(n) if turn == *n => {},
+                GameToken::TurnCounter(n) if turn == *n => {}
                 GameToken::DotDot() if white.is_none() => white = Some(None),
                 GameToken::DotDot() if white.is_some() => {}
                 GameToken::NumAnGlyph(n) if white.is_some() => white_nag = *n,
                 GameToken::NumAnGlyph(n) if black.is_some() => black_nag = *n,
                 GameToken::NumAnGlyph(_) => {}
                 GameToken::Move(alg) if white.is_none() => white = Some(Some(alg.clone())),
-                GameToken::Move(alg) if white.is_some() && black.is_none() => black = Some(alg.clone()),
-                GameToken::Comment(com) if white.is_some() && black.is_none() && white_comment.is_none() => white_comment = Some(com.clone()),
-                GameToken::Comment(com) if white.is_some() && black.is_some() && black_comment.is_none() => black_comment = Some(com.clone()),
+                GameToken::Move(alg) if white.is_some() && black.is_none() => {
+                    black = Some(alg.clone())
+                }
+                GameToken::Comment(com)
+                    if white.is_some() && black.is_none() && white_comment.is_none() =>
+                {
+                    white_comment = Some(com.clone())
+                }
+                GameToken::Comment(com)
+                    if white.is_some() && black.is_some() && black_comment.is_none() =>
+                {
+                    black_comment = Some(com.clone())
+                }
                 GameToken::Comment(_) if white_comment.is_some() && black_comment.is_some() => {}
-                _ => break
+                _ => break,
             }
 
             tokens = &tokens[1..];
         }
 
-        if let Some(white) = white && turn != 0 && (white.is_some() || black.is_some()) {
-            (Some(
-                MovePair { turn, white, white_nag, white_comment, black, black_nag, black_comment }
-            ), tokens)
+        if let Some(white) = white
+            && turn != 0
+            && (white.is_some() || black.is_some())
+        {
+            (
+                Some(MovePair {
+                    turn,
+                    white,
+                    white_nag,
+                    white_comment,
+                    black,
+                    black_nag,
+                    black_comment,
+                }),
+                tokens,
+            )
         } else {
             (None, tokens)
         }
@@ -313,13 +340,14 @@ pub enum GameToken {
 }
 
 impl GameToken {
-        pub fn parse_tokens(mut file: &str) -> (Vec<GameToken>, &str) {
+    pub fn parse_tokens(mut file: &str) -> (Vec<GameToken>, &str) {
         let mut res = vec![];
         loop {
-
             if let Some(c) = regexp!(r"^\s*(\d+)\.").captures(file) {
                 let (full, [num]) = c.extract();
-                res.push(GameToken::TurnCounter(u64::from_str_radix(num, 10).unwrap()));
+                res.push(GameToken::TurnCounter(
+                    u64::from_str_radix(num, 10).unwrap(),
+                ));
                 file = &file[full.len()..];
             } else if let Some(c) = regexp!(r"^\s*\{([^}]*)\}").captures(file) {
                 let (full, [comment]) = c.extract();
