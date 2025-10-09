@@ -268,16 +268,6 @@ impl ChessMove {
             guess.check_or_mate = Some(false);
         }
 
-        if guess.check_or_mate.is_some() {
-            let mut board = board.clone();
-            board.apply(self);
-            let mut moves = vec![];
-            board.moves(&mut moves);
-            if moves.is_empty() {
-                guess.check_or_mate = Some(true);
-            }
-        }
-
         if self.piece.piece() == ChessPiece::Pawn {
             if guess.capture {
                 guess.file_origin = Some(self.pmv.from.file_rank().0);
