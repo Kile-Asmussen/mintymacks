@@ -100,7 +100,7 @@ pub struct PGN {
 }
 
 impl PGN {
-    pub fn to_string(&self, res: &mut String) {
+    pub fn to_string(&self, res: &mut String, newlines: bool) {
         add_tag_pair(res, "Event", self.headers.event.as_deref());
         add_tag_pair(res, "Site", self.headers.site.as_deref());
         add_tag_pair(res, "Date", self.headers.date.as_deref());
@@ -128,7 +128,7 @@ impl PGN {
 
         for mv in &self.moves {
             *res += &mv.to_string();
-            res.push(' ');
+            res.push(if newlines { '\n' } else { ' ' });
         }
 
         if !self.end.is_empty() {
