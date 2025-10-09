@@ -246,7 +246,9 @@ impl ChessMove {
             check_or_mate: None,
         };
 
-        if self.special == Some(SpecialMove::CastlingEastward) {
+        if self.special == Some(SpecialMove::CastlingEastward)
+            || self.special == Some(SpecialMove::CastlingWestward)
+        {
             guess.destination = Square::a1;
             guess.rank_origin = None;
             guess.file_origin = None;
