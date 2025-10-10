@@ -31,6 +31,7 @@ pub mod model;
 #[macro_use]
 pub mod notation;
 pub mod game;
+pub mod openings;
 pub mod profile;
 pub mod utils;
 pub mod zobrist;
