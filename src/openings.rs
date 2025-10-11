@@ -1,13 +1,17 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    path::PathBuf,
+};
 
 use crate::notation::{
     algebraic::AlgebraicMove,
-    pgn::{PGN, PGNHeaders, load_pgn_file},
+    pgn::{MovePair, PGN, PGNHeaders, load_pgn_file},
 };
 use trie_rs::{self, map};
 
 pub struct Openings {
-    file: String,
+    pgns: Vec<PGN>,
     trie: trie_rs::map::Trie<AlgebraicMove, PGNAbbrevHeader>,
 }
 
@@ -17,7 +21,7 @@ impl Openings {
 
         let mut tb = map::TrieBuilder::new();
 
-        for pgn in pgns {
+        for pgn in &pgns {
             tb.insert(
                 pgn.move_list(),
                 PGNAbbrevHeader::from_pgn_header(&pgn.headers),
@@ -25,12 +29,13 @@ impl Openings {
         }
 
         Openings {
-            file: file.to_string(),
+            pgns,
             trie: tb.build(),
         }
     }
 }
 
+#[derive(Debug)]
 pub struct PGNAbbrevHeader {
     eco: Option<String>,
     opening: Option<String>,
@@ -62,5 +67,28 @@ impl PGNAbbrevHeader {
         res.variation = self.variation;
 
         res
+    }
+}
+
+#[test]
+fn build_openings() {
+    let file = String::from_utf8_lossy_owned(fs::read("eco.pgn").unwrap());
+
+    let op = Openings::build(&file);
+
+    let query = &[];
+    for (pf, pgn) in op.trie.postfix_search::<Vec<AlgebraicMove>, _>(query) {
+        let pf = MovePair::pair_moves(query.iter().chain(pf.iter()).map(|a| *a));
+
+        println!(
+            "{} {{{}: {} {}}}",
+            pf.iter()
+                .map(|mp| mp.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            pgn.eco.as_deref().unwrap_or(""),
+            pgn.opening.as_deref().unwrap_or(""),
+            pgn.variation.as_deref().unwrap_or(""),
+        )
     }
 }

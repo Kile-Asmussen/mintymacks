@@ -227,16 +227,49 @@ impl PGN {
 
 #[derive(Clone, Debug)]
 pub struct MovePair {
-    pub turn: u64,
+    pub turn: u16,
     pub white: Option<AlgebraicMove>,
-    pub white_nag: u64,
+    pub white_nag: u8,
     pub white_comment: Option<String>,
     pub black: Option<AlgebraicMove>,
-    pub black_nag: u64,
+    pub black_nag: u8,
     pub black_comment: Option<String>,
 }
 
 impl MovePair {
+    pub fn pair_moves<I: IntoIterator<Item = AlgebraicMove>>(it: I) -> Vec<Self> {
+        let mut res = vec![];
+        let mut it = it.into_iter().array_chunks::<2>();
+        let mut turn = 1;
+
+        while let Some([w, b]) = it.next() {
+            res.push(MovePair {
+                turn,
+                white: Some(w),
+                black: Some(b),
+                white_comment: None,
+                black_comment: None,
+                white_nag: 0,
+                black_nag: 0,
+            });
+            turn += 1;
+        }
+
+        if let Some(w) = it.into_remainder().and_then(|mut i| i.next()) {
+            res.push(MovePair {
+                turn,
+                white: Some(w),
+                white_nag: 0,
+                white_comment: None,
+                black: None,
+                black_nag: 0,
+                black_comment: None,
+            });
+        }
+
+        res
+    }
+
     pub fn to_string(&self) -> String {
         let mut res = String::new();
 
@@ -348,8 +381,8 @@ impl MovePair {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum GameToken {
-    TurnCounter(u64),
-    NumAnGlyph(u64),
+    TurnCounter(u16),
+    NumAnGlyph(u8),
     DotDot(),
     Move(AlgebraicMove),
     Comment(String),
@@ -362,7 +395,7 @@ impl GameToken {
             if let Some(c) = regexp!(r"^\s*(\d+)\.").captures(file) {
                 let (full, [num]) = c.extract();
                 res.push(GameToken::TurnCounter(
-                    u64::from_str_radix(num, 10).unwrap(),
+                    u16::from_str_radix(num, 10).unwrap(),
                 ));
                 file = &file[full.len()..];
             } else if let Some(c) = regexp!(r"^\s*\{([^}]*)\}").captures(file) {
@@ -374,7 +407,7 @@ impl GameToken {
                 file = &file[c.len()..];
             } else if let Some(c) = regexp!(r"^\s*\$(\d+)").captures(file) {
                 let (full, [num]) = c.extract();
-                res.push(GameToken::NumAnGlyph(u64::from_str_radix(num, 10).unwrap()));
+                res.push(GameToken::NumAnGlyph(u8::from_str_radix(num, 10).unwrap()));
                 file = &file[full.len()..];
             } else if let Some(c) = regexp!(r"^\s*(\S+)").captures(file) {
                 let (full, [alg]) = c.extract();

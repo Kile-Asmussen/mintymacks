@@ -8,6 +8,8 @@
 #![feature(try_blocks)]
 #![feature(adt_const_params)]
 #![feature(format_args_nl)]
+#![feature(string_from_utf8_lossy_owned)]
+#![feature(iter_array_chunks)]
 
 use std::{
     alloc::System,
