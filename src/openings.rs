@@ -8,7 +8,13 @@ use crate::notation::{
     algebraic::AlgebraicMove,
     pgn::{MovePair, PGN, PGNTags, Tag, load_pgn_file},
 };
+use lazy_static::lazy_static;
 use trie_rs::{self, map};
+
+lazy_static! {
+    pub static ref OPENINGS_DB: Openings = Openings::build(&*ECO_DB);
+};
+include_flate::flate!(pub static ECO_DB: str from "eco.pgn");
 
 pub struct Openings {
     pgns: Vec<PGN>,

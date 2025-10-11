@@ -10,6 +10,7 @@ use indexmap::IndexMap;
 
 use crate::{
     ix_map,
+    model::Victory,
     notation::{
         algebraic::{self, AlgebraicMove},
         regexp,
@@ -89,7 +90,7 @@ impl ToString for Tag {
 pub struct PGN {
     pub headers: PGNTags,
     pub moves: Vec<MovePair>,
-    pub end: String,
+    pub end: Option<Victory>,
 }
 
 impl PGN {
@@ -97,7 +98,7 @@ impl PGN {
         PGN {
             headers: PGNTags::default(),
             moves: vec![],
-            end: "*".to_string(),
+            end: None,
         }
     }
 
@@ -117,10 +118,8 @@ impl PGN {
             res.push(if newlines { '\n' } else { ' ' });
         }
 
-        if !self.end.is_empty() {
-            *res += &self.end;
-            *res += "\n\n"
-        }
+        *res += &self.end.map(|v| v.to_ascii()).unwrap_or("*");
+        *res += "\n\n"
     }
 
     pub fn move_list(&self) -> Vec<AlgebraicMove> {
@@ -186,10 +185,19 @@ impl PGN {
         (res, file)
     }
 
-    pub fn parse_end(file: &str) -> (Option<String>, &str) {
+    pub fn parse_end(file: &str) -> (Option<Option<Victory>>, &str) {
         if let Some(c) = regexp!(r"\s+(\*|1-0|0-1|1/2-1/2)").captures(file) {
             let (full, [cap]) = c.extract::<1>();
-            (Some(cap.to_string()), &file[full.len()..])
+            (
+                Some(match cap {
+                    "1-0" => Some(Victory::WhiteWins),
+                    "0-1" => Some(Victory::BlackWins),
+                    "1/2-1/2" => Some(Victory::Draw),
+                    "*" => None,
+                    _ => return (None, file),
+                }),
+                &file[full.len()..],
+            )
         } else {
             (None, file)
         }

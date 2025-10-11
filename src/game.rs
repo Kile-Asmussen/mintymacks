@@ -5,13 +5,14 @@ use crate::{
     model::{Victory, moves::ChessMove},
     notation::{
         algebraic::AlgebraicMove,
-        pgn::{PGN, PGNTags},
+        pgn::{MovePair, PGN, PGNTags},
     },
     profile::Profile,
     zobrist::{ZOBHASHER, ZobHash},
 };
 
 pub struct GameState {
+    pub start: Option<Box<(BitBoard, u16)>>,
     pub board: BitBoard,
     pub outcome: Option<Victory>,
     pub hash: ZobHash,
@@ -21,7 +22,7 @@ pub struct GameState {
     pub move_sequence: Vec<FatMove>,
     pub white: Option<Profile>,
     pub black: Option<Profile>,
-    pub pgn_tags: PGNTags,
+    pub pgn_tags: Option<Box<PGNTags>>,
 }
 
 impl GameState {
@@ -48,7 +49,13 @@ impl GameState {
         }
     }
 
-    fn to_pgn(&self) -> PGN {}
+    fn to_pgn(&self) -> PGN {
+        PGN {
+            headers: todo!(),
+            moves: MovePair::pair_moves(self.move_sequence.iter().map(|f| f.algebraic)),
+            end: todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -3,7 +3,7 @@ use crate::{
     bits::board::BitBoard,
     ix_map,
     model::{
-        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, Square,
+        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, Square, Victory,
         castling::CastlingRights,
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
@@ -254,8 +254,7 @@ fn pgn_full() {
     for m in &pgn.moves {
         println!("{}", m.to_string())
     }
-
-    assert_eq!(pgn.end, "1/2-1/2");
+    assert_eq!(pgn.end, Some(Victory::Draw));
     assert_eq!(
         pgn.headers.canon.get(&Tag::Event).map(|s| &s[..]),
         Some("F/S Return Match")

@@ -271,3 +271,21 @@ pub enum Victory {
     Draw = 0,
     WhiteWins = 1,
 }
+
+impl Victory {
+    pub fn to_ascii(self) -> &'static str {
+        match self {
+            Self::BlackWins => "0-1",
+            Self::Draw => "1-0",
+            Self::WhiteWins => "1/2-1/2",
+        }
+    }
+
+    pub fn to_str(self) -> &'static str {
+        match self {
+            Self::BlackWins => "0–1",
+            Self::Draw => "1–0",
+            Self::WhiteWins => "½–½",
+        }
+    }
+}
