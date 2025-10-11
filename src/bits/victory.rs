@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use crate::{bits::board::{BitBoard, HalfBitBoard}, model::{moves::ChessMove, ChessPiece, Color, Victory}, zobrist::ZobHash};
+use crate::{
+    bits::board::{BitBoard, HalfBitBoard},
+    model::{ChessPiece, Color, Victory, moves::ChessMove},
+    zobrist::ZobHash,
+};
 
 impl Victory {
     pub fn from_color(c: Color) -> Self {
@@ -10,14 +14,19 @@ impl Victory {
         }
     }
 
-    pub fn determine(board: &BitBoard, hash: ZobHash, moves: &[ChessMove], halfmove: u16, seen_positions: &HashMap<ZobHash, u8>) -> Option<Self> {
+    pub fn determine(
+        board: &BitBoard,
+        hash: ZobHash,
+        moves: &[ChessMove],
+        halfmove: u16,
+        seen_positions: &HashMap<ZobHash, u8>,
+    ) -> Option<Self> {
+        let (active, passive) = board.active_passive(board.metadata.to_move);
 
-        let (active, passive) =  board.active_passive(board.metadata.to_move);
-
-        if moves.is_empty() && (active.kings & passive.threats(board.metadata.to_move.opposite(), {
-            let this = &active;
-            this.total
-        }, None, None) != 0) {
+        if moves.is_empty()
+            && (active.kings & passive.attacks(board.metadata.to_move.opposite(), active.total)
+                != 0)
+        {
             return Some(Self::from_color(board.metadata.to_move.opposite()));
         }
 
@@ -25,11 +34,11 @@ impl Victory {
             return Some(Self::Draw);
         }
 
-        if let Some(n) = seen_positions.get(&hash) && n >= &3 {
+        if let Some(3..) = seen_positions.get(&hash) {
             return Some(Self::Draw);
         }
 
-        if !active.suffiecient() && !passive.suffiecient() {
+        if !active.sufficient() && !passive.sufficient() {
             return Some(Self::Draw);
         }
 
@@ -47,8 +56,10 @@ impl HalfBitBoard {
     }
 
     fn count_bishops(&self) -> (u32, u32) {
-        ((self.bishops & 0x5555_5555_5555_5555).count_ones(),
-        (self.bishops & 0xAAAA_AAAA_AAAA_AAAA).count_ones())
+        (
+            (self.bishops & 0x5555_5555_5555_5555).count_ones(),
+            (self.bishops & 0xAAAA_AAAA_AAAA_AAAA).count_ones(),
+        )
     }
 
     fn count_rooks(&self) -> u32 {
@@ -59,8 +70,7 @@ impl HalfBitBoard {
         self.rooks.count_ones()
     }
 
-    fn suffiecient(&self) -> bool {
-
+    fn sufficient(&self) -> bool {
         if self.count_pawns() > 0 {
             return true;
         }
@@ -82,7 +92,7 @@ impl HalfBitBoard {
         }
 
         return false;
-    } 
+    }
 }
 
 impl ChessMove {

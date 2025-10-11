@@ -1,16 +1,20 @@
+pub mod attacks;
 pub mod board;
 pub mod jumps;
+pub mod movecount;
 pub mod movegen;
 pub mod moving;
 pub mod slides;
 pub mod tests;
-pub mod threats;
 pub mod victory;
-pub mod movecount;
 
-use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
+use rand::{Rng, RngCore, SeedableRng, rngs::SmallRng};
 
-use crate::{arrays::ArrayBoard, bits::slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST}, model::{moves::PseudoMove, BoardFile, BoardRank, ChessPiece, Square}};
+use crate::{
+    arrays::ArrayBoard,
+    bits::slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST},
+    model::{BoardFile, BoardRank, ChessPiece, Square, moves::PseudoMove},
+};
 
 pub type BoardMask = u64;
 
@@ -100,7 +104,7 @@ pub fn show_mask(m: BoardMask) -> String {
 pub const fn slide_move_attacks(
     neg_ray: BoardMask,
     pos_ray: BoardMask,
-    occupied: BoardMask
+    occupied: BoardMask,
 ) -> BoardMask {
     let neg_hit = neg_ray & occupied;
     let pos_hit = pos_ray & occupied;

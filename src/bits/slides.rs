@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{BoardMask, bit, mask, show_mask},
-    model::{Color, Dir, BoardRank, Square},
+    model::{BoardRank, Color, Dir, Square},
 };
 
 pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Dir::East);
@@ -9,15 +9,11 @@ pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Dir::North);
 pub const RAYS_WEST: ArrayBoard<BoardMask> = build_slideboard(Dir::West);
 pub const RAYS_SOUTH: ArrayBoard<BoardMask> = build_slideboard(Dir::South);
 
-pub const RAYS_NORTHEAST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::NorthEast);
-pub const RAYS_SOUTHEAST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::SouthEast);
+pub const RAYS_NORTHEAST: ArrayBoard<BoardMask> = build_slideboard(Dir::NorthEast);
+pub const RAYS_SOUTHEAST: ArrayBoard<BoardMask> = build_slideboard(Dir::SouthEast);
 
-pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::NorthWest);
-pub const RAYS_SOUTHWEST: ArrayBoard<BoardMask> =
-    build_slideboard(Dir::SouthWest);
+pub const RAYS_NORTHWEST: ArrayBoard<BoardMask> = build_slideboard(Dir::NorthWest);
+pub const RAYS_SOUTHWEST: ArrayBoard<BoardMask> = build_slideboard(Dir::SouthWest);
 
 pub const fn build_slideboard(dir: Dir) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);
@@ -35,8 +31,7 @@ pub const fn build_slidemask(dir: Dir, sq: Square) -> BoardMask {
     let mut res = BoardMask::MIN;
     let mut n = 1;
     let mut sq = sq.go(&[dir]);
-    while let Some(s) = sq
-    {
+    while let Some(s) = sq {
         res |= s.bit();
         n += 1;
         sq = s.go(&[dir])

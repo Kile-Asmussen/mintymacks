@@ -1,3 +1,6 @@
+use std::{fmt, io::Write, ops::DerefMut};
+use tokio::io::{AsyncWrite, AsyncWriteExt};
+
 #[macro_export]
 macro_rules! deque {
     [] => (
@@ -11,8 +14,6 @@ macro_rules! deque {
     );
 }
 
-use std::{fmt, io::Write, ops::DerefMut};
-
 pub use deque;
 
 #[macro_export]
@@ -22,16 +23,28 @@ macro_rules! tree_map {
     }};
 
     { $( $key:expr => $value:expr ),* $(,)? } => {{
-        let mut map = std::collections::BTreeMap::with_capacity(
-            const { std::repetition_utils!(@count $($key),*) }
-        );
+        let mut map = std::collections::BTreeMap::new();
         $( map.insert($key, $value); )*
         map
     }}
 }
 
-use tokio::io::{AsyncWrite, AsyncWriteExt};
 pub use tree_map;
+
+#[macro_export]
+macro_rules! ix_map {
+    {} => {{
+        indexmap::IndexMap::new()
+    }};
+
+    { $( $key:expr => $value:expr ),* $(,)? } => {{
+        let mut map = indexmap::IndexMap::new();
+        $( map.insert($key, $value); )*
+        map
+    }}
+}
+
+pub use ix_map;
 
 pub async fn print_to_async<T>(args: fmt::Arguments<'_>, global_s: fn() -> T, label: &str)
 where

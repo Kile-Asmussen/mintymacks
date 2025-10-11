@@ -1,5 +1,3 @@
-mod tests;
-
 use std::{arch::x86_64, array, fs::canonicalize, ops::BitXor};
 
 use rand::{Rng, SeedableRng};

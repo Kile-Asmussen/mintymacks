@@ -5,6 +5,7 @@ use crate::{
 };
 
 pub const WHITE_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::White);
+pub const BLACK_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::Black);
 
 pub const fn build_pawnboard(c: Color) -> ArrayBoard<BoardMask> {
     let mut res = ArrayBoard::new(0);

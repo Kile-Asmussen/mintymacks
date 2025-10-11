@@ -12128,17 +12128,3 @@ d5 Ne7 9. Ne1 Nd7 10. f3 f5 *
 
 1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. 
 d5 Ne7 9. Ne1 Nd7 10. f3 f5 11. g4 *
-
--------------
-
-{
-A PGN file of ECO classifications distributed with the PGN extraction
-program, pgn-extract. I believe that the original file from which I
-generated this was put together by Ewart Shaw, Franz Hemmer and others,
-to whom appropriate thanks and acknowledgement is due.  Permission has
-been granted for its inclusion with the pgn-extract program, which is
-available from:
-https://www.cs.kent.ac.uk/~djb/pgn-extract/
-
-David J. Barnes (d.j.barnes@kent.ac.uk)
-}

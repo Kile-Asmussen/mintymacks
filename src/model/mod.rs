@@ -162,6 +162,12 @@ impl ChessPiece {
     pub const fn color(self, c: Color) -> ColoredChessPiece {
         ColoredChessPiece::new(c, self)
     }
+
+    pub const PAWN: i16 = 100;
+    pub const KNIGHT: i16 = 325;
+    pub const BISHOP: i16 = 333;
+    pub const ROOK: i16 = 500;
+    pub const QUEEN: i16 = 500;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]

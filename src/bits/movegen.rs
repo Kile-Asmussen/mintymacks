@@ -1,11 +1,19 @@
 use crate::{
     bits::{
-        self, bit, board::{BitBoard, HalfBitBoard}, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, show_mask, slide_move_attacks, slides::{
-            BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES
-        }, Bits, BoardMask
+        self, Bits, BoardMask, bit,
+        board::{BitBoard, HalfBitBoard},
+        jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        mask, show_mask, slide_move_attacks,
+        slides::{
+            BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
+            RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
+        },
     },
     model::{
-        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights}, metadata::Metadata, moves::{self, ChessMove, PseudoMove, SpecialMove}, BoardRank, ChessPiece, Color, ColoredChessPiece, Square
+        BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
+        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
+        metadata::Metadata,
+        moves::{self, ChessMove, PseudoMove, SpecialMove},
     },
 };
 
@@ -41,10 +49,13 @@ pub fn knight_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.knights) {
-        for dst in Bits(KNIGHT_MOVES.at(from) & !{
-            let this = &friendly;
-            this.total
-        }) {
+        for dst in Bits(
+            KNIGHT_MOVES.at(from)
+                & !{
+                    let this = &friendly;
+                    this.total
+                },
+        ) {
             encode_piece_move(
                 from.to(dst),
                 ChessPiece::Knight,
@@ -65,25 +76,33 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.rooks) {
-        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
+        let attacks = slide_move_attacks(
+            RAYS_SOUTH.at(from),
+            RAYS_NORTH.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | slide_move_attacks(
+            RAYS_WEST.at(from),
+            RAYS_EAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let mask = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let mask = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -106,25 +125,33 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.bishops) {
-        let attacks = slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
+        let attacks = slide_move_attacks(
+            RAYS_SOUTHWEST.at(from),
+            RAYS_NORTHEAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | slide_move_attacks(
+            RAYS_SOUTHEAST.at(from),
+            RAYS_NORTHWEST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let mask = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let mask = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -147,39 +174,53 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.queens) {
-        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
+        let attacks = slide_move_attacks(
+            RAYS_SOUTH.at(from),
+            RAYS_NORTH.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | slide_move_attacks(
+            RAYS_WEST.at(from),
+            RAYS_EAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | slide_move_attacks(
+            RAYS_SOUTHWEST.at(from),
+            RAYS_NORTHEAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | slide_move_attacks(
+            RAYS_SOUTHEAST.at(from),
+            RAYS_NORTHWEST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let mask = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let mask = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         for dst in Bits(mask) {
             encode_piece_move(
@@ -250,12 +291,8 @@ pub fn pawn_captures(
 ) {
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
-            Color::White => {
-                WHITE_PAWN_CAPTURE.at(from) 
-            }
-            Color::Black => {
-                WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes()
-            }
+            Color::White => WHITE_PAWN_CAPTURE.at(from),
+            Color::Black => WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes(),
         } & (({
             let this = &enemy;
             this.total
@@ -284,16 +321,17 @@ pub fn king_moves(
     metadata: Metadata,
     res: &mut Vec<ChessMove>,
 ) {
-    let static_threats = enemy.threats(metadata.to_move.opposite(), {
-        let this = &friendly;
-        this.total
-    }, None, None);
+    let static_threats = enemy.attacks(metadata.to_move.opposite(), friendly.total);
 
     for from in Bits(friendly.kings) {
-        for dst in Bits(KING_MOVES.at(from) & !static_threats & !{
-            let this = &friendly;
-            this.total
-        }) {
+        for dst in Bits(
+            KING_MOVES.at(from)
+                & !static_threats
+                & !{
+                    let this = &friendly;
+                    this.total
+                },
+        ) {
             encode_piece_move(
                 from.to(dst),
                 ChessPiece::King,
@@ -385,10 +423,7 @@ pub fn encode_piece_move(
     let cap = enemy.at(mv.to).map(|p| (p, mv.to));
 
     let hypothetical_threat =
-        enemy.threats(metadata.to_move.opposite(), {
-            let this = &friendly;
-            this.total
-        }, Some(mv), cap);
+        enemy.attacks_after_enemy_move(metadata.to_move.opposite(), friendly.total, mv, cap);
 
     let kings = if piece == ChessPiece::King {
         friendly.kings ^ mv.bits()
@@ -418,10 +453,7 @@ pub fn encode_pawn_move(
     res: &mut Vec<ChessMove>,
 ) {
     let hypothetical_threat =
-        enemy.threats(metadata.to_move.opposite(), {
-            let this = &friendly;
-            this.total
-        }, Some(mv), cap);
+        enemy.attacks_after_enemy_move(metadata.to_move.opposite(), friendly.total, mv, cap);
 
     if (hypothetical_threat & friendly.kings) == 0 {
         let promotions = if let BoardRank::_1 | BoardRank::_8 = mv.to.file_rank().1 {

@@ -1,13 +1,14 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Bits, BoardMask, bit,
+        Bits, BoardMask,
+        attacks::{bishop_attacks, knight_attacks, rook_attacks},
+        bit,
         board::{BitBoard, HalfBitBoard},
         jumps::KNIGHT_MOVES,
         mask,
         movegen::{legal_moves, pawn_moves},
         show_mask, slides,
-        threats::{bishop_threats, knight_threats, rook_threats},
     },
     fuzzing::stockfish_perft,
     model::{
@@ -24,7 +25,7 @@ use crate::{
 
 #[test]
 fn knight_threat_masks() {
-    let t = knight_threats(mask([
+    let t = knight_attacks(mask([
         0b_00000000,
         0b_00000000,
         0b_00000100,
@@ -52,7 +53,7 @@ fn knight_threat_masks() {
 
 #[test]
 fn rook_threat_masks() {
-    let t = rook_threats(
+    let t = rook_attacks(
         mask([
             0b_00000000,
             0b_00000000,
@@ -92,7 +93,7 @@ fn rook_threat_masks() {
 
 #[test]
 fn bishop_threat_masks() {
-    let t = bishop_threats(
+    let t = bishop_attacks(
         mask([
             0b_00000000,
             0b_00000000,

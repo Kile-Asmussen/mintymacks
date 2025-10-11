@@ -2,12 +2,18 @@ use std::{
     collections::HashMap,
     default,
     hash::Hash,
+    ops::Index,
     time::{Duration, Instant},
 };
 
-use crate::notation::{
-    algebraic::{self, AlgebraicMove},
-    regexp,
+use indexmap::IndexMap;
+
+use crate::{
+    ix_map,
+    notation::{
+        algebraic::{self, AlgebraicMove},
+        regexp,
+    },
 };
 
 pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
@@ -22,79 +28,66 @@ pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
 }
 
 #[derive(Debug, Clone)]
-pub struct PGNHeaders {
-    pub event: Option<String>,
-    pub site: Option<String>,
-    pub date: Option<String>,
-    pub round: Option<String>,
-    pub white: Option<String>,
-    pub black: Option<String>,
-    pub result: Option<String>,
-    pub annotator: Option<String>,
-    pub ply_count: Option<String>,
-    pub time_control: Option<String>,
-    pub termination: Option<String>,
-    pub opening: Option<String>,
-    pub variation: Option<String>,
-    pub eco: Option<String>,
-    pub mode: Option<String>,
-    pub fen: Option<String>,
-    pub tag_pairs: HashMap<String, String>,
+pub struct PGNTags {
+    pub canon: IndexMap<Tag, String>,
+    pub misc: IndexMap<String, String>,
 }
 
-impl Default for PGNHeaders {
+impl Default for PGNTags {
     fn default() -> Self {
         Self {
-            event: None,
-            site: None,
-            date: None,
-            round: None,
-            white: None,
-            black: None,
-            result: None,
-            annotator: None,
-            ply_count: None,
-            time_control: None,
-            opening: None,
-            variation: None,
-            eco: None,
-            termination: None,
-            mode: None,
-            fen: None,
-            tag_pairs: HashMap::new(),
+            canon: IndexMap::new(),
+            misc: IndexMap::new(),
         }
     }
 }
 
-impl PGNHeaders {
-    fn from_tag_pairs(mut tag_pairs: HashMap<String, String>) -> Self {
+impl PGNTags {
+    pub fn from_tag_pairs(hash: IndexMap<String, String>) -> Self {
         let mut res = Self::default();
-
-        res.event = tag_pairs.remove("Event");
-        res.site = tag_pairs.remove("Site");
-        res.date = tag_pairs.remove("Date");
-        res.round = tag_pairs.remove("Round");
-        res.white = tag_pairs.remove("White");
-        res.black = tag_pairs.remove("Black");
-        res.result = tag_pairs.remove("Result");
-        res.annotator = tag_pairs.remove("Annotator");
-        res.ply_count = tag_pairs.remove("PlyCount");
-        res.time_control = tag_pairs.remove("TimeControl");
-        res.termination = tag_pairs.remove("Termination");
-        res.mode = tag_pairs.remove("Mode");
-        res.fen = tag_pairs.remove("FEN");
-        res.opening = tag_pairs.remove("Opening");
-        res.variation = tag_pairs.remove("Variation");
-        res.eco = tag_pairs.remove("ECO");
-        res.tag_pairs = tag_pairs;
-
+        res.misc = hash;
+        for i in Tag::Event as u8..Tag::Variation as u8 {
+            let i: Tag = unsafe { std::mem::transmute(i) };
+            let Some(v) = res.misc.shift_remove(&i.to_string()) else {
+                continue;
+            };
+            res.canon.insert(i, v);
+        }
         res
+    }
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[repr(u8)]
+pub enum Tag {
+    Event = 0,
+    Site,
+    Date,
+    Round,
+    White,
+    Black,
+    Result,
+    Annotator,
+    PlyCount,
+    TimeControl,
+    Time,
+    Termination,
+    Mode,
+    FEN,
+    ECO,
+    Opening,
+    Variation,
+}
+
+impl ToString for Tag {
+    fn to_string(&self) -> String {
+        format!("{self:?}")
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct PGN {
-    pub headers: PGNHeaders,
+    pub headers: PGNTags,
     pub moves: Vec<MovePair>,
     pub end: String,
 }
@@ -102,34 +95,19 @@ pub struct PGN {
 impl PGN {
     pub fn new() -> Self {
         PGN {
-            headers: PGNHeaders::default(),
+            headers: PGNTags::default(),
             moves: vec![],
             end: "*".to_string(),
         }
     }
 
     pub fn to_string(&self, res: &mut String, newlines: bool) {
-        add_tag_pair(res, "Event", self.headers.event.as_deref());
-        add_tag_pair(res, "Site", self.headers.site.as_deref());
-        add_tag_pair(res, "Date", self.headers.date.as_deref());
-        add_tag_pair(res, "Round", self.headers.round.as_deref());
-        add_tag_pair(res, "White", self.headers.white.as_deref());
-        add_tag_pair(res, "Black", self.headers.black.as_deref());
-        add_tag_pair(res, "Result", self.headers.result.as_deref());
+        for (k, v) in &self.headers.canon {
+            *res += &format!("[{k:?} \"{v}\"]\n");
+        }
 
-        add_tag_pair(res, "Annotator", self.headers.annotator.as_deref());
-        add_tag_pair(res, "PlyCount", self.headers.ply_count.as_deref());
-        add_tag_pair(res, "TimeControl", self.headers.time_control.as_deref());
-        add_tag_pair(res, "Termination", self.headers.termination.as_deref());
-        add_tag_pair(res, "Mode", self.headers.mode.as_deref());
-        add_tag_pair(res, "Fen", self.headers.fen.as_deref());
-
-        add_tag_pair(res, "ECO", self.headers.eco.as_deref());
-        add_tag_pair(res, "Opening", self.headers.opening.as_deref());
-        add_tag_pair(res, "Variation", self.headers.opening.as_deref());
-
-        for (k, v) in &self.headers.tag_pairs {
-            add_tag_pair(res, k, Some(v));
+        for (k, v) in &self.headers.misc {
+            *res += &format!("[{k} \"{v}\"]\n");
         }
 
         *res += "\n";
@@ -142,13 +120,6 @@ impl PGN {
         if !self.end.is_empty() {
             *res += &self.end;
             *res += "\n\n"
-        }
-
-        fn add_tag_pair(res: &mut String, name: &str, value: Option<&str>) {
-            if let Some(value) = value {
-                *res += &format!(r#"[{name} "{value}"]"#);
-                *res += "\n";
-            }
         }
     }
 
@@ -179,10 +150,10 @@ impl PGN {
             return (None, orig_file);
         };
 
-        let default = PGNHeaders::default();
+        let default = PGNTags::default();
 
         let res = PGN {
-            headers: PGNHeaders::from_tag_pairs(tag_pairs),
+            headers: PGNTags::from_tag_pairs(tag_pairs),
             moves,
             end,
         };
@@ -190,8 +161,8 @@ impl PGN {
         (Some(res), file)
     }
 
-    pub fn parse_tag_pairs(mut file: &str) -> (HashMap<String, String>, &str) {
-        let mut res = hash_map! {};
+    pub fn parse_tag_pairs(mut file: &str) -> (IndexMap<String, String>, &str) {
+        let mut res = ix_map! {};
 
         while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();

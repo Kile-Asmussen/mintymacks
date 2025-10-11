@@ -6,7 +6,7 @@ use std::{
 
 use crate::notation::{
     algebraic::AlgebraicMove,
-    pgn::{MovePair, PGN, PGNHeaders, load_pgn_file},
+    pgn::{MovePair, PGN, PGNTags, Tag, load_pgn_file},
 };
 use trie_rs::{self, map};
 
@@ -51,20 +51,26 @@ impl PGNAbbrevHeader {
         }
     }
 
-    pub fn from_pgn_header(pgn: &PGNHeaders) -> Self {
+    pub fn from_pgn_header(pgn: &PGNTags) -> Self {
         PGNAbbrevHeader {
-            eco: pgn.eco.clone(),
-            opening: pgn.opening.clone(),
-            variation: pgn.variation.clone(),
+            eco: pgn.canon.get(&Tag::ECO).map(Clone::clone),
+            opening: pgn.canon.get(&Tag::Opening).map(Clone::clone),
+            variation: pgn.canon.get(&Tag::Variation).map(Clone::clone),
         }
     }
 
-    pub fn into_header(self) -> PGNHeaders {
-        let mut res = PGNHeaders::default();
+    pub fn into_header(self) -> PGNTags {
+        let mut res = PGNTags::default();
 
-        res.eco = self.eco;
-        res.opening = self.opening;
-        res.variation = self.variation;
+        if let Some(eco) = self.eco {
+            res.canon.insert(Tag::ECO, eco);
+        }
+        if let Some(opening) = self.opening {
+            res.canon.insert(Tag::Opening, opening);
+        }
+        if let Some(variation) = self.variation {
+            res.canon.insert(Tag::Variation, variation);
+        }
 
         res
     }

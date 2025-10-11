@@ -123,3 +123,37 @@ impl ArrayBoard<BoardMask> {
         res
     }
 }
+
+impl ArrayBoard<i16> {
+    pub const fn zero(&mut self) {
+        let mut sq = Square::a1;
+        while let Some(next) = sq.next() {
+            self.set(sq, 0);
+            sq = next;
+        }
+    }
+
+    pub const fn add(&mut self, m: BoardMask, n: i16) {
+        let mut it = Bits(m);
+        while let Some(sq) = it.next() {
+            self.set(sq, self.at(sq) + n);
+        }
+    }
+}
+
+impl ArrayBoard<i8> {
+    pub const fn zero(&mut self) {
+        let mut sq = Square::a1;
+        while let Some(next) = sq.next() {
+            self.set(sq, 0);
+            sq = next;
+        }
+    }
+
+    pub const fn add(&mut self, m: BoardMask, n: i8) {
+        let mut it = Bits(m);
+        while let Some(sq) = it.next() {
+            self.set(sq, self.at(sq) + n);
+        }
+    }
+}
