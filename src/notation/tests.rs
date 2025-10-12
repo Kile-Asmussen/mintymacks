@@ -186,7 +186,13 @@ fn pgn_tag_pairs() {
         "Result".to_string() => "1/2-1/2".to_string(),
     };
 
-    assert_eq!(hash, reference);
+    assert_eq!(hash["Event"], reference["Event"]);
+    assert_eq!(hash["Site"], reference["Site"]);
+    assert_eq!(hash["Date"], reference["Date"]);
+    assert_eq!(hash["Round"], reference["Round"]);
+    assert_eq!(hash["White"], reference["White"]);
+    assert_eq!(hash["Black"], reference["Black"]);
+    assert_eq!(hash["Result"], reference["Result"]);
 
     assert_eq!(
         rest,

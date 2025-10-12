@@ -1,10 +1,13 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     default,
     hash::Hash,
     ops::Index,
     time::{Duration, Instant},
 };
+
+use strum::{EnumIter, IntoStaticStr, VariantArray};
 
 use indexmap::IndexMap;
 
@@ -30,35 +33,41 @@ pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
 
 #[derive(Debug, Clone)]
 pub struct PGNTags {
-    pub canon: IndexMap<Tag, String>,
-    pub misc: IndexMap<String, String>,
+    pub canon: IndexMap<Tag, Cow<'static, str>>,
+    pub misc: IndexMap<Cow<'static, str>, Cow<'static, str>>,
 }
 
 impl Default for PGNTags {
     fn default() -> Self {
         Self {
-            canon: IndexMap::new(),
+            canon: ix_map! {
+                Tag::Event => "?".into(),
+                Tag::Site => "?".into(),
+                Tag::Date => "????.??.??".into(),
+                Tag::Round => "?".into(),
+                Tag::White => "?".into(),
+                Tag::Black => "?".into(),
+                Tag::Black => "*".into(),
+            },
             misc: IndexMap::new(),
         }
     }
 }
 
 impl PGNTags {
-    pub fn from_tag_pairs(hash: IndexMap<String, String>) -> Self {
+    pub fn from_tag_pairs(hash: IndexMap<Cow<'static, str>, Cow<'static, str>>) -> Self {
         let mut res = Self::default();
         res.misc = hash;
-        for i in Tag::Event as u8..Tag::Variation as u8 {
-            let i: Tag = unsafe { std::mem::transmute(i) };
-            let Some(v) = res.misc.shift_remove(&i.to_string()) else {
-                continue;
-            };
-            res.canon.insert(i, v);
+        for i in Tag::VARIANTS {
+            if let Some(v) = res.misc.shift_remove(&Cow::Borrowed(i.into())) {
+                res.canon.insert(*i, v);
+            }
         }
         res
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, VariantArray, IntoStaticStr)]
 #[repr(u8)]
 pub enum Tag {
     Event = 0,
@@ -160,12 +169,19 @@ impl PGN {
         (Some(res), file)
     }
 
-    pub fn parse_tag_pairs(mut file: &str) -> (IndexMap<String, String>, &str) {
+    pub fn parse_tag_pairs(
+        mut file: &str,
+    ) -> (IndexMap<Cow<'static, str>, Cow<'static, str>>, &str) {
         let mut res = ix_map! {};
 
         while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();
-            res.insert(tag.to_string(), value.to_string());
+            if let Some(tag) = Tag::VARIANTS
+                .iter()
+                .find(|t| <&'static str>::from(**t) == tag)
+            {
+                res.insert(Cow::Borrowed(tag.into()), Cow::Owned(value.to_string()));
+            }
             file = &file[matched.len()..];
         }
 
@@ -216,10 +232,29 @@ pub struct MovePair {
 }
 
 impl MovePair {
-    pub fn pair_moves<I: IntoIterator<Item = AlgebraicMove>>(it: I) -> Vec<Self> {
+    pub fn pair_moves<I: IntoIterator<Item = AlgebraicMove>>(
+        it: I,
+        mut turn: u16,
+        black_first: bool,
+    ) -> Vec<Self> {
         let mut res = vec![];
-        let mut it = it.into_iter().array_chunks::<2>();
-        let mut turn = 1;
+
+        let mut it = it.into_iter();
+
+        if black_first {
+            res.push(MovePair {
+                turn,
+                white: None,
+                white_nag: 0,
+                white_comment: None,
+                black: it.next(),
+                black_nag: 0,
+                black_comment: None,
+            });
+            turn += 1;
+        }
+
+        let mut it = it.array_chunks::<2>();
 
         while let Some([w, b]) = it.next() {
             res.push(MovePair {

@@ -71,7 +71,7 @@ impl HalfBitBoard {
 
         return pawn_attacks(self.pawns ^ is_mv(c, Pawn, mv), c.color())
             | knight_attacks(self.knights ^ is_mv(c, Knight, mv))
-            | king_attacks(self.kings)
+            | king_attacks(self.kings ^ is_mv(c, King, mv))
             | rook_attacks(self.rooks ^ is_mv(c, Rook, mv), total)
             | bishop_attacks(self.bishops ^ is_mv(c, Bishop, mv), total)
             | queen_attacks(self.queens ^ is_mv(c, Queen, mv), total);
@@ -95,11 +95,11 @@ impl HalfBitBoard {
     ) {
         let total = self.total | enemy;
         count_pawn_attackers(self.pawns, c, amount, res);
-        count_knight_attackers(self.pawns, amount, res);
-        count_bishop_attackers(self.pawns, total, amount, res);
-        count_rook_attackers(self.pawns, total, amount, res);
-        count_queen_attackers(self.pawns, total, amount, res);
-        count_king_attackers(self.pawns, amount, res);
+        count_knight_attackers(self.knights, amount, res);
+        count_bishop_attackers(self.bishops, total, amount, res);
+        count_rook_attackers(self.rooks, total, amount, res);
+        count_queen_attackers(self.queens, total, amount, res);
+        count_king_attackers(self.kings, amount, res);
     }
 
     pub fn count_attacker_materiel(
@@ -111,10 +111,10 @@ impl HalfBitBoard {
     ) {
         let total = self.total | enemy;
         count_pawn_attacker_materiel(self.pawns, c, scale, res);
-        count_knight_attacker_materiel(self.pawns, scale, res);
-        count_bishop_attacker_materiel(self.pawns, total, scale, res);
-        count_rook_attacker_materiel(self.pawns, total, scale, res);
-        count_queen_attacker_materiel(self.pawns, total, scale, res);
+        count_knight_attacker_materiel(self.knights, scale, res);
+        count_bishop_attacker_materiel(self.bishops, total, scale, res);
+        count_rook_attacker_materiel(self.rooks, total, scale, res);
+        count_queen_attacker_materiel(self.queens, total, scale, res);
     }
 }
 

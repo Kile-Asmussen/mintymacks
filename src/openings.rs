@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     fs::{self, File},
     path::PathBuf,
@@ -13,7 +14,7 @@ use trie_rs::{self, map};
 
 lazy_static! {
     pub static ref OPENINGS_DB: Openings = Openings::build(&*ECO_DB);
-};
+}
 include_flate::flate!(pub static ECO_DB: str from "eco.pgn");
 
 pub struct Openings {
@@ -43,13 +44,17 @@ impl Openings {
 
 #[derive(Debug)]
 pub struct PGNAbbrevHeader {
-    eco: Option<String>,
-    opening: Option<String>,
-    variation: Option<String>,
+    eco: Option<Cow<'static, str>>,
+    opening: Option<Cow<'static, str>>,
+    variation: Option<Cow<'static, str>>,
 }
 
 impl PGNAbbrevHeader {
-    pub fn new(eco: Option<String>, opening: Option<String>, variation: Option<String>) -> Self {
+    pub fn new(
+        eco: Option<Cow<'static, str>>,
+        opening: Option<Cow<'static, str>>,
+        variation: Option<Cow<'static, str>>,
+    ) -> Self {
         PGNAbbrevHeader {
             eco,
             opening,
@@ -90,7 +95,7 @@ fn build_openings() {
 
     let query = &[];
     for (pf, pgn) in op.trie.postfix_search::<Vec<AlgebraicMove>, _>(query) {
-        let pf = MovePair::pair_moves(query.iter().chain(pf.iter()).map(|a| *a));
+        let pf = MovePair::pair_moves(query.iter().chain(pf.iter()).map(|a| *a), 1, false);
 
         println!(
             "{} {{{}: {} {}}}",

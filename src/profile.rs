@@ -16,6 +16,15 @@ pub enum Profile {
     Engine(EngineProfile),
 }
 
+impl Profile {
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Player(player_profile) => &player_profile.human.name,
+            Self::Engine(engine_profile) => &engine_profile.engine.name,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PlayerProfile {
     pub human: PlayerMetadata,
