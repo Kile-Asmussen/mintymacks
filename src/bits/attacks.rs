@@ -11,7 +11,10 @@ use crate::{
         },
         two_bits,
     },
-    model::{ChessPiece, Color, ColoredChessPiece, Square, moves::PseudoMove},
+    model::{
+        ChessPiece, Color, ColoredChessPiece, ColoredChessPieceWithCapture, Square,
+        moves::PseudoMove,
+    },
 };
 
 impl HalfBitBoard {
@@ -32,25 +35,26 @@ impl HalfBitBoard {
         c: Color,
         enemy: BoardMask,
         mv: PseudoMove,
-        cap: Option<(ChessPiece, Square)>,
+        cap_sq: Option<Square>,
+        cap_p: Option<ChessPiece>,
     ) -> BoardMask {
         use ChessPiece::*;
 
         let enemy = enemy ^ mv.bits();
-        let friendly = self.total ^ bit(cap.map(|(_, s)| s));
+        let friendly = self.total ^ bit(cap_sq);
         let total = friendly | enemy;
 
-        return pawn_attacks(self.pawns ^ is_cap(Pawn, cap), c)
-            | knight_attacks(self.knights ^ is_cap(Knight, cap))
+        return pawn_attacks(self.pawns ^ is_cap(Pawn, cap_p, cap_sq), c)
+            | knight_attacks(self.knights ^ is_cap(Knight, cap_p, cap_sq))
             | king_attacks(self.kings)
-            | rook_attacks(self.rooks ^ is_cap(Rook, cap), total)
-            | bishop_attacks(self.bishops ^ is_cap(Bishop, cap), total)
-            | queen_attacks(self.queens ^ is_cap(Queen, cap), total);
+            | rook_attacks(self.rooks ^ is_cap(Rook, cap_p, cap_sq), total)
+            | bishop_attacks(self.bishops ^ is_cap(Bishop, cap_p, cap_sq), total)
+            | queen_attacks(self.queens ^ is_cap(Queen, cap_p, cap_sq), total);
 
         #[inline]
-        fn is_cap(is: ChessPiece, cap: Option<(ChessPiece, Square)>) -> BoardMask {
-            match cap {
-                Some((p, sq)) if p == is => sq.bit(),
+        fn is_cap(is: ChessPiece, cap: Option<ChessPiece>, sq: Option<Square>) -> BoardMask {
+            match (cap, sq) {
+                (Some(p), Some(sq)) if p == is => sq.bit(),
                 _ => BoardMask::MIN,
             }
         }
@@ -58,7 +62,7 @@ impl HalfBitBoard {
 
     pub fn attacks_after_friendly_move(
         &self,
-        c: ColoredChessPiece,
+        c: ColoredChessPieceWithCapture,
         enemy: BoardMask,
         mv: PseudoMove,
         cap: Option<Square>,
@@ -77,7 +81,7 @@ impl HalfBitBoard {
             | queen_attacks(self.queens ^ is_mv(c, Queen, mv), total);
 
         #[inline]
-        fn is_mv(c: ColoredChessPiece, is: ChessPiece, mv: PseudoMove) -> BoardMask {
+        fn is_mv(c: ColoredChessPieceWithCapture, is: ChessPiece, mv: PseudoMove) -> BoardMask {
             if c.piece() == is {
                 mv.bits()
             } else {

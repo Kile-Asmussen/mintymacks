@@ -6,6 +6,7 @@ use crate::{
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
+    zobrist::ZOBHASHER,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,15 +93,16 @@ fn bitmetadata_sizeof() {
 }
 
 impl BitBoard {
-    pub const fn new(
+    pub fn new(
         board: &ArrayBoard<Option<ColoredChessPiece>>,
         to_move: Color,
         turn: u16,
+        halfmove_clock: u8,
         castling_rights: CastlingRights,
         en_passant: Option<Square>,
         castling_details: CastlingDetails,
     ) -> Self {
-        Self {
+        let mut res = Self {
             white: HalfBitBoard::new(Color::White, board),
             black: HalfBitBoard::new(Color::Black, board),
             metadata: Metadata {
@@ -109,11 +111,15 @@ impl BitBoard {
                 castling_rights,
                 en_passant,
                 castling_details,
+                halfmove_clock,
+                hash: 0,
             },
-        }
+        };
+        res.metadata.hash = ZOBHASHER.hash(&res);
+        res
     }
 
-    pub const fn startpos() -> Self {
+    pub fn startpos() -> Self {
         use ColoredChessPiece::*;
         Self::new(
             &ArrayBoard::setup([
@@ -146,6 +152,7 @@ impl BitBoard {
             ]),
             Color::White,
             1,
+            0,
             CastlingRights::full(),
             None,
             CLASSIC_CASTLING,

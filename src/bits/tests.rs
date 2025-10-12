@@ -140,8 +140,10 @@ fn test_move_numbers(fen: &str, c: Color, cr: CastlingRights, epc: Option<Square
         to_move: c,
         castling_rights: cr,
         turn: 1,
+        halfmove_clock: 0,
         en_passant: epc,
         castling_details: CLASSIC_CASTLING,
+        hash: 0,
     };
 
     let mut moves = vec![];
@@ -197,11 +199,12 @@ fn test_movegen() {
 fn test_moving() {
     let mut board = BitBoard::startpos();
     board.apply(ChessMove {
-        piece: ColoredChessPiece::WhitePawn,
+        cpc: ColoredChessPiece::WhitePawn.with_cap(None),
         pmv: Square::d2.to(Square::d4),
         cap: None,
-        special: None,
-        rights: CastlingRights::full(),
+        spc: None,
+        hmc: 0,
+        cr: CastlingRights::full(),
         epc: None,
     });
 
@@ -269,6 +272,7 @@ fn en_passant_pawn_capture() {
         &board,
         Color::Black,
         1,
+        0,
         CastlingRights::nil(),
         None,
         CLASSIC_CASTLING,
@@ -291,8 +295,8 @@ fn en_passant_pawn_capture() {
 
 #[test]
 fn solve_this_debackle() {
-    let fen = "r3kbnr/pp1b1ppp/1qn1p3/3pP3/3p4/2PB1N2/PP3PPP/RNBQ1RK1 w kq - 0 8";
-    let (board, _) = parse_fen(fen).unwrap();
+    let fen = "r3kbnr/pp1b1ppp/1qn1p3/3pP3/3p4/2PB1N2/PP3PPP/RNBQ1RK1 w kq - 2 8";
+    let board = parse_fen(fen).unwrap();
 
     let mut board2 = BitBoard::startpos();
     let movehist = board2.apply_pseudomoves(&[

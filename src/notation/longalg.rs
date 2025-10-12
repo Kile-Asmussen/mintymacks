@@ -69,7 +69,7 @@ impl Square {
 
 impl ChessMove {
     pub fn longalg(self) -> String {
-        match self.special {
+        match self.spc {
             Some(SpecialMove::Promotion(p)) => self.pmv.longalg(Some(p)),
             Some(SpecialMove::Null) => "0000".to_string(),
             _ => self.pmv.longalg(None),

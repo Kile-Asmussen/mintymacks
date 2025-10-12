@@ -300,13 +300,16 @@ pub fn pawn_captures(
 
         for dst in Bits(mask) {
             let mv = from.to(dst);
-            let mut cap = enemy.at(dst).map(|p| (p, dst));
+            let mut cap = if enemy.total & mv.to.bit() != 0 {
+                Some(mv.to)
+            } else {
+                None
+            };
 
             if cap == None {
                 cap = metadata
                     .en_passant
-                    .and_then(|sq| Square::new(sq.ix() - 8 * (metadata.to_move as i8)))
-                    .map(|sq| (ChessPiece::Pawn, sq))
+                    .and_then(|sq| Square::new(sq.ix() - 8 * (metadata.to_move as i8)));
             }
 
             encode_pawn_move(mv, cap, friendly, enemy, metadata, res);
@@ -391,20 +394,22 @@ pub fn encode_castling_move(
     if (cmv.threat_mask & static_threats) == 0 && (cmv.clear_mask & total) == 0 {
         if metadata.castling_details.capture_own_rook {
             res.push(ChessMove {
-                piece: metadata.to_move.piece(ChessPiece::King),
+                cpc: metadata.to_move.piece(ChessPiece::King).with_cap(None),
                 pmv: cmv.king_move.from.to(cmv.rook_move.from),
                 cap: None,
-                special: Some(special),
-                rights: metadata.castling_rights,
+                hmc: metadata.halfmove_clock,
+                spc: Some(special),
+                cr: metadata.castling_rights,
                 epc: metadata.en_passant,
             })
         } else {
             res.push(ChessMove {
-                piece: metadata.to_move.piece(ChessPiece::King),
+                cpc: metadata.to_move.piece(ChessPiece::King).with_cap(None),
                 pmv: cmv.king_move,
                 cap: None,
-                special: Some(special),
-                rights: metadata.castling_rights,
+                hmc: metadata.halfmove_clock,
+                spc: Some(special),
+                cr: metadata.castling_rights,
                 epc: metadata.en_passant,
             })
         }
@@ -420,10 +425,19 @@ pub fn encode_piece_move(
     metadata: Metadata,
     res: &mut Vec<ChessMove>,
 ) {
-    let cap = enemy.at(mv.to).map(|p| (p, mv.to));
+    let (cap_sq, cap_p) = if enemy.total & mv.to.bit() != 0 {
+        (Some(mv.to), enemy.at(mv.to))
+    } else {
+        (None, None)
+    };
 
-    let hypothetical_threat =
-        enemy.attacks_after_enemy_move(metadata.to_move.opposite(), friendly.total, mv, cap);
+    let hypothetical_threat = enemy.attacks_after_enemy_move(
+        metadata.to_move.opposite(),
+        friendly.total,
+        mv,
+        cap_sq,
+        cap_p,
+    );
 
     let kings = if piece == ChessPiece::King {
         friendly.kings ^ mv.bits()
@@ -433,11 +447,12 @@ pub fn encode_piece_move(
 
     if (hypothetical_threat & kings) == 0 {
         res.push(ChessMove {
-            piece: metadata.to_move.piece(piece),
+            cpc: metadata.to_move.piece(piece).with_cap(cap_p),
             pmv: mv,
-            cap,
-            special: None,
-            rights: metadata.castling_rights,
+            cap: cap_sq,
+            hmc: metadata.halfmove_clock,
+            spc: None,
+            cr: metadata.castling_rights,
             epc: metadata.en_passant,
         });
     }
@@ -446,14 +461,25 @@ pub fn encode_piece_move(
 #[inline]
 pub fn encode_pawn_move(
     mv: PseudoMove,
-    cap: Option<(ChessPiece, Square)>,
+    cap_sq: Option<Square>,
     friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
     res: &mut Vec<ChessMove>,
 ) {
-    let hypothetical_threat =
-        enemy.attacks_after_enemy_move(metadata.to_move.opposite(), friendly.total, mv, cap);
+    let cap_p = if let Some(sq) = cap_sq {
+        enemy.at(sq)
+    } else {
+        None
+    };
+
+    let hypothetical_threat = enemy.attacks_after_enemy_move(
+        metadata.to_move.opposite(),
+        friendly.total,
+        mv,
+        cap_sq,
+        cap_p,
+    );
 
     if (hypothetical_threat & friendly.kings) == 0 {
         let promotions = if let BoardRank::_1 | BoardRank::_8 = mv.to.file_rank().1 {
@@ -466,11 +492,12 @@ pub fn encode_pawn_move(
         for special in promotions {
             let special = *special;
             res.push(ChessMove {
-                piece: metadata.to_move.piece(ChessPiece::Pawn),
+                cpc: metadata.to_move.piece(ChessPiece::Pawn).with_cap(cap_p),
                 pmv: mv,
-                cap,
-                special,
-                rights: metadata.castling_rights,
+                cap: cap_sq,
+                hmc: metadata.halfmove_clock,
+                spc: special,
+                cr: metadata.castling_rights,
                 epc: metadata.en_passant,
             });
         }

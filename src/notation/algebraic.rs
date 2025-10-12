@@ -23,13 +23,13 @@ impl AlgebraicMove {
         if let Some(SpecialMove::CastlingEastward) | Some(SpecialMove::CastlingWestward) =
             self.special
         {
-            return mv.special == self.special;
+            return mv.spc == self.special;
         }
 
-        self.piece == mv.piece.piece()
+        self.piece == mv.cpc.piece()
             && self.destination == mv.pmv.to
             && self.capture == mv.cap.is_some()
-            && self.special == mv.special
+            && self.special == mv.spc
             && (self.file_origin.is_none() || self.file_origin == Some(mv.pmv.from.file_rank().0))
             && (self.rank_origin.is_none() || self.rank_origin == Some(mv.pmv.from.file_rank().1))
     }
@@ -237,35 +237,30 @@ impl BoardRank {
 impl ChessMove {
     pub fn ambiguate(self, board: &BitBoard, moves: &[ChessMove]) -> AlgebraicMove {
         let mut guess = AlgebraicMove {
-            piece: self.piece.piece(),
+            piece: self.cpc.piece(),
             rank_origin: Some(self.pmv.from.file_rank().1),
             file_origin: Some(self.pmv.from.file_rank().0),
             destination: self.pmv.to,
             capture: self.cap.is_some(),
-            special: self.special,
+            special: self.spc,
             check_or_mate: None,
         };
 
-        if self.special == Some(SpecialMove::CastlingEastward)
-            || self.special == Some(SpecialMove::CastlingWestward)
+        if self.spc == Some(SpecialMove::CastlingEastward)
+            || self.spc == Some(SpecialMove::CastlingWestward)
         {
             guess.destination = Square::a1;
             guess.rank_origin = None;
             guess.file_origin = None;
         }
 
-        let (this, enemy) = board.active_passive(self.piece.color());
-        let threats = this.attacks_after_friendly_move(
-            self.piece,
-            enemy.total,
-            self.pmv,
-            self.cap.map(|s| s.1),
-        );
+        let (this, enemy) = board.active_passive(self.cpc.color());
+        let threats = this.attacks_after_friendly_move(self.cpc, enemy.total, self.pmv, self.cap);
         if threats & enemy.kings != BoardMask::MIN {
             guess.check_or_mate = Some(false);
         }
 
-        if self.piece.piece() == ChessPiece::Pawn {
+        if self.cpc.piece() == ChessPiece::Pawn {
             if guess.capture {
                 guess.file_origin = Some(self.pmv.from.file_rank().0);
             } else {

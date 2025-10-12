@@ -166,35 +166,35 @@ impl ZobristBoard {
 
     #[inline]
     pub fn delta(&self, mv: ChessMove, details: CastlingDetails) -> ZobHash {
-        let (act, pas) = self.active_passive(mv.piece.color());
+        let (act, pas) = self.active_passive(mv.cpc.color());
 
-        let movement = match mv.special {
+        let movement = match mv.spc {
             Some(SpecialMove::Promotion(p)) => {
                 act.pawns.at(mv.pmv.from) ^ act.piece(p).at(mv.pmv.to)
             }
             Some(SpecialMove::CastlingEastward) => {
-                let cast = details.eastward.reify(mv.piece.color());
+                let cast = details.eastward.reify(mv.cpc.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
             Some(SpecialMove::CastlingWestward) => {
-                let cast = details.westward.reify(mv.piece.color());
+                let cast = details.westward.reify(mv.cpc.color());
                 act.kings.at2(cast.king_move) ^ act.rooks.at2(cast.rook_move)
             }
             Some(SpecialMove::Null) => ZobHash::MIN,
-            None => act.piece(mv.piece.piece()).at2(mv.pmv),
+            None => act.piece(mv.cpc.piece()).at2(mv.pmv),
         };
 
-        let capture = if let Some((p, sq)) = mv.cap {
+        let capture = if let (Some(p), Some(sq)) = (mv.cpc.capture(), mv.cap) {
             pas.piece(p).hash(sq.bit())
         } else {
             ZobHash::MIN
         };
 
-        let meta = self.metadata.hash_color(mv.piece.color())
-            ^ self.metadata.hash_color(mv.piece.color().opposite())
+        let meta = self.metadata.hash_color(mv.cpc.color())
+            ^ self.metadata.hash_color(mv.cpc.color().opposite())
             ^ self.metadata.hash_epc(mv.ep_opening())
             ^ self.metadata.hash_epc(mv.epc)
-            ^ self.metadata.castling.hash(mv.rights)
+            ^ self.metadata.castling.hash(mv.cr)
             ^ self.metadata.castling.hash(mv.castling_change(details));
 
         movement ^ capture ^ meta

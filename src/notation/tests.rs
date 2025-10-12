@@ -3,7 +3,8 @@ use crate::{
     bits::board::BitBoard,
     ix_map,
     model::{
-        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, Square, Victory,
+        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, ColoredChessPieceWithCapture, Square,
+        Victory,
         castling::CastlingRights,
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
@@ -70,7 +71,7 @@ fn fen_board_roundtrip() {
     );
 
     assert_eq!(
-        (BitBoard::startpos(), 0),
+        BitBoard::startpos(),
         parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap(),
     );
 }
@@ -108,14 +109,16 @@ fn algebraic_roundtrip() {
 
     let q = moves.iter().find(|m| mv.matches(**m)).map(|m| *m);
 
+    let cpc = ColoredChessPieceWithCapture::new(ColoredChessPiece::WhiteKnight, None);
     assert_eq!(
         q,
         Some(ChessMove {
-            piece: ColoredChessPiece::WhiteKnight,
+            cpc,
             pmv: Square::b1.to(Square::c3),
             cap: None,
-            special: None,
-            rights: CastlingRights::full(),
+            spc: None,
+            hmc: 0,
+            cr: CastlingRights::full(),
             epc: None
         })
     );

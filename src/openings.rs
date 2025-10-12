@@ -86,26 +86,3 @@ impl PGNAbbrevHeader {
         res
     }
 }
-
-#[test]
-fn build_openings() {
-    let file = String::from_utf8_lossy_owned(fs::read("eco.pgn").unwrap());
-
-    let op = Openings::build(&file);
-
-    let query = &[];
-    for (pf, pgn) in op.trie.postfix_search::<Vec<AlgebraicMove>, _>(query) {
-        let pf = MovePair::pair_moves(query.iter().chain(pf.iter()).map(|a| *a), 1, false);
-
-        println!(
-            "{} {{{}: {} {}}}",
-            pf.iter()
-                .map(|mp| mp.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            pgn.eco.as_deref().unwrap_or(""),
-            pgn.opening.as_deref().unwrap_or(""),
-            pgn.variation.as_deref().unwrap_or(""),
-        )
-    }
-}

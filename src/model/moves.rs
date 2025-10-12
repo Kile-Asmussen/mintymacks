@@ -1,5 +1,6 @@
 use crate::model::{
-    BoardFile, BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
+    BoardFile, BoardRank, ChessPiece, Color, ColoredChessPiece, ColoredChessPieceWithCapture,
+    Square,
     castling::{self, CastlingDetails, CastlingMove, CastlingRights},
 };
 
@@ -19,23 +20,24 @@ pub enum SpecialMove {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ChessMove {
-    pub piece: ColoredChessPiece,
+    pub cpc: ColoredChessPieceWithCapture,
     pub pmv: PseudoMove,
-    pub cap: Option<(ChessPiece, Square)>,
-    pub special: Option<SpecialMove>,
-    pub rights: CastlingRights,
+    pub cap: Option<Square>,
+    pub spc: Option<SpecialMove>,
+    pub cr: CastlingRights,
     pub epc: Option<Square>,
+    pub hmc: u8,
 }
 
 impl ChessMove {
     pub const fn ep_opening(self) -> Option<Square> {
-        if self.piece as i8 == ColoredChessPiece::WhitePawn as i8 {
+        if self.cpc.color_piece() as i8 == ColoredChessPiece::WhitePawn as i8 {
             if (self.pmv.to.ix() - self.pmv.from.ix()).abs() == 16 {
                 Square::new(self.pmv.from.ix() + 8)
             } else {
                 None
             }
-        } else if self.piece as i8 == ColoredChessPiece::BlackPawn as i8 {
+        } else if self.cpc.color_piece() as i8 == ColoredChessPiece::BlackPawn as i8 {
             if (self.pmv.to.ix() - self.pmv.from.ix()).abs() == 16 {
                 Square::new(self.pmv.from.ix() - 8)
             } else {
@@ -49,7 +51,7 @@ impl ChessMove {
     pub const fn simplify(self) -> (PseudoMove, Option<ChessPiece>) {
         (
             self.pmv,
-            match self.special {
+            match self.spc {
                 Some(SpecialMove::Promotion(p)) => Some(p),
                 _ => None,
             },
@@ -58,20 +60,22 @@ impl ChessMove {
 
     pub const fn castling_change(self, details: CastlingDetails) -> CastlingRights {
         use ColoredChessPiece::*;
-        let mut rights = self.rights;
+        let mut rights = self.cr;
 
-        rights = match self.piece {
-            WhiteKing | BlackKing => rights.move_king(self.piece.color()),
+        rights = match self.cpc.color_piece() {
+            WhiteKing | BlackKing => rights.move_king(self.cpc.color()),
             WhiteRook => move_rook(self.pmv.from, Color::White, details, rights),
             BlackRook => move_rook(self.pmv.from, Color::Black, details, rights),
             _ => rights,
         };
 
-        rights = if let Some((ChessPiece::Rook, sq)) = self.cap {
-            move_rook(sq, self.piece.color().opposite(), details, rights)
+        rights = if let Some(sq) = self.cap {
+            move_rook(sq, self.cpc.color(), details, rights)
         } else {
             rights
         };
+
+        return rights;
 
         #[must_use]
         const fn move_rook(
@@ -88,12 +92,10 @@ impl ChessMove {
                 rights
             }
         }
-
-        rights
     }
 
     pub const fn irreversible(self) -> bool {
-        self.piece.piece() as i8 == ChessPiece::Pawn as i8 || self.cap.is_some()
+        self.cpc.piece() as i8 == ChessPiece::Pawn as i8 || self.cap.is_some()
     }
 }
 

@@ -97,11 +97,11 @@ impl HalfBitBoard {
 
 impl ChessMove {
     fn reversible(self) -> bool {
-        if self.piece.piece() == ChessPiece::Pawn {
+        if self.cpc.piece() == ChessPiece::Pawn {
             return false;
         }
 
-        if self.special.is_some() {
+        if self.spc.is_some() {
             return false;
         }
 

@@ -11,6 +11,7 @@ use crate::{
         metadata::{self, Metadata},
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
+    zobrist::ZOBHASHER,
 };
 
 impl BitBoard {
@@ -20,6 +21,8 @@ impl BitBoard {
     pub fn apply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.apply(mv);
+        let (_, pas) = self.active_passive(mv.cpc.color());
+        self.metadata.hash ^= ZOBHASHER.delta(mv, self.metadata.castling_details)
     }
 
     /// Calling this method with a Move value that was
@@ -28,6 +31,8 @@ impl BitBoard {
     pub fn unapply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
+        let (_, pas) = self.active_passive(mv.cpc.color());
+        self.metadata.hash ^= ZOBHASHER.delta(mv, self.metadata.castling_details)
     }
 
     #[cfg(test)]
@@ -120,7 +125,7 @@ impl BitBoard {
     #[inline]
     fn apply_no_metadata(&mut self, mv: ChessMove) {
         let cd = self.metadata.castling_details;
-        let (act, pas) = self.active_passive_mut(mv.piece.color());
+        let (act, pas) = self.active_passive_mut(mv.cpc.color());
         act.apply_active(cd, mv);
         pas.apply_passive(mv);
     }
@@ -143,13 +148,13 @@ impl BitBoard {
 impl HalfBitBoard {
     #[inline]
     pub fn apply_active(&mut self, castling: CastlingDetails, mv: ChessMove) {
-        if let Some(sp) = mv.special {
+        if let Some(sp) = mv.spc {
             match sp {
                 SpecialMove::CastlingWestward => {
-                    castling_move(self, castling.westward, mv.piece.color());
+                    castling_move(self, castling.westward, mv.cpc.color());
                 }
                 SpecialMove::CastlingEastward => {
-                    castling_move(self, castling.eastward, mv.piece.color());
+                    castling_move(self, castling.eastward, mv.cpc.color());
                 }
                 SpecialMove::Promotion(p) => {
                     self.pawns ^= mv.pmv.from.bit();
@@ -159,7 +164,7 @@ impl HalfBitBoard {
                 _ => {}
             }
         } else {
-            *self.piece(mv.piece.piece()) ^= mv.pmv.bits();
+            *self.piece(mv.cpc.piece()) ^= mv.pmv.bits();
             self.total ^= mv.pmv.bits();
         }
 
@@ -174,8 +179,10 @@ impl HalfBitBoard {
 
     #[inline]
     pub fn apply_passive(&mut self, mv: ChessMove) {
-        if let Some((p, sq)) = mv.cap {
-            *self.piece(p) ^= sq.bit();
+        if let Some(sq) = mv.cap
+            && let Some(pm) = self.piece_for(sq)
+        {
+            *pm ^= sq.bit();
             self.total ^= sq.bit();
         }
     }
@@ -190,6 +197,10 @@ impl HalfBitBoard {
             ChessPiece::King => &mut self.kings,
         }
     }
+
+    pub fn piece_for(&mut self, sq: Square) -> Option<&mut BoardMask> {
+        self.at(sq).map(|p| self.piece(p))
+    }
 }
 
 impl Metadata {
@@ -197,19 +208,25 @@ impl Metadata {
     pub fn apply(&mut self, mv: ChessMove) {
         self.castling_rights = mv.castling_change(self.castling_details);
         self.en_passant = mv.ep_opening();
-        self.to_move = mv.piece.color().opposite();
-        if mv.piece.color() == Color::Black {
+        self.to_move = mv.cpc.color().opposite();
+        if mv.cpc.color() == Color::Black {
             self.turn += 1;
+        }
+        if mv.irreversible() {
+            self.halfmove_clock = 0;
+        } else {
+            self.halfmove_clock += 1;
         }
     }
 
     #[inline]
     fn unapply(&mut self, mv: ChessMove) {
         self.en_passant = mv.epc;
-        self.castling_rights = mv.rights;
-        self.to_move = mv.piece.color();
-        if mv.piece.color() == Color::Black {
+        self.castling_rights = mv.cr;
+        self.to_move = mv.cpc.color();
+        if mv.cpc.color() == Color::Black {
             self.turn -= 1;
         }
+        self.halfmove_clock = mv.hmc;
     }
 }

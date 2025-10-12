@@ -12,7 +12,7 @@ use crate::{
 
 type Result<T> = std::result::Result<T, String>;
 
-pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
+pub fn parse_fen(fen: &str) -> Result<BitBoard> {
     let parts = regexp!(r"\s+").split(fen).collect::<Vec<&str>>();
 
     let n_parts = parts.len();
@@ -29,7 +29,7 @@ pub fn parse_fen(fen: &str) -> Result<(BitBoard, u16)> {
     }
 }
 
-pub fn parse_fen_6<S: AsRef<str>>(parts: &[S; 6]) -> Result<(BitBoard, u16)> {
+pub fn parse_fen_6<S: AsRef<str>>(parts: &[S; 6]) -> Result<BitBoard> {
     let board = parse_fen_board(parts[0].as_ref())?;
     let to_move = parse_fen_to_move(parts[1].as_ref())?;
     let castling_rights = parse_fen_castling_rights(parts[2].as_ref())?;
@@ -37,21 +37,19 @@ pub fn parse_fen_6<S: AsRef<str>>(parts: &[S; 6]) -> Result<(BitBoard, u16)> {
     let halfmove = parse_fen_halfmove_clock(parts[4].as_ref())?;
     let turn = parse_fen_turn_counter(parts[5].as_ref())?;
 
-    Ok((
-        BitBoard::new(
-            &board,
-            to_move,
-            turn,
-            castling_rights,
-            en_passant,
-            CLASSIC_CASTLING,
-        ),
+    Ok(BitBoard::new(
+        &board,
+        to_move,
+        turn,
         halfmove,
+        castling_rights,
+        en_passant,
+        CLASSIC_CASTLING,
     ))
 }
 
-pub fn parse_fen_halfmove_clock(hmc: &str) -> Result<u16> {
-    u16::from_str_radix(hmc, 10)
+pub fn parse_fen_halfmove_clock(hmc: &str) -> Result<u8> {
+    u8::from_str_radix(hmc, 10)
         .map_err(|_| format!("Invalid FEN: Malformed halfmove clock `{hmc}'"))
 }
 

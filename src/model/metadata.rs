@@ -1,8 +1,11 @@
 use std::default;
 
-use crate::model::{
-    Color, Square,
-    castling::{CLASSIC_CASTLING, CastlingDetails, CastlingRights},
+use crate::{
+    model::{
+        Color, Square,
+        castling::{CLASSIC_CASTLING, CastlingDetails, CastlingRights},
+    },
+    zobrist::ZobHash,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -12,6 +15,8 @@ pub struct Metadata {
     pub castling_rights: CastlingRights = CastlingRights::full(),
     pub en_passant: Option<Square> = None,
     pub castling_details: CastlingDetails = CLASSIC_CASTLING,
+    pub hash: ZobHash,
+    pub halfmove_clock: u8,
 }
 
 impl Metadata {
@@ -21,8 +26,8 @@ impl Metadata {
 
     pub fn equiv(&self, other: &Self) -> bool {
         self.to_move == other.to_move
-        && self.castling_rights == other.castling_rights
-        && self.castling_details == other.castling_details
-        && self.en_passant == other.en_passant
+            && self.castling_rights == other.castling_rights
+            && self.castling_details == other.castling_details
+            && self.en_passant == other.en_passant
     }
 }

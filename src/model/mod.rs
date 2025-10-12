@@ -8,6 +8,8 @@ pub mod wincon;
 use std::fmt::Debug;
 use std::num::NonZeroI8;
 
+use strum::{FromRepr, VariantArray};
+
 use crate::arrays::ArrayBoard;
 use crate::bits::{Bits, BoardMask};
 
@@ -147,7 +149,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, VariantArray)]
 #[repr(i8)]
 pub enum ChessPiece {
     Pawn = 1,
@@ -170,7 +172,7 @@ impl ChessPiece {
     pub const QUEEN: i16 = 500;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, VariantArray)]
 #[repr(i8)]
 pub enum ColoredChessPiece {
     BlackKing = -6,
@@ -230,6 +232,10 @@ impl ColoredChessPiece {
         }
     }
 
+    pub const fn with_cap(self, p: Option<ChessPiece>) -> ColoredChessPieceWithCapture {
+        ColoredChessPieceWithCapture::new(self, p)
+    }
+
     pub const fn split(self) -> (Color, ChessPiece) {
         use ChessPiece::*;
         use Color::*;
@@ -247,6 +253,43 @@ impl ColoredChessPiece {
             BlackRook => (Black, Rook),
             BlackQueen => (Black, Queen),
             BlackKing => (Black, King),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+pub struct ColoredChessPieceWithCapture(NonZeroI8);
+
+impl ColoredChessPieceWithCapture {
+    #[inline]
+    pub const fn new(cp: ColoredChessPiece, cap_p: Option<ChessPiece>) -> Self {
+        let cap_n = match cap_p {
+            Some(ChessPiece::King) | None => 0,
+            Some(i) => i as i8,
+        };
+        Self(NonZeroI8::new((cp as i8) << 3 | cap_n).unwrap())
+    }
+
+    #[inline]
+    pub const fn color(self) -> Color {
+        self.color_piece().color()
+    }
+
+    #[inline]
+    pub const fn piece(self) -> ChessPiece {
+        self.color_piece().piece()
+    }
+
+    #[inline]
+    pub const fn color_piece(self) -> ColoredChessPiece {
+        ColoredChessPiece::from_repr(self.0.get() >> 3).unwrap()
+    }
+
+    #[inline]
+    pub const fn capture(self) -> Option<ChessPiece> {
+        match self.0.get() & 7 {
+            n @ 1..=5 => ChessPiece::from_repr(n),
+            _ => None,
         }
     }
 }
