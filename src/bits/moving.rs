@@ -21,8 +21,6 @@ impl BitBoard {
     pub fn apply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.apply(mv);
-        let (_, pas) = self.active_passive(mv.cpc.color());
-        self.metadata.hash ^= ZOBHASHER.delta(mv, self.metadata.castling_details)
     }
 
     /// Calling this method with a Move value that was
@@ -31,110 +29,17 @@ impl BitBoard {
     pub fn unapply(&mut self, mv: ChessMove) {
         self.apply_no_metadata(mv);
         self.metadata.unapply(mv);
-        let (_, pas) = self.active_passive(mv.cpc.color());
-        self.metadata.hash ^= ZOBHASHER.delta(mv, self.metadata.castling_details)
-    }
-
-    #[cfg(test)]
-    pub fn apply_algebraic(&mut self, mv: AlgebraicMove) -> Option<ChessMove> {
-        let mut buf = vec![];
-        self.algebraic_internal(mv, &mut buf)
-    }
-
-    #[cfg(test)]
-    pub fn apply_algebraics(&mut self, mvs: &[AlgebraicMove]) -> Vec<ChessMove> {
-        let mut res = vec![];
-        let mut buf = vec![];
-        for mv in mvs {
-            if let Some(mv) = self.algebraic_internal(*mv, &mut buf) {
-                res.push(mv);
-            } else {
-                break;
-            }
-        }
-        return res;
-    }
-
-    #[cfg(test)]
-    pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<ChessPiece>)) -> Option<ChessMove> {
-        let mut buf = vec![];
-        self.pseudomove_internal(mv, &mut buf)
-    }
-
-    #[cfg(test)]
-    pub fn apply_pseudomoves(
-        &mut self,
-        mvs: &[(PseudoMove, Option<ChessPiece>)],
-    ) -> Vec<ChessMove> {
-        let mut res = vec![];
-        let mut buf = vec![];
-        for mv in mvs {
-            if let Some(mv) = self.pseudomove_internal(*mv, &mut buf) {
-                res.push(mv);
-            } else {
-                break;
-            }
-        }
-        return res;
-    }
-
-    #[cfg(test)]
-    fn pseudomove_internal(
-        &mut self,
-        mv: (PseudoMove, Option<ChessPiece>),
-        buf: &mut Vec<ChessMove>,
-    ) -> Option<ChessMove> {
-        buf.clear();
-        self.moves(buf);
-        let matches = buf
-            .iter()
-            .filter(|m| mv == m.simplify())
-            .map(|mv| *mv)
-            .collect::<Vec<_>>();
-
-        if let [mv] = &matches[..] {
-            self.apply(*mv);
-            Some(*mv)
-        } else {
-            None
-        }
-    }
-
-    #[cfg(test)]
-    fn algebraic_internal(
-        &mut self,
-        mv: AlgebraicMove,
-        buf: &mut Vec<ChessMove>,
-    ) -> Option<ChessMove> {
-        buf.clear();
-        self.moves(buf);
-        let matches = buf
-            .iter()
-            .filter(|m| mv.matches(**m))
-            .map(|mv| *mv)
-            .collect::<Vec<_>>();
-
-        if let [mv] = &matches[..] {
-            self.apply(*mv);
-            Some(*mv)
-        } else {
-            return None;
-        }
     }
 
     #[inline]
     fn apply_no_metadata(&mut self, mv: ChessMove) {
         let cd = self.metadata.castling_details;
-        let (act, pas) = self.active_passive_mut(mv.cpc.color());
-        act.apply_active(cd, mv);
-        pas.apply_passive(mv);
-    }
-
-    fn active_passive_mut(&mut self, color: Color) -> (&mut HalfBitBoard, &mut HalfBitBoard) {
-        match color {
+        let (act, pas) = match mv.cpc.color() {
             Color::White => (&mut self.white, &mut self.black),
             Color::Black => (&mut self.black, &mut self.white),
-        }
+        };
+        act.apply_active(cd, mv);
+        pas.apply_passive(mv);
     }
 
     pub fn active_passive(&self, color: Color) -> (&HalfBitBoard, &HalfBitBoard) {
@@ -179,10 +84,8 @@ impl HalfBitBoard {
 
     #[inline]
     pub fn apply_passive(&mut self, mv: ChessMove) {
-        if let Some(sq) = mv.cap
-            && let Some(pm) = self.piece_for(sq)
-        {
-            *pm ^= sq.bit();
+        if let (Some(sq), Some(p)) = (mv.cap, mv.cpc.capture()) {
+            *self.piece(p) ^= sq.bit();
             self.total ^= sq.bit();
         }
     }
@@ -196,10 +99,6 @@ impl HalfBitBoard {
             ChessPiece::Queen => &mut self.queens,
             ChessPiece::King => &mut self.kings,
         }
-    }
-
-    pub fn piece_for(&mut self, sq: Square) -> Option<&mut BoardMask> {
-        self.at(sq).map(|p| self.piece(p))
     }
 }
 
@@ -217,6 +116,7 @@ impl Metadata {
         } else {
             self.halfmove_clock += 1;
         }
+        self.hash ^= ZOBHASHER.delta(mv, self.castling_details);
     }
 
     #[inline]
@@ -228,5 +128,6 @@ impl Metadata {
             self.turn -= 1;
         }
         self.halfmove_clock = mv.hmc;
+        self.hash ^= ZOBHASHER.delta(mv, self.castling_details);
     }
 }

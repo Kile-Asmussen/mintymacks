@@ -7,7 +7,7 @@ use std::{
 
 use crate::notation::{
     algebraic::AlgebraicMove,
-    pgn::{MovePair, PGN, PGNTags, Tag, load_pgn_file},
+    pgn::{MovePair, PGN, PGNTags, load_pgn_file},
 };
 use lazy_static::lazy_static;
 use trie_rs::{self, map};
@@ -44,17 +44,13 @@ impl Openings {
 
 #[derive(Debug)]
 pub struct PGNAbbrevHeader {
-    eco: Option<Cow<'static, str>>,
-    opening: Option<Cow<'static, str>>,
-    variation: Option<Cow<'static, str>>,
+    eco: Option<String>,
+    opening: Option<String>,
+    variation: Option<String>,
 }
 
 impl PGNAbbrevHeader {
-    pub fn new(
-        eco: Option<Cow<'static, str>>,
-        opening: Option<Cow<'static, str>>,
-        variation: Option<Cow<'static, str>>,
-    ) -> Self {
+    pub fn new(eco: Option<String>, opening: Option<String>, variation: Option<String>) -> Self {
         PGNAbbrevHeader {
             eco,
             opening,
@@ -64,9 +60,9 @@ impl PGNAbbrevHeader {
 
     pub fn from_pgn_header(pgn: &PGNTags) -> Self {
         PGNAbbrevHeader {
-            eco: pgn.canon.get(&Tag::ECO).map(Clone::clone),
-            opening: pgn.canon.get(&Tag::Opening).map(Clone::clone),
-            variation: pgn.canon.get(&Tag::Variation).map(Clone::clone),
+            eco: pgn.0.get(&Cow::Borrowed("ECO")).map(Clone::clone),
+            opening: pgn.0.get(&Cow::Borrowed("Opening")).map(Clone::clone),
+            variation: pgn.0.get(&Cow::Borrowed("Variation")).map(Clone::clone),
         }
     }
 
@@ -74,13 +70,13 @@ impl PGNAbbrevHeader {
         let mut res = PGNTags::default();
 
         if let Some(eco) = self.eco {
-            res.canon.insert(Tag::ECO, eco);
+            res.0.insert(Cow::Borrowed("ECO"), eco);
         }
         if let Some(opening) = self.opening {
-            res.canon.insert(Tag::Opening, opening);
+            res.0.insert(Cow::Borrowed("Opening"), opening);
         }
         if let Some(variation) = self.variation {
-            res.canon.insert(Tag::Variation, variation);
+            res.0.insert(Cow::Borrowed("Variation"), variation);
         }
 
         res

@@ -172,7 +172,6 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize) {
     let mut buf = vec![];
     let mut moves = vec![];
     let mut board = BitBoard::startpos();
-    let mut hash = ZOBHASHER.hash(&board);
 
     for _ in 0..ply {
         buf.clear();
@@ -182,11 +181,13 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize) {
             let mv = *mv;
             moves.push(mv);
             board.apply(mv);
-            hash ^= ZOBHASHER.delta(mv, board.metadata.castling_details);
             let reference = ZOBHASHER.hash(&board);
 
-            if hash != reference {
-                println!("Hash mismatch! {:X} != {:X}", hash, reference);
+            if board.metadata.hash != reference {
+                println!(
+                    "Hash mismatch! {:X} != {:X}",
+                    board.metadata.hash, reference
+                );
                 println!("Board state {}", render_fen_board(&board.render()));
                 println!("Board metadata {:?}", board.metadata);
                 println!(
@@ -313,7 +314,7 @@ async fn stockfish_comparison_game(
 
         println_async!().await;
         println_async!("Perft mismatch!").await;
-        println_async!("FEN: {}", render_fen(&board, 0)).await;
+        println_async!("FEN: {}", render_fen(&board)).await;
 
         for p in problems {
             println_async!("- {}", p).await;

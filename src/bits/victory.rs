@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     bits::board::{BitBoard, HalfBitBoard},
-    model::{ChessPiece, Color, Victory, moves::ChessMove},
+    model::{ChessPiece, Color, DrawReason, Victory, moves::ChessMove},
     zobrist::ZobHash,
 };
 
@@ -16,30 +16,31 @@ impl Victory {
 
     pub fn determine(
         board: &BitBoard,
-        hash: ZobHash,
         moves: &[ChessMove],
-        halfmove: u16,
         seen_positions: &HashMap<ZobHash, u8>,
     ) -> Option<Self> {
         let (active, passive) = board.active_passive(board.metadata.to_move);
 
-        if moves.is_empty()
-            && (active.kings & passive.attacks(board.metadata.to_move.opposite(), active.total)
+        if moves.is_empty() {
+            if (active.kings & passive.attacks(board.metadata.to_move.opposite(), active.total)
                 != 0)
-        {
-            return Some(Self::from_color(board.metadata.to_move.opposite()));
+            {
+                return Some(Self::from_color(board.metadata.to_move.opposite()));
+            } else {
+                return Some(Self::Draw(DrawReason::Stalemate));
+            }
         }
 
-        if halfmove >= 150 {
-            return Some(Self::Draw);
+        if board.metadata.halfmove_clock >= 150 {
+            return Some(Self::Draw(DrawReason::Inactivity));
         }
 
-        if let Some(3..) = seen_positions.get(&hash) {
-            return Some(Self::Draw);
+        if let Some(3..) = seen_positions.get(&board.metadata.hash) {
+            return Some(Self::Draw(DrawReason::Repetition));
         }
 
         if !active.sufficient() && !passive.sufficient() {
-            return Some(Self::Draw);
+            return Some(Self::Draw(DrawReason::Insufficient));
         }
 
         None

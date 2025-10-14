@@ -90,6 +90,23 @@ impl HalfBitBoard {
         }
     }
 
+    pub fn pieces(&self, amount: i8, res: &mut ArrayBoard<i8>) {
+        res.add(self.pawns, amount);
+        res.add(self.knights, amount);
+        res.add(self.bishops, amount);
+        res.add(self.rooks, amount);
+        res.add(self.queens, amount);
+        res.add(self.kings, amount);
+    }
+
+    pub fn materiel(&self, scale: i16, res: &mut ArrayBoard<i16>) {
+        res.add(self.pawns, scale * ChessPiece::PAWN);
+        res.add(self.knights, scale * ChessPiece::KNIGHT);
+        res.add(self.bishops, scale * ChessPiece::BISHOP);
+        res.add(self.rooks, scale * ChessPiece::ROOK);
+        res.add(self.queens, scale * ChessPiece::QUEEN);
+    }
+
     pub fn count_attackers(
         &self,
         c: Color,

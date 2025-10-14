@@ -1,17 +1,20 @@
+use std::borrow::Cow;
+
 use crate::{
     arrays::ArrayBoard,
     bits::board::BitBoard,
     ix_map,
     model::{
-        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, ColoredChessPieceWithCapture, Square,
-        Victory,
+        BoardFile, BoardRank, ChessPiece, ColoredChessPiece, ColoredChessPieceWithCapture,
+        DrawReason, Square, Victory,
         castling::CastlingRights,
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
     notation::{
+        MoveMatcher,
         algebraic::AlgebraicMove,
         fen::{parse_fen, parse_fen_board, render_fen_board},
-        pgn::{GameToken, MovePair, PGN, Tag},
+        pgn::{GameToken, MovePair, PGN},
     },
 };
 
@@ -263,9 +266,9 @@ fn pgn_full() {
     for m in &pgn.moves {
         println!("{}", m.to_string())
     }
-    assert_eq!(pgn.end, Some(Victory::Draw));
+    assert_eq!(pgn.end, Some(Victory::Draw(DrawReason::Unknown)));
     assert_eq!(
-        pgn.headers.canon.get(&Tag::Event).map(|s| &s[..]),
+        pgn.headers.0.get(&Cow::Borrowed("Event")).map(|s| &s[..]),
         Some("F/S Return Match")
     );
     assert_eq!(pgn.moves.len(), 43);

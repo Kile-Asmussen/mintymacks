@@ -4,9 +4,12 @@ pub mod engine;
 pub mod gui;
 pub mod test;
 
-use crate::model::{moves::PseudoMove, ChessPiece};
+use crate::{
+    model::{ChessPiece, moves::PseudoMove},
+    notation::LongAlg,
+};
 
-pub trait Uci : Sized {
+pub trait Uci: Sized {
     fn print(&self, output: &mut Vec<String>);
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
@@ -14,7 +17,7 @@ pub trait Uci : Sized {
     }
 }
 
-fn parse_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(U, &'a [&'a str])> {
+fn parse_uci<'a, U: Uci>(mut input: &'a [&'a str]) -> Option<(U, &'a [&'a str])> {
     loop {
         if let Some(res) = U::parse_direct(input) {
             return Some(res);
@@ -28,7 +31,9 @@ fn parse_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(U, &'a [&'a str])
     }
 }
 
-fn parse_until_uci<'a, U : Uci, T : Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a [&'a str])> {
+fn parse_until_uci<'a, U: Uci, T: Uci>(
+    mut input: &'a [&'a str],
+) -> Option<(Vec<U>, &'a [&'a str])> {
     let mut res = vec![];
     loop {
         if input.is_empty() || T::parse_direct(input).is_some() {
@@ -43,8 +48,8 @@ fn parse_until_uci<'a, U : Uci, T : Uci>(mut input: &'a [&'a str]) -> Option<(Ve
     Some((res, input))
 }
 
-fn parse_many_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a [&'a str])> {
-        let mut res = vec![];
+fn parse_many_uci<'a, U: Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a [&'a str])> {
+    let mut res = vec![];
     loop {
         if input.is_empty() {
             break;
@@ -58,10 +63,9 @@ fn parse_many_uci<'a, U : Uci>(mut input: &'a [&'a str]) -> Option<(Vec<U>, &'a 
     Some((res, input))
 }
 
-
 fn literal_uci<'a>(lit: &'a str, mut input: &'a [&'a str]) -> Option<&'a [&'a str]> {
     if input.is_empty() {
-            return None;
+        return None;
     } else if input[0] == lit {
         return Some((&input[1..]));
     } else {
@@ -178,8 +182,7 @@ impl Uci for LongAlg {
     }
 }
 
-
-impl<U : Uci> Uci for &[U] {
+impl<U: Uci> Uci for &[U] {
     fn print(&self, output: &mut Vec<String>) {
         for x in *self {
             x.print(output);
@@ -187,7 +190,7 @@ impl<U : Uci> Uci for &[U] {
     }
 }
 
-impl<U : Uci> Uci for Option<U> {
+impl<U: Uci> Uci for Option<U> {
     fn print(&self, output: &mut Vec<String>) {
         match self {
             Self::Some(u) => print_uci!(output, u),
@@ -196,7 +199,4 @@ impl<U : Uci> Uci for Option<U> {
     }
 }
 
-pub type LongAlg = (PseudoMove, Option<ChessPiece>);
 pub type Line = Vec<LongAlg>;
-
-

@@ -262,7 +262,7 @@ impl Uci for GoCommand {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct TimeControl {
     pub wtime: u64,
     pub btime: u64,

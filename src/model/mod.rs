@@ -311,24 +311,34 @@ pub enum Dir {
 #[repr(i8)]
 pub enum Victory {
     BlackWins = -1,
-    Draw = 0,
     WhiteWins = 1,
+    Draw(DrawReason) = 0,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[repr(i8)]
+pub enum DrawReason {
+    Unknown = 0,
+    Stalemate = 1,
+    Inactivity = 2,
+    Insufficient = 3,
+    Repetition = 4,
 }
 
 impl Victory {
     pub fn to_ascii(self) -> &'static str {
         match self {
             Self::BlackWins => "0-1",
-            Self::Draw => "1-0",
-            Self::WhiteWins => "1/2-1/2",
+            Self::Draw(_) => "1/2-1/2",
+            Self::WhiteWins => "1-0",
         }
     }
 
     pub fn to_str(self) -> &'static str {
         match self {
             Self::BlackWins => "0–1",
-            Self::Draw => "1–0",
-            Self::WhiteWins => "½–½",
+            Self::Draw(_) => "½–½",
+            Self::WhiteWins => "1–0",
         }
     }
 }

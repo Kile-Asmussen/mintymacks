@@ -190,8 +190,7 @@ impl ZobristBoard {
             ZobHash::MIN
         };
 
-        let meta = self.metadata.hash_color(mv.cpc.color())
-            ^ self.metadata.hash_color(mv.cpc.color().opposite())
+        let meta = self.metadata.black_to_move
             ^ self.metadata.hash_epc(mv.ep_opening())
             ^ self.metadata.hash_epc(mv.epc)
             ^ self.metadata.castling.hash(mv.cr)

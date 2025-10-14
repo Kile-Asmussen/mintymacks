@@ -19,10 +19,8 @@ use crate::{
 
 impl BitBoard {
     pub fn moves(&self, res: &mut Vec<ChessMove>) {
-        match self.metadata.to_move {
-            Color::White => legal_moves(&self.white, &self.black, self.metadata, res),
-            Color::Black => legal_moves(&self.black, &self.white, self.metadata, res),
-        }
+        let (act, pas) = self.active_passive(self.metadata.to_move);
+        legal_moves(act, pas, self.metadata, res);
     }
 }
 

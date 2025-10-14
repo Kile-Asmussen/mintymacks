@@ -19,7 +19,28 @@ macro_rules! regexp {
 
 pub use regexp;
 
-#[test]
-fn test() {
-    assert!(regexp!("a").is_match("a"));
+use crate::model::{
+    ChessPiece,
+    moves::{ChessMove, PseudoMove, SpecialMove},
+};
+
+pub type LongAlg = (PseudoMove, Option<ChessPiece>);
+
+pub trait MoveMatcher {
+    fn matches(&self, cm: ChessMove) -> bool;
+}
+
+impl MoveMatcher for LongAlg {
+    fn matches(&self, cm: ChessMove) -> bool {
+        match self.1 {
+            None => self.0 == cm.pmv,
+            Some(p) => cm.spc == Some(SpecialMove::Promotion(p)),
+        }
+    }
+}
+
+impl MoveMatcher for ChessMove {
+    fn matches(&self, cm: ChessMove) -> bool {
+        *self == cm
+    }
 }

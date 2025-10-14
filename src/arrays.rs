@@ -111,6 +111,35 @@ impl ArrayBoard<Option<ColoredChessPiece>> {
         }
         res
     }
+
+    pub const STARTPOS: ArrayBoard<Option<ColoredChessPiece>> = ArrayBoard::setup([
+        [
+            Some(ColoredChessPiece::BlackRook),
+            Some(ColoredChessPiece::BlackKnight),
+            Some(ColoredChessPiece::BlackBishop),
+            Some(ColoredChessPiece::BlackQueen),
+            Some(ColoredChessPiece::BlackKing),
+            Some(ColoredChessPiece::BlackBishop),
+            Some(ColoredChessPiece::BlackKnight),
+            Some(ColoredChessPiece::BlackRook),
+        ],
+        [Some(ColoredChessPiece::BlackPawn); 8],
+        [None; 8],
+        [None; 8],
+        [None; 8],
+        [None; 8],
+        [Some(ColoredChessPiece::WhitePawn); 8],
+        [
+            Some(ColoredChessPiece::WhiteRook),
+            Some(ColoredChessPiece::WhiteKnight),
+            Some(ColoredChessPiece::WhiteBishop),
+            Some(ColoredChessPiece::WhiteQueen),
+            Some(ColoredChessPiece::WhiteKing),
+            Some(ColoredChessPiece::WhiteBishop),
+            Some(ColoredChessPiece::WhiteKnight),
+            Some(ColoredChessPiece::WhiteRook),
+        ],
+    ]);
 }
 
 impl ArrayBoard<BoardMask> {

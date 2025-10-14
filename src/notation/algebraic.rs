@@ -4,7 +4,7 @@ use crate::{
         BoardFile, BoardRank, ChessPiece, Color, Square,
         moves::{ChessMove, SpecialMove},
     },
-    notation::regexp,
+    notation::{MoveMatcher, regexp},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -19,21 +19,6 @@ pub struct AlgebraicMove {
 }
 
 impl AlgebraicMove {
-    pub fn matches(self, mv: ChessMove) -> bool {
-        if let Some(SpecialMove::CastlingEastward) | Some(SpecialMove::CastlingWestward) =
-            self.special
-        {
-            return mv.spc == self.special;
-        }
-
-        self.piece == mv.cpc.piece()
-            && self.destination == mv.pmv.to
-            && self.capture == mv.cap.is_some()
-            && self.special == mv.spc
-            && (self.file_origin.is_none() || self.file_origin == Some(mv.pmv.from.file_rank().0))
-            && (self.rank_origin.is_none() || self.rank_origin == Some(mv.pmv.from.file_rank().1))
-    }
-
     pub fn to_string(self) -> String {
         let mut res = "".to_string();
 
@@ -136,6 +121,23 @@ impl AlgebraicMove {
         }
 
         return None;
+    }
+}
+
+impl MoveMatcher for AlgebraicMove {
+    fn matches(&self, mv: ChessMove) -> bool {
+        if let Some(SpecialMove::CastlingEastward) | Some(SpecialMove::CastlingWestward) =
+            self.special
+        {
+            return mv.spc == self.special;
+        }
+
+        self.piece == mv.cpc.piece()
+            && self.destination == mv.pmv.to
+            && self.capture == mv.cap.is_some()
+            && self.special == mv.spc
+            && (self.file_origin.is_none() || self.file_origin == Some(mv.pmv.from.file_rank().0))
+            && (self.rank_origin.is_none() || self.rank_origin == Some(mv.pmv.from.file_rank().1))
     }
 }
 

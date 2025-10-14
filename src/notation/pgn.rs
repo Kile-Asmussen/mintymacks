@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     default,
     hash::Hash,
-    ops::Index,
+    ops::{Deref, Index},
     time::{Duration, Instant},
 };
 
@@ -13,7 +13,7 @@ use indexmap::IndexMap;
 
 use crate::{
     ix_map,
-    model::Victory,
+    model::{DrawReason, Victory},
     notation::{
         algebraic::{self, AlgebraicMove},
         regexp,
@@ -32,68 +32,50 @@ pub fn load_pgn_file(mut file: &str) -> Vec<PGN> {
 }
 
 #[derive(Debug, Clone)]
-pub struct PGNTags {
-    pub canon: IndexMap<Tag, Cow<'static, str>>,
-    pub misc: IndexMap<Cow<'static, str>, Cow<'static, str>>,
-}
+pub struct PGNTags(pub IndexMap<Cow<'static, str>, String>);
 
 impl Default for PGNTags {
     fn default() -> Self {
-        Self {
-            canon: ix_map! {
-                Tag::Event => "?".into(),
-                Tag::Site => "?".into(),
-                Tag::Date => "????.??.??".into(),
-                Tag::Round => "?".into(),
-                Tag::White => "?".into(),
-                Tag::Black => "?".into(),
-                Tag::Black => "*".into(),
-            },
-            misc: IndexMap::new(),
-        }
+        Self(ix_map! {
+            "Event".into() => "?".into(),
+            "Site".into() => "?".into(),
+            "Date".into() => "????.??.??".into(),
+            "Round".into() => "?".into(),
+            "White".into() => "?".into(),
+            "Black".into() => "?".into(),
+            "Result".into() => "*".into(),
+        })
     }
 }
 
 impl PGNTags {
-    pub fn from_tag_pairs(hash: IndexMap<Cow<'static, str>, Cow<'static, str>>) -> Self {
+    pub fn from_tag_pairs(mut hash: IndexMap<Cow<'static, str>, String>) -> Self {
         let mut res = Self::default();
-        res.misc = hash;
-        for i in Tag::VARIANTS {
-            if let Some(v) = res.misc.shift_remove(&Cow::Borrowed(i.into())) {
-                res.canon.insert(*i, v);
+        for i in CANON_TAGS.iter().chain(SEMICANON_TAGS) {
+            if let Some(v) = hash.shift_remove(&Cow::Borrowed(*i)) {
+                res.0.insert((*i).into(), v);
             }
         }
         res
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, VariantArray, IntoStaticStr)]
-#[repr(u8)]
-pub enum Tag {
-    Event = 0,
-    Site,
-    Date,
-    Round,
-    White,
-    Black,
-    Result,
-    Annotator,
-    PlyCount,
-    TimeControl,
-    Time,
-    Termination,
-    Mode,
-    FEN,
-    ECO,
-    Opening,
-    Variation,
-}
+pub const CANON_TAGS: &[&'static str] =
+    &["Event", "Site", "Date", "Round", "White", "Black", "Result"];
 
-impl ToString for Tag {
-    fn to_string(&self) -> String {
-        format!("{self:?}")
-    }
-}
+pub const SEMICANON_TAGS: &[&'static str] = &[
+    "Time",
+    "TimeControl",
+    "FEN",
+    "SetUp",
+    "ECO",
+    "Opening",
+    "Variation",
+    "Mode",
+    "PlyCount",
+    "Termination",
+    "Annotator",
+];
 
 #[derive(Debug, Clone)]
 pub struct PGN {
@@ -112,11 +94,17 @@ impl PGN {
     }
 
     pub fn to_string(&self, res: &mut String, newlines: bool) {
-        for (k, v) in &self.headers.canon {
-            *res += &format!("[{k:?} \"{v}\"]\n");
+        for c in CANON_TAGS.iter().chain(SEMICANON_TAGS) {
+            let Some(v) = self.headers.0.get(*c) else {
+                continue;
+            };
+            *res += &format!("[{c} \"{v}\"]\n");
         }
 
-        for (k, v) in &self.headers.misc {
+        for (k, v) in &self.headers.0 {
+            if CANON_TAGS.contains(&k.as_ref()) || SEMICANON_TAGS.contains(&k.as_ref()) {
+                continue;
+            }
             *res += &format!("[{k} \"{v}\"]\n");
         }
 
@@ -169,18 +157,15 @@ impl PGN {
         (Some(res), file)
     }
 
-    pub fn parse_tag_pairs(
-        mut file: &str,
-    ) -> (IndexMap<Cow<'static, str>, Cow<'static, str>>, &str) {
+    pub fn parse_tag_pairs(mut file: &str) -> (IndexMap<Cow<'static, str>, String>, &str) {
         let mut res = ix_map! {};
 
         while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();
-            if let Some(tag) = Tag::VARIANTS
-                .iter()
-                .find(|t| <&'static str>::from(**t) == tag)
-            {
-                res.insert(Cow::Borrowed(tag.into()), Cow::Owned(value.to_string()));
+            if let Some(tag) = CANON_TAGS.iter().chain(SEMICANON_TAGS).find(|t| **t == tag) {
+                res.insert((*tag).into(), value.into());
+            } else {
+                res.insert(Cow::Owned(tag.into()), value.into());
             }
             file = &file[matched.len()..];
         }
@@ -208,7 +193,7 @@ impl PGN {
                 Some(match cap {
                     "1-0" => Some(Victory::WhiteWins),
                     "0-1" => Some(Victory::BlackWins),
-                    "1/2-1/2" => Some(Victory::Draw),
+                    "1/2-1/2" => Some(Victory::Draw(DrawReason::Unknown)),
                     "*" => None,
                     _ => return (None, file),
                 }),

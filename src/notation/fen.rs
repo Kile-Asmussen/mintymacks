@@ -204,11 +204,11 @@ pub fn color_piece_letter(c: char) -> Option<ColoredChessPiece> {
     })
 }
 
-pub fn render_fen(board: &BitBoard, halfmove: u16) -> String {
-    render_fen6(board, halfmove).join(" ")
+pub fn render_fen(board: &BitBoard) -> String {
+    render_fen6(board).join(" ")
 }
 
-pub fn render_fen6(board: &BitBoard, halfmove: u16) -> [String; 6] {
+pub fn render_fen6(board: &BitBoard) -> [String; 6] {
     [
         render_fen_board(&board.render()),
         board.metadata.to_move.letter().to_string(),
@@ -222,7 +222,7 @@ pub fn render_fen6(board: &BitBoard, halfmove: u16) -> [String; 6] {
             "-"
         }
         .to_string(),
-        halfmove.to_string(),
+        board.metadata.halfmove_clock.to_string(),
         board.metadata.turn.to_string(),
     ]
 }

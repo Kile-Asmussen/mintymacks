@@ -6,7 +6,7 @@ use crate::{
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
-    zobrist::ZOBHASHER,
+    zobrist::{ZOBHASHER, ZobHash},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,34 +122,7 @@ impl BitBoard {
     pub fn startpos() -> Self {
         use ColoredChessPiece::*;
         Self::new(
-            &ArrayBoard::setup([
-                [
-                    Some(BlackRook),
-                    Some(BlackKnight),
-                    Some(BlackBishop),
-                    Some(BlackQueen),
-                    Some(BlackKing),
-                    Some(BlackBishop),
-                    Some(BlackKnight),
-                    Some(BlackRook),
-                ],
-                [Some(BlackPawn); 8],
-                [None; 8],
-                [None; 8],
-                [None; 8],
-                [None; 8],
-                [Some(WhitePawn); 8],
-                [
-                    Some(WhiteRook),
-                    Some(WhiteKnight),
-                    Some(WhiteBishop),
-                    Some(WhiteQueen),
-                    Some(WhiteKing),
-                    Some(WhiteBishop),
-                    Some(WhiteKnight),
-                    Some(WhiteRook),
-                ],
-            ]),
+            &ArrayBoard::STARTPOS,
             Color::White,
             1,
             0,
@@ -174,6 +147,10 @@ impl BitBoard {
         } else {
             None
         }
+    }
+
+    pub fn pure_position_hash(&self) -> ZobHash {
+        self.metadata.hash ^ ZOBHASHER.metadata.hash_color(self.metadata.to_move)
     }
 }
 

@@ -22,6 +22,99 @@ use crate::{
         fen::{self, parse_fen, parse_fen_board, render_fen},
     },
 };
+#[cfg(test)]
+use crate::{model::ChessPiece, notation::algebraic::AlgebraicMove};
+
+impl BitBoard {
+    #[cfg(test)]
+    pub fn apply_algebraic(&mut self, mv: AlgebraicMove) -> Option<ChessMove> {
+        let mut buf = vec![];
+        self.algebraic_internal(mv, &mut buf)
+    }
+
+    #[cfg(test)]
+    pub fn apply_algebraics(&mut self, mvs: &[AlgebraicMove]) -> Vec<ChessMove> {
+        let mut res = vec![];
+        let mut buf = vec![];
+        for mv in mvs {
+            if let Some(mv) = self.algebraic_internal(*mv, &mut buf) {
+                res.push(mv);
+            } else {
+                break;
+            }
+        }
+        return res;
+    }
+
+    #[cfg(test)]
+    pub fn apply_pseudomove(&mut self, mv: (PseudoMove, Option<ChessPiece>)) -> Option<ChessMove> {
+        let mut buf = vec![];
+        self.pseudomove_internal(mv, &mut buf)
+    }
+
+    #[cfg(test)]
+    pub fn apply_pseudomoves(
+        &mut self,
+        mvs: &[(PseudoMove, Option<ChessPiece>)],
+    ) -> Vec<ChessMove> {
+        let mut res = vec![];
+        let mut buf = vec![];
+        for mv in mvs {
+            if let Some(mv) = self.pseudomove_internal(*mv, &mut buf) {
+                res.push(mv);
+            } else {
+                break;
+            }
+        }
+        return res;
+    }
+
+    #[cfg(test)]
+    fn pseudomove_internal(
+        &mut self,
+        mv: (PseudoMove, Option<ChessPiece>),
+        buf: &mut Vec<ChessMove>,
+    ) -> Option<ChessMove> {
+        buf.clear();
+        self.moves(buf);
+        let matches = buf
+            .iter()
+            .filter(|m| mv == m.simplify())
+            .map(|mv| *mv)
+            .collect::<Vec<_>>();
+
+        if let [mv] = &matches[..] {
+            self.apply(*mv);
+            Some(*mv)
+        } else {
+            None
+        }
+    }
+
+    #[cfg(test)]
+    fn algebraic_internal(
+        &mut self,
+        mv: AlgebraicMove,
+        buf: &mut Vec<ChessMove>,
+    ) -> Option<ChessMove> {
+        use crate::notation::MoveMatcher;
+
+        buf.clear();
+        self.moves(buf);
+        let matches = buf
+            .iter()
+            .filter(|m| mv.matches(**m))
+            .map(|mv| *mv)
+            .collect::<Vec<_>>();
+
+        if let [mv] = &matches[..] {
+            self.apply(*mv);
+            Some(*mv)
+        } else {
+            return None;
+        }
+    }
+}
 
 #[test]
 fn knight_threat_masks() {
@@ -324,7 +417,7 @@ fn solve_this_debackle() {
 
     assert_eq!(movehist.len(), 14);
 
-    assert_eq!(render_fen(&board, 0), render_fen(&board2, 0));
+    assert_eq!(render_fen(&board), render_fen(&board2));
 
     assert_eq!(board.white, board2.white, "WHITE");
     assert_eq!(board.black, board2.black, "BLACK");
