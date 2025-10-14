@@ -10,6 +10,10 @@ pub struct PseudoMove {
     pub to: Square,
 }
 
+impl PseudoMove {
+    pub const NULL: PseudoMove = Square::a1.to(Square::a1);
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum SpecialMove {
     Promotion(ChessPiece),
