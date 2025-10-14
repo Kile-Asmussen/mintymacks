@@ -65,7 +65,7 @@ macro_rules! print_async {
         async {}
     };
     ($($arg:tt)*) => {async {
-        crate::utils::print_to_async(std::format_args!($($arg)*), tokio::io::stdout, "stdout").await;
+        $crate::utils::print_to_async(std::format_args!($($arg)*), tokio::io::stdout, "stdout").await;
     }};
 }
 
@@ -74,10 +74,10 @@ pub use print_async;
 #[macro_export]
 macro_rules! println_async {
     () => {async {
-        crate::utils::print_async!("\n").await;
+        $crate::utils::print_async!("\n").await;
     }};
     ($($arg:tt)*) => {async {
-        crate::utils::print_to_async(std::format_args_nl!($($arg)*), tokio::io::stdout, "stdout").await;
+        $crate::utils::print_to_async(std::format_args_nl!($($arg)*), tokio::io::stdout, "stdout").await;
     }};
 }
 
@@ -89,7 +89,7 @@ macro_rules! eprint_async {
         async {}
     };
     ($($arg:tt)*) => {async {
-        crate::utils::print_to_async(std::format_args!($($arg)*), tokio::io::stderr, "stderr").await;
+        $crate::utils::print_to_async(std::format_args!($($arg)*), tokio::io::stderr, "stderr").await;
     }};
 }
 
@@ -98,10 +98,10 @@ pub use eprint_async;
 #[macro_export]
 macro_rules! eprintln_async {
     () => {async {
-        crate::utils::eprint_async!("\n").await;
+        $crate::utils::eprint_async!("\n").await;
     }};
     ($($arg:tt)*) => {async {
-        crate::utils::print_to_async(std::format_args_nl!($($arg)*), tokio::io::stderr, "stderr").await;
+        $crate::utils::print_to_async(std::format_args_nl!($($arg)*), tokio::io::stderr, "stderr").await;
     }};
 }
 
@@ -120,14 +120,14 @@ where
 #[macro_export]
 macro_rules! write_async {
     ($dst:expr, $($arg:tt)*) => {{
-        crate::utils::write_to_async(std::format_args!($($arg)*), &mut $dst)
+        $crate::utils::write_to_async(std::format_args!($($arg)*), &mut $dst)
     }};
 }
 
 #[macro_export]
 macro_rules! writeln_async {
     ($dst:expr, $($arg:tt)*) => {{
-        crate::utils::write_to_async(std::format_args_nl!($($arg)*), &mut $dst)
+        $crate::utils::write_to_async(std::format_args_nl!($($arg)*), &mut $dst)
     }};
 }
 
