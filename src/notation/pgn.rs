@@ -58,6 +58,22 @@ impl PGNTags {
         }
         res
     }
+
+    pub fn to_string(&self, res: &mut String) {
+        for c in CANON_TAGS {
+            let Some(v) = self.0.get(*c) else {
+                continue;
+            };
+            *res += &format!("[{c} \"{v}\"]\n");
+        }
+
+        for (k, v) in &self.0 {
+            if CANON_TAGS.contains(&k.as_ref()) {
+                continue;
+            }
+            *res += &format!("[{k} \"{v}\"]\n");
+        }
+    }
 }
 
 pub const CANON_TAGS: &[&'static str] =
@@ -80,19 +96,7 @@ impl PGN {
     }
 
     pub fn to_string(&self, res: &mut String, newlines: bool) {
-        for c in CANON_TAGS {
-            let Some(v) = self.headers.0.get(*c) else {
-                continue;
-            };
-            *res += &format!("[{c} \"{v}\"]\n");
-        }
-
-        for (k, v) in &self.headers.0 {
-            if CANON_TAGS.contains(&k.as_ref()) {
-                continue;
-            }
-            *res += &format!("[{k} \"{v}\"]\n");
-        }
+        self.headers.to_string(res);
 
         *res += "\n";
 

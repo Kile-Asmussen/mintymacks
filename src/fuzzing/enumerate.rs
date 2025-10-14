@@ -9,12 +9,13 @@ use crate::{
         ChessPiece,
         moves::{ChessMove, PseudoMove},
     },
+    println_async,
     utils::tree_map,
     zobrist::{ZobHash, ZobristBoard},
 };
 
 impl BitBoard {
-    pub fn enumerate(&self, depth: usize) -> EnumerationResult {
+    pub fn enumerate(&self, depth: u64) -> EnumerationResult {
         if depth == 0 {
             EnumerationResult {
                 time: Duration::ZERO,
@@ -27,7 +28,7 @@ impl BitBoard {
         }
     }
 
-    fn enumerate_mut(&mut self, depth: usize) -> EnumerationResult {
+    fn enumerate_mut(&mut self, depth: u64) -> EnumerationResult {
         let now = Instant::now();
         let mut moves = tree_map! {};
         let mut zobrist = HashMap::with_capacity(10usize.pow(depth as u32));
@@ -62,9 +63,9 @@ impl BitBoard {
     fn enum_nodes(
         &mut self,
         moves: &[ChessMove],
-        depth: usize,
+        depth: u64,
         hash: ZobHash,
-        zobrist: &mut HashMap<(ZobHash, usize), usize>,
+        zobrist: &mut HashMap<(ZobHash, u64), usize>,
         hasher: &ZobristBoard,
     ) -> usize {
         if let Some(n) = zobrist.get(&(hash, depth)) {
@@ -103,7 +104,7 @@ impl BitBoard {
 
 pub struct EnumerationResult {
     pub time: Duration,
-    pub depth: usize,
+    pub depth: u64,
     pub moves: BTreeMap<(PseudoMove, Option<ChessPiece>), usize>,
     pub transpos: (usize, usize),
 }
@@ -121,6 +122,17 @@ impl EnumerationResult {
 
         for (k, v) in &self.moves {
             println!("{}: {}", k.0.longalg(k.1), v);
+        }
+    }
+
+    pub async fn print_async(&self) {
+        println_async!("Depth searched: {}", self.depth).await;
+        println_async!("Time elapsed: {} ms", self.time.as_millis()).await;
+        println_async!("Nodes reached: {}", self.total()).await;
+        println_async!("Zobrist table: {}/{}", self.transpos.0, self.transpos.1).await;
+
+        for (k, v) in &self.moves {
+            println_async!("{}: {}", k.0.longalg(k.1), v).await;
         }
     }
 }

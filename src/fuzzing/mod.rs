@@ -8,9 +8,11 @@ use std::{
 };
 
 use anyhow::anyhow;
+use serde::de;
 use trie_rs::inc_search::Position;
 
 use crate::{
+    bits::board::BitBoard,
     deque,
     engine::EngineHandle,
     eprintln_async,
@@ -18,28 +20,38 @@ use crate::{
         ChessPiece,
         moves::{ChessMove, PseudoMove},
     },
-    notation::uci::{
-        engine::{InfoString, UciEngine},
-        gui::{GoCommand, PositionString, UciGui},
+    notation::{
+        fen::render_fen6,
+        uci::{
+            engine::{InfoString, UciEngine},
+            gui::{GoCommand, PositionString, UciGui},
+        },
     },
     tree_map,
 };
 
 pub async fn stockfish_perft(
     engine: &mut EngineHandle,
+    startpos: Option<&BitBoard>,
     moves: &[ChessMove],
-    depth: usize,
+    depth: u64,
 ) -> tokio::io::Result<BTreeMap<(PseudoMove, Option<ChessPiece>), usize>> {
     let mut res = tree_map! {};
 
     let pmoves = moves.iter().map(|cm| cm.simplify()).collect();
 
+    let startpos = if let Some(b) = startpos {
+        PositionString::Fen(render_fen6(&b))
+    } else {
+        PositionString::Startpos()
+    };
+
     let mut output = vec![];
     engine
         .interleave(
             &mut deque![
-                UciGui::Position(PositionString::Startpos(), pmoves),
-                UciGui::Go(GoCommand::Perft(Some(depth as u64))),
+                UciGui::Position(startpos, pmoves),
+                UciGui::Go(GoCommand::Perft(Some(depth)))
             ],
             &mut output,
             Duration::from_millis(5) * 2u32.pow(depth as u32),

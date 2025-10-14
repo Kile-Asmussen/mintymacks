@@ -24,7 +24,6 @@ pub struct GameState {
     pub possible_moves: Vec<ChessMove>,
     pub seen_positions: HashMap<ZobHash, u8>,
     pub move_sequence: Vec<FatMove>,
-    pub time_control: uci::gui::TimeControl,
     pub white: Option<Profile>,
     pub black: Option<Profile>,
 }
@@ -51,7 +50,6 @@ impl GameState {
             },
             seen_positions: hash_map! { board.metadata.hash => 1 },
             board: board,
-            time_control: TimeControl::default(),
             move_sequence: vec![],
             outcome: None,
             white: None,
@@ -78,14 +76,6 @@ impl GameState {
             res.0.insert("FEN".into(), render_fen(board).into());
             res.0.insert("SetUp".into(), "1".into());
         }
-        if self.time_control != TimeControl::default() {
-            res.0.insert("TimeControl".into(), {
-                let mut v = vec![];
-                self.time_control.print(&mut v);
-                v.join(" ")
-            });
-        }
-        res.0.insert("Mode".into(), "ICS".into());
 
         res
     }

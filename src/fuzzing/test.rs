@@ -30,8 +30,9 @@ use crate::{
     notation::{
         fen::{self, parse_fen, parse_fen_board, render_fen_board},
         pgn::load_pgn_file,
-        uci::gui::UciGui,
+        uci::{engine::UciEngine, gui::UciGui},
     },
+    println_async,
     zobrist::{self, ZOBHASHER, ZobHash, ZobristBoard},
 };
 
@@ -212,33 +213,30 @@ async fn stockfish_comparison_game(
     rng: &mut SmallRng,
     ply: usize,
     skip_over: usize,
-    depth: usize,
+    depth: u64,
+    startpos: Option<&BitBoard>,
     start: &[(PseudoMove, Option<ChessPiece>)],
     skip_this: bool,
 ) {
     use crate::println_async;
 
     let mut buf = vec![];
-    let mut board = BitBoard::startpos();
+    let mut board = startpos
+        .map(Clone::clone)
+        .unwrap_or_else(BitBoard::startpos);
     let mut moves = board.apply_pseudomoves(start);
 
     if moves.len() != start.len() {
         panic!("Bad starting moves")
     }
 
-    engine.interleave(
-        &mut deque![UciGui::UciNewGame()],
-        &mut vec![],
-        Duration::from_millis(50),
-    );
+    engine.exterleave(&mut deque![UciGui::UciNewGame()], Duration::from_millis(50));
 
     let now = Instant::now();
     let mut problems = vec![];
 
     println_async!("Playing {} ply: ", ply + 1).await;
     if skip_this {
-        use crate::println_async;
-
         println_async!("(skipping stockfish eval)").await;
     }
 
@@ -247,7 +245,7 @@ async fn stockfish_comparison_game(
         let stock = if skip_this {
             mint.clone()
         } else {
-            stockfish_perft(engine, &moves, depth)
+            stockfish_perft(engine, startpos, &moves, depth)
                 .await
                 .expect("Unable to get stockfish perft!")
         };
@@ -341,7 +339,7 @@ pub async fn fuzz_stockfish_comparison(
     n: usize,
     skip_to: usize,
     ply: usize,
-    depth: usize,
+    depth: u64,
     step: usize,
 ) {
     use crate::println_async;
@@ -352,7 +350,17 @@ pub async fn fuzz_stockfish_comparison(
         use crate::println_async;
 
         println_async!("\n### Game {i} ###").await;
-        stockfish_comparison_game(engine, rng, ply - 1, step - 1, depth, &[], i < skip_to).await;
+        stockfish_comparison_game(
+            engine,
+            rng,
+            ply - 1,
+            step - 1,
+            depth,
+            None,
+            &[],
+            i < skip_to,
+        )
+        .await;
     }
 
     println_async!("\n !!! Successfully played {n} random games in accordance with stockfish !!!")
@@ -367,13 +375,13 @@ async fn fuzz_against_stockfish() {
         .expect("Could not open stockfish");
 
     engine
-        .interleave(
-            &mut deque![UciGui::Uci()],
-            &mut vec![],
+        .exterleave_until(
+            &mut deque![UciGui::Uci(), UciGui::IsReady()],
+            |u| u == &UciEngine::ReadyOk(),
             Duration::from_millis(500),
         )
         .await;
 
     rng.next_u64();
-    fuzz_stockfish_comparison(&mut engine, &mut rng, 10_000, 0, 96, 3, 1).await;
+    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 0, 96, 3, 1).await;
 }

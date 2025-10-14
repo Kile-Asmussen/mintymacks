@@ -84,7 +84,7 @@ impl ChessMove {
         };
 
         rights = if let Some(sq) = self.cap {
-            move_rook(sq, self.cpc.color(), details, rights)
+            move_rook(sq, self.cpc.color().opposite(), details, rights)
         } else {
             rights
         };
