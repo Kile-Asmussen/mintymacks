@@ -271,6 +271,7 @@ impl FatMove {
 }
 
 pub struct GameReview {
+    pub tags: PGNTags,
     pub start: Option<Box<BitBoard>>,
     pub end: Box<BitBoard>,
     pub cursor: BitBoard,
@@ -279,8 +280,9 @@ pub struct GameReview {
 }
 
 impl GameReview {
-    pub fn new(gs: &GameState) -> Self {
+    pub fn new(gs: &GameState, tags: PGNTags) -> Self {
         Self {
+            tags,
             start: gs.start.clone(),
             end: Box::new(gs.board.clone()),
             cursor: gs
