@@ -303,6 +303,7 @@ impl GameReview {
         }
 
         self.past.append(&mut self.future);
+        self.future.append(&mut self.past);
     }
 
     pub fn next(&mut self) -> bool {
@@ -329,7 +330,6 @@ impl GameReview {
         self.cursor = (*self.end).clone();
 
         self.past.append(&mut self.future);
-        self.future.append(&mut self.past);
     }
 
     pub fn past_pgn(&self) -> Vec<MovePair> {
