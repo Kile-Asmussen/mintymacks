@@ -258,7 +258,7 @@ impl ChessMove {
 
         let (this, enemy) = board.active_passive(self.cpc.color());
         let threats = this.attacks_after_friendly_move(self.cpc, enemy.total, self.pmv, self.cap);
-        if threats & enemy.kings != BoardMask::MIN {
+        if threats & enemy.kings != 0 {
             guess.check_or_mate = Some(false);
         }
 

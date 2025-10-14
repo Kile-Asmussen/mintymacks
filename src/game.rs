@@ -158,7 +158,6 @@ impl GameState {
 
     pub fn apply(&mut self, mut fm: FatMove) -> Option<FatMove> {
         if fm.precon == self.board.metadata.hash {
-            self.move_sequence.push(fm);
             self.board.apply(fm.chessmove);
             self.possible_moves.clear();
             self.board.moves(&mut self.possible_moves);
@@ -168,12 +167,15 @@ impl GameState {
                 .or_insert(0) += 1;
             self.outcome =
                 Victory::determine(&self.board, &self.possible_moves, &self.seen_positions);
+
             if self.outcome == Some(Victory::from_color(fm.chessmove.cpc.color()))
                 && self.possible_moves.is_empty()
                 && fm.algebraic.check_or_mate == Some(false)
             {
                 fm.algebraic.check_or_mate == Some(true);
             }
+
+            self.move_sequence.push(fm);
 
             Some(fm)
         } else {
