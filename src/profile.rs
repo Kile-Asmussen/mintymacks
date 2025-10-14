@@ -8,7 +8,7 @@ use crate::notation::uci::{
     gui::OptVal,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Profile {
     #[serde(untagged)]
     Player(PlayerProfile),
@@ -25,25 +25,25 @@ impl Profile {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PlayerProfile {
     pub human: PlayerMetadata,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PlayerMetadata {
     pub name: String,
     pub title: String,
     pub elo: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EngineProfile {
     pub engine: EngineMetadata,
     pub options: IndexMap<String, OptVal>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EngineMetadata {
     pub name: String,
     pub author: String,

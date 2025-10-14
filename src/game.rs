@@ -6,9 +6,12 @@ use crate::{
     notation::{
         MoveMatcher,
         algebraic::AlgebraicMove,
-        fen::render_fen,
+        fen::{render_fen, render_fen6},
         pgn::{MovePair, PGN, PGNTags},
-        uci::{self, Uci, gui::TimeControl},
+        uci::{
+            self, Line, Uci,
+            gui::{PositionString, TimeControl, UciGui},
+        },
     },
     profile::Profile,
     zobrist::{ZOBHASHER, ZobHash},
@@ -87,7 +90,7 @@ impl GameState {
         res
     }
 
-    pub fn movelist(&self) -> Vec<MovePair> {
+    pub fn pgn_movelist(&self) -> Vec<MovePair> {
         let (color, turn) = self
             .start
             .as_ref()
@@ -99,6 +102,22 @@ impl GameState {
             turn,
             color == Color::Black,
         )
+    }
+
+    pub fn uci_line(&self) -> Line {
+        let mut res = Vec::with_capacity(self.move_sequence.len());
+        for fm in &self.move_sequence {
+            res.push(fm.longalg())
+        }
+        res
+    }
+
+    pub fn uci_position(&self) -> PositionString {
+        if let Some(b) = &self.start {
+            PositionString::Fen(render_fen6(b))
+        } else {
+            PositionString::Startpos()
+        }
     }
 
     pub fn find_move<M: MoveMatcher>(&self, m: M) -> Result<FatMove, usize> {
@@ -172,9 +191,9 @@ impl GameState {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FatMove {
-    precon: ZobHash,
-    chessmove: ChessMove,
-    algebraic: AlgebraicMove,
+    pub precon: ZobHash,
+    pub chessmove: ChessMove,
+    pub algebraic: AlgebraicMove,
 }
 
 use crate::notation::LongAlg;
