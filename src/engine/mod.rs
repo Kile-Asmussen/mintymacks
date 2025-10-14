@@ -4,7 +4,7 @@ use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
     process::Stdio,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crate::{
@@ -42,14 +42,16 @@ pub async fn load_engine(prof: &EngineProfile) -> tokio::io::Result<(EngineHandl
     )
     .await?;
 
-    let mut details = EngineDetails::extract(&mut handle, Duration::from_millis(1000)).await?;
+    let mut details = EngineDetails::extract(&mut handle, Duration::from_millis(100)).await?;
 
     details.load_profile(prof);
 
-    handle.interleave(
-        &mut details.set_options(),
+    handle.exterleave(&mut details.set_options(), Duration::from_millis(100));
+    handle.interleave_until(
+        &mut deque![UciGui::IsReady()],
         &mut vec![],
-        Duration::from_millis(1000),
+        |p| p == &UciEngine::ReadyOk(),
+        Duration::from_millis(5000),
     );
 
     Ok((handle, details))
@@ -87,7 +89,12 @@ impl EngineDetails {
         let mut ingress = vec![];
 
         engine
-            .interleave(&mut deque![UciGui::Uci()], &mut ingress, timeout)
+            .interleave_until(
+                &mut deque![UciGui::Uci()],
+                &mut ingress,
+                |p| p == &UciEngine::UciOk(),
+                timeout,
+            )
             .await?;
 
         Ok(EngineDetails::new(&ingress))
@@ -188,19 +195,21 @@ impl EngineHandle {
             .await
     }
 
-    pub async fn interleave_until<P: FnMut(&UciEngine) -> bool>(
+    pub async fn interleave_until(
         &mut self,
         egress: &mut VecDeque<UciGui>,
         ingress: &mut Vec<UciEngine>,
-        mut until: P,
+        mut until: impl FnMut(&UciEngine) -> bool,
         timeout: Duration,
     ) -> tokio::io::Result<()> {
         let n = egress.len();
         let (mut cin, mut cout) = self.split();
 
+        let start = Instant::now();
+
         loop {
             select! {
-                _ = sleep(timeout) => { break; }
+                _ = sleep(timeout - start.elapsed()) => { break; }
                 uci = cin.receive() => {
                     let uci = uci?;
                     if until(&uci) {
@@ -210,6 +219,38 @@ impl EngineHandle {
                         ingress.push(uci);
                     }
                 }
+                _ = cout.send(egress.front()), if !egress.is_empty() => {
+                    egress.pop_front();
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn exterleave(
+        &mut self,
+        egress: &mut VecDeque<UciGui>,
+        timeout: Duration,
+    ) -> tokio::io::Result<()> {
+        self.exterleave_until(egress, |_| false, timeout).await
+    }
+
+    pub async fn exterleave_until(
+        &mut self,
+        egress: &mut VecDeque<UciGui>,
+        mut until: impl FnMut(&UciEngine) -> bool,
+        timeout: Duration,
+    ) -> tokio::io::Result<()> {
+        let n = egress.len();
+        let (mut cin, mut cout) = self.split();
+
+        let start = Instant::now();
+
+        loop {
+            select! {
+                _ = sleep(timeout - start.elapsed()) => { break; }
+                uci = cin.receive() => { if until(&uci?) { break; } }
                 _ = cout.send(egress.front()), if !egress.is_empty() => {
                     egress.pop_front();
                 }
