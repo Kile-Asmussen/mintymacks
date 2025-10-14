@@ -335,7 +335,7 @@ impl GameReview {
     pub fn past_pgn(&self) -> Vec<MovePair> {
         MovePair::pair_moves(
             self.past.iter().map(|fm| fm.algebraic),
-            self.start.as_ref().map(|b| b.metadata.turn).unwrap_or(0),
+            self.start.as_ref().map(|b| b.metadata.turn).unwrap_or(1),
             self.start
                 .as_ref()
                 .map(|b| b.metadata.to_move == Color::Black)
