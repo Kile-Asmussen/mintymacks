@@ -66,7 +66,7 @@ impl GameState {
             .insert("Date".into(), today.format("%Y.%m.%d").to_string().into());
         res.0.insert(
             "Result".into(),
-            self.outcome.map(|v| v.to_ascii()).unwrap_or("*").into(),
+            self.outcome.map(|v| v.to_str()).unwrap_or("*").into(),
         );
         if let Some(w) = &self.white {
             res.0.insert("White".into(), w.name().to_string().into());
@@ -168,8 +168,11 @@ impl GameState {
             self.outcome =
                 Victory::determine(&self.board, &self.possible_moves, &self.seen_positions);
 
-            if self.outcome == Some(Victory::from_color(fm.chessmove.cpc.color()))
-                && self.possible_moves.is_empty()
+            if self.outcome
+                == Some(Victory::from_color(
+                    fm.chessmove.cpc.color(),
+                    crate::model::WinReason::CheckMate,
+                ))
                 && fm.algebraic.check_or_mate == Some(false)
             {
                 fm.algebraic.check_or_mate == Some(true);

@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use crate::{
     bits::board::{BitBoard, HalfBitBoard},
-    model::{ChessPiece, Color, DrawReason, Victory, moves::ChessMove},
+    model::{ChessPiece, Color, DrawReason, Victory, WinReason, moves::ChessMove},
     zobrist::ZobHash,
 };
 
 impl Victory {
-    pub fn from_color(c: Color) -> Self {
+    pub fn from_color(c: Color, wr: WinReason) -> Self {
         match c {
-            Color::White => Self::WhiteWins,
-            Color::Black => Self::BlackWins,
+            Color::White => Self::WhiteWins(wr),
+            Color::Black => Self::BlackWins(wr),
         }
     }
 
@@ -25,7 +25,10 @@ impl Victory {
             if (active.kings & passive.attacks(board.metadata.to_move.opposite(), active.total)
                 != 0)
             {
-                return Some(Self::from_color(board.metadata.to_move.opposite()));
+                return Some(Self::from_color(
+                    board.metadata.to_move.opposite(),
+                    WinReason::CheckMate,
+                ));
             } else {
                 return Some(Self::Draw(DrawReason::Stalemate));
             }

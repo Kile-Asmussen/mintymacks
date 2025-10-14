@@ -13,7 +13,7 @@ use indexmap::IndexMap;
 
 use crate::{
     ix_map,
-    model::{DrawReason, Victory},
+    model::{DrawReason, Victory, WinReason},
     notation::{
         algebraic::{self, AlgebraicMove},
         regexp,
@@ -115,7 +115,7 @@ impl PGN {
             res.push(if newlines { '\n' } else { ' ' });
         }
 
-        *res += &self.end.map(|v| v.to_ascii()).unwrap_or("*");
+        *res += &self.end.map(|v| v.to_str()).unwrap_or("*");
         *res += "\n\n"
     }
 
@@ -191,8 +191,8 @@ impl PGN {
             let (full, [cap]) = c.extract::<1>();
             (
                 Some(match cap {
-                    "1-0" => Some(Victory::WhiteWins),
-                    "0-1" => Some(Victory::BlackWins),
+                    "1-0" => Some(Victory::WhiteWins(WinReason::Unknown)),
+                    "0-1" => Some(Victory::BlackWins(WinReason::Unknown)),
                     "1/2-1/2" => Some(Victory::Draw(DrawReason::Unknown)),
                     "*" => None,
                     _ => return (None, file),

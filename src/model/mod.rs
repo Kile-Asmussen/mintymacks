@@ -3,7 +3,6 @@ pub mod metadata;
 pub mod moves;
 pub mod square;
 pub mod tests;
-pub mod wincon;
 
 use std::fmt::Debug;
 use std::num::NonZeroI8;
@@ -310,9 +309,27 @@ pub enum Dir {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[repr(i8)]
 pub enum Victory {
-    BlackWins = -1,
-    WhiteWins = 1,
+    BlackWins(WinReason) = -1,
+    WhiteWins(WinReason) = 1,
     Draw(DrawReason) = 0,
+}
+
+impl Victory {
+    pub fn to_str(self) -> &'static str {
+        match self {
+            Self::BlackWins(_) => "0-1",
+            Self::Draw(_) => "1/2-1/2",
+            Self::WhiteWins(_) => "1-0",
+        }
+    }
+
+    pub fn to_string(self) -> String {
+        match self {
+            Self::BlackWins(wr) => format!("0-1{}", wr.to_str()),
+            Self::Draw(dr) => format!("1/2-1/2{}", dr.to_str()),
+            Self::WhiteWins(wr) => format!("1-0{}", wr.to_str()),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -325,20 +342,36 @@ pub enum DrawReason {
     Repetition = 4,
 }
 
-impl Victory {
-    pub fn to_ascii(self) -> &'static str {
-        match self {
-            Self::BlackWins => "0-1",
-            Self::Draw(_) => "1/2-1/2",
-            Self::WhiteWins => "1-0",
-        }
-    }
-
+impl DrawReason {
     pub fn to_str(self) -> &'static str {
         match self {
-            Self::BlackWins => "0–1",
-            Self::Draw(_) => "½–½",
-            Self::WhiteWins => "1–0",
+            Self::Unknown => "",
+            Self::Stalemate => " {stalemate}",
+            Self::Inactivity => " {75-move rule}",
+            Self::Insufficient => " {insufficient materiel}",
+            Self::Repetition => " {repetition}",
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[repr(i8)]
+pub enum WinReason {
+    Unknown = 0,
+    CheckMate = 1,
+    Resign = 2,
+    Time = 3,
+    Forefeit = 4,
+}
+
+impl WinReason {
+    pub fn to_str(self) -> &'static str {
+        match self {
+            Self::Unknown => "",
+            Self::CheckMate => "",
+            Self::Resign => " {resignation}",
+            Self::Time => " {time}",
+            Self::Forefeit => " {forefeit}",
         }
     }
 }
