@@ -184,6 +184,17 @@ impl EngineHandle {
         ingress: &mut Vec<UciEngine>,
         timeout: Duration,
     ) -> tokio::io::Result<()> {
+        self.interleave_until(egress, ingress, |_| false, timeout)
+            .await
+    }
+
+    pub async fn interleave_until<P: FnMut(&UciEngine) -> bool>(
+        &mut self,
+        egress: &mut VecDeque<UciGui>,
+        ingress: &mut Vec<UciEngine>,
+        mut until: P,
+        timeout: Duration,
+    ) -> tokio::io::Result<()> {
         let n = egress.len();
         let (mut cin, mut cout) = self.split();
 
@@ -191,7 +202,13 @@ impl EngineHandle {
             select! {
                 _ = sleep(timeout) => { break; }
                 uci = cin.receive() => {
-                    ingress.push(uci?);
+                    let uci = uci?;
+                    if until(&uci) {
+                        ingress.push(uci);
+                        break;
+                    } else {
+                        ingress.push(uci);
+                    }
                 }
                 _ = cout.send(egress.front()), if !egress.is_empty() => {
                     egress.pop_front();
