@@ -51,7 +51,7 @@ impl Default for PGNTags {
 impl PGNTags {
     pub fn from_tag_pairs(mut hash: IndexMap<Cow<'static, str>, String>) -> Self {
         let mut res = Self::default();
-        for i in CANON_TAGS.iter().chain(SEMICANON_TAGS) {
+        for i in CANON_TAGS {
             if let Some(v) = hash.shift_remove(&Cow::Borrowed(*i)) {
                 res.0.insert((*i).into(), v);
             }
@@ -62,20 +62,6 @@ impl PGNTags {
 
 pub const CANON_TAGS: &[&'static str] =
     &["Event", "Site", "Date", "Round", "White", "Black", "Result"];
-
-pub const SEMICANON_TAGS: &[&'static str] = &[
-    "Time",
-    "TimeControl",
-    "FEN",
-    "SetUp",
-    "ECO",
-    "Opening",
-    "Variation",
-    "Mode",
-    "PlyCount",
-    "Termination",
-    "Annotator",
-];
 
 #[derive(Debug, Clone)]
 pub struct PGN {
@@ -94,7 +80,7 @@ impl PGN {
     }
 
     pub fn to_string(&self, res: &mut String, newlines: bool) {
-        for c in CANON_TAGS.iter().chain(SEMICANON_TAGS) {
+        for c in CANON_TAGS {
             let Some(v) = self.headers.0.get(*c) else {
                 continue;
             };
@@ -102,7 +88,7 @@ impl PGN {
         }
 
         for (k, v) in &self.headers.0 {
-            if CANON_TAGS.contains(&k.as_ref()) || SEMICANON_TAGS.contains(&k.as_ref()) {
+            if CANON_TAGS.contains(&k.as_ref()) {
                 continue;
             }
             *res += &format!("[{k} \"{v}\"]\n");
@@ -162,7 +148,7 @@ impl PGN {
 
         while let Some(c) = regexp!(r#"\A\s*\[\s*(\w+)\s+"([^"]*)"\s*\]"#).captures(file) {
             let (matched, [tag, value]) = c.extract::<2>();
-            if let Some(tag) = CANON_TAGS.iter().chain(SEMICANON_TAGS).find(|t| **t == tag) {
+            if let Some(tag) = CANON_TAGS.iter().find(|t| **t == tag) {
                 res.insert((*tag).into(), value.into());
             } else {
                 res.insert(Cow::Owned(tag.into()), value.into());
