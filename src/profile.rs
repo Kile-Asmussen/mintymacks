@@ -62,6 +62,11 @@ impl EngineMetadata {
         res += "\n[options]\n";
 
         for (k, v) in options {
+            let k = if k.contains(" ") {
+                format!("\"{k}\"")
+            } else {
+                k.clone()
+            };
             match &v.option_type {
                 OptionType::Check(ot) => {
                     if let Some(val) = ot.value {
