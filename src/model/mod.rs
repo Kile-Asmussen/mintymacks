@@ -264,7 +264,7 @@ impl ColoredChessPieceWithCapture {
     #[inline]
     pub const fn new(cp: ColoredChessPiece, cap_p: Option<ChessPiece>) -> Self {
         let cap_n = match cap_p {
-            Some(ChessPiece::King) | None => 0,
+            None => 0,
             Some(i) => i as i8,
         };
         Self(NonZeroI8::new((cp as i8) << 3 | cap_n).unwrap())
