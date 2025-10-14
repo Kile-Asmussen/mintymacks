@@ -1,12 +1,16 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::LazyLock,
+};
 
 use crate::{
     bits::board::{self, BitBoard},
+    deque,
     model::{Color, Victory, moves::ChessMove},
     notation::{
         MoveMatcher,
         algebraic::AlgebraicMove,
-        fen::{render_fen, render_fen6},
+        fen::{parse_fen, render_fen, render_fen6},
         pgn::{MovePair, PGN, PGNTags},
         uci::{
             self, Line, Uci,
@@ -24,6 +28,7 @@ pub struct GameState {
     pub possible_moves: Vec<ChessMove>,
     pub seen_positions: HashMap<ZobHash, u8>,
     pub move_sequence: Vec<FatMove>,
+    pub cursor: usize,
     pub white: Option<Profile>,
     pub black: Option<Profile>,
 }
@@ -51,6 +56,7 @@ impl GameState {
             seen_positions: hash_map! { board.metadata.hash => 1 },
             board: board,
             move_sequence: vec![],
+            cursor: 0,
             outcome: None,
             white: None,
             black: None,
@@ -120,6 +126,8 @@ impl GameState {
                         chessmove: pm,
                         algebraic: pm.ambiguate(&self.board, &self.possible_moves),
                         precon: self.board.metadata.hash,
+                        postcon: self.board.metadata.hash
+                            ^ ZOBHASHER.delta(pm, self.board.metadata.castling_details),
                     })
                 } else if let Ok(_) = res {
                     res = Err(2)
@@ -140,6 +148,8 @@ impl GameState {
                     chessmove: pm,
                     algebraic: pm.ambiguate(&self.board, &self.possible_moves),
                     precon: self.board.metadata.hash,
+                    postcon: self.board.metadata.hash
+                        ^ ZOBHASHER.delta(pm, self.board.metadata.castling_details),
                 });
             }
         }
@@ -147,8 +157,7 @@ impl GameState {
     }
 
     pub fn apply(&mut self, mut fm: FatMove) -> Option<FatMove> {
-        if fm.precon == self.board.metadata.hash {
-            self.board.apply(fm.chessmove);
+        if fm.apply(&mut self.board) {
             self.possible_moves.clear();
             self.board.moves(&mut self.possible_moves);
             *self
@@ -178,7 +187,7 @@ impl GameState {
 
     pub fn undo(&mut self) -> Option<FatMove> {
         if let Some(fm) = self.move_sequence.pop() {
-            self.board.unapply(fm.chessmove);
+            fm.unapply(&mut self.board);
             self.possible_moves.clear();
             self.board.moves(&mut self.possible_moves);
             *self
@@ -192,6 +201,39 @@ impl GameState {
             None
         }
     }
+
+    pub fn from_pgn(pgn: &PGN) -> Result<Self, String> {
+        let mut res = GameState::startpos();
+
+        if pgn.headers.0.get("SetUp").map(|s| &s[..]) == Some("1")
+            && let Some(f) = pgn.headers.0.get("FEN")
+        {
+            let f = &f[..];
+            res = GameState::from_position(parse_fen(f)?);
+        }
+
+        for mp in pgn.move_list() {
+            res.apply(res.find_move(mp).map_err(|n| {
+                if res.board.metadata.to_move == Color::White {
+                    format!(
+                        "Invalid PGN: {}. {} is not a valid and unambiguous move",
+                        res.board.metadata.turn,
+                        mp.to_string()
+                    )
+                } else {
+                    format!(
+                        "Invalid PGN: {}. .. {} is not a valid and unambiguous move",
+                        res.board.metadata.turn,
+                        mp.to_string()
+                    )
+                }
+            })?);
+        }
+
+        res.outcome = pgn.end;
+
+        Ok(res)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -199,6 +241,7 @@ pub struct FatMove {
     pub precon: ZobHash,
     pub chessmove: ChessMove,
     pub algebraic: AlgebraicMove,
+    pub postcon: ZobHash,
 }
 
 use crate::notation::LongAlg;
@@ -206,5 +249,103 @@ use crate::notation::LongAlg;
 impl FatMove {
     pub fn longalg(&self) -> LongAlg {
         self.chessmove.simplify()
+    }
+
+    pub fn apply(self, board: &mut BitBoard) -> bool {
+        if self.precon == board.metadata.hash {
+            board.apply(self.chessmove);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn unapply(self, board: &mut BitBoard) -> bool {
+        if self.postcon == board.metadata.hash {
+            board.unapply(self.chessmove);
+            true
+        } else {
+            false
+        }
+    }
+}
+
+pub struct GameReview {
+    pub start: Option<Box<BitBoard>>,
+    pub end: Box<BitBoard>,
+    pub cursor: BitBoard,
+    pub past: VecDeque<FatMove>,
+    pub future: VecDeque<FatMove>,
+}
+
+impl GameReview {
+    pub fn new(gs: &GameState) -> Self {
+        Self {
+            start: gs.start.clone(),
+            end: Box::new(gs.board.clone()),
+            cursor: gs
+                .start
+                .clone()
+                .map(|b| *b)
+                .unwrap_or_else(BitBoard::startpos),
+            past: deque![],
+            future: VecDeque::from(gs.move_sequence.clone()),
+        }
+    }
+
+    pub fn to_start(&mut self) {
+        if let Some(b) = &self.start {
+            self.cursor = *b.clone()
+        } else {
+            self.cursor = BitBoard::startpos()
+        }
+
+        self.past.append(&mut self.future);
+    }
+
+    pub fn next(&mut self) -> bool {
+        if let Some(fm) = self.future.pop_front() {
+            fm.apply(&mut self.cursor);
+            self.past.push_back(fm);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn prev(&mut self) -> bool {
+        if let Some(fm) = self.past.pop_back() {
+            fm.unapply(&mut self.cursor);
+            self.future.push_front(fm);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn to_end(&mut self) {
+        self.cursor = (*self.end).clone();
+
+        self.past.append(&mut self.future);
+        self.future.append(&mut self.past);
+    }
+
+    pub fn past_pgn(&self) -> Vec<MovePair> {
+        MovePair::pair_moves(
+            self.past.iter().map(|fm| fm.algebraic),
+            self.start.as_ref().map(|b| b.metadata.turn).unwrap_or(0),
+            self.start
+                .as_ref()
+                .map(|b| b.metadata.to_move == Color::Black)
+                .unwrap_or(false),
+        )
+    }
+
+    pub fn future_pgn(&self) -> Vec<MovePair> {
+        MovePair::pair_moves(
+            self.future.iter().map(|fm| fm.algebraic),
+            self.cursor.metadata.turn,
+            self.cursor.metadata.to_move == Color::Black,
+        )
     }
 }
