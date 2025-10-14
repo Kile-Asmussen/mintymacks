@@ -74,6 +74,16 @@ impl PGNTags {
             *res += &format!("[{k} \"{v}\"]\n");
         }
     }
+
+    pub fn only_canonical(&self) -> PGNTags {
+        let mut res = Self::default();
+        for k in CANON_TAGS {
+            let k = Cow::Borrowed(*k);
+            let v = self.0[&k].clone();
+            res.0.insert(k, v);
+        }
+        res
+    }
 }
 
 pub const CANON_TAGS: &[&'static str] =
