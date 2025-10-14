@@ -3,7 +3,7 @@ use std::ops::Deref;
 use crate::{
     notation::uci::{
         Line, LongAlg, Uci, find_literal_uci, literal_uci, next_uci_token, parse_many_uci,
-        parse_uci, parse_until_uci,
+        parse_uci, parse_until_uci, split_at_uci,
     },
     print_uci, regexp,
 };
@@ -429,10 +429,16 @@ impl Uci for EngineOption {
 
     fn parse_direct<'a>(input: &'a [&'a str]) -> Option<(Self, &'a [&'a str])> {
         let input = literal_uci("name", input)?;
-        let (name, input) = next_uci_token(input)?;
+        let (name, input) = split_at_uci("type", input)?;
         let (option_type, input) = parse_uci(input)?;
 
-        Some((Self { name, option_type }, input))
+        Some((
+            Self {
+                name: name.join(" "),
+                option_type,
+            },
+            input,
+        ))
     }
 }
 

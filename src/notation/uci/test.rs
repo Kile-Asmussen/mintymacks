@@ -231,7 +231,7 @@ impl Examples for EngineOption {
                 }),
             },
             EngineOption {
-                name: "MyCombo".to_string(),
+                name: "My Combo".to_string(),
                 option_type: OptionType::Combo(ComboType {
                     default: "foo".to_string(),
                     value: None,
@@ -336,7 +336,8 @@ impl Examples for UciGui {
         ];
 
         for opt in OptVal::examples() {
-            res.push(SetOption("spam".to_string(), opt))
+            res.push(SetOption("spam".to_string(), opt.clone()));
+            res.push(SetOption("spam parrot".to_string(), opt));
         }
 
         for go in GoCommand::examples() {

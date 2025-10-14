@@ -108,10 +108,10 @@ impl Uci for UciGui {
 
         if let Some(input) = literal_uci("setoption", input)
             && let Some(input) = literal_uci("name", input)
-            && let Some((name, input)) = next_uci_token(input)
+            && let Some((name, input)) = split_at_uci("value", input)
             && let Some((optval, input)) = parse_uci(input)
         {
-            return Some((Self::SetOption(name, optval), input));
+            return Some((Self::SetOption(name.join(" "), optval), input));
         }
 
         if let Some(input) = literal_uci("register", input)
