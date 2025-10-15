@@ -3,7 +3,7 @@ use crate::{
         self, Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
         jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        mask, show_mask, slide_move_attacks,
+        mask, show_mask, obstruction_difference,
         slides::{
             BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
@@ -74,7 +74,7 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.rooks) {
-        let attacks = slide_move_attacks(
+        let attacks = obstruction_difference(
             RAYS_SOUTH.at(from),
             RAYS_NORTH.at(from),
             ({
@@ -84,7 +84,7 @@ pub fn rook_moves(
                 let this = &enemy;
                 this.total
             },
-        ) | slide_move_attacks(
+        ) | obstruction_difference(
             RAYS_WEST.at(from),
             RAYS_EAST.at(from),
             ({
@@ -123,7 +123,7 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.bishops) {
-        let attacks = slide_move_attacks(
+        let attacks = obstruction_difference(
             RAYS_SOUTHWEST.at(from),
             RAYS_NORTHEAST.at(from),
             ({
@@ -133,7 +133,7 @@ pub fn bishop_moves(
                 let this = &enemy;
                 this.total
             },
-        ) | slide_move_attacks(
+        ) | obstruction_difference(
             RAYS_SOUTHEAST.at(from),
             RAYS_NORTHWEST.at(from),
             ({
@@ -172,7 +172,7 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Bits(friendly.queens) {
-        let attacks = slide_move_attacks(
+        let attacks = obstruction_difference(
             RAYS_SOUTH.at(from),
             RAYS_NORTH.at(from),
             ({
@@ -182,7 +182,7 @@ pub fn queen_moves(
                 let this = &enemy;
                 this.total
             },
-        ) | slide_move_attacks(
+        ) | obstruction_difference(
             RAYS_WEST.at(from),
             RAYS_EAST.at(from),
             ({
@@ -192,7 +192,7 @@ pub fn queen_moves(
                 let this = &enemy;
                 this.total
             },
-        ) | slide_move_attacks(
+        ) | obstruction_difference(
             RAYS_SOUTHWEST.at(from),
             RAYS_NORTHEAST.at(from),
             ({
@@ -202,7 +202,7 @@ pub fn queen_moves(
                 let this = &enemy;
                 this.total
             },
-        ) | slide_move_attacks(
+        ) | obstruction_difference(
             RAYS_SOUTHEAST.at(from),
             RAYS_NORTHWEST.at(from),
             ({
@@ -242,7 +242,7 @@ pub fn pawn_moves(
 ) {
     for from in Bits(friendly.pawns) {
         let mask = match metadata.to_move {
-            Color::White => slide_move_attacks(
+            Color::White => obstruction_difference(
                 BoardMask::MIN,
                 WHITE_PAWN_MOVES.at(from),
                 ({
@@ -253,7 +253,7 @@ pub fn pawn_moves(
                     this.total
                 },
             ),
-            Color::Black => slide_move_attacks(
+            Color::Black => obstruction_difference(
                 WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
                 BoardMask::MIN,
                 ({

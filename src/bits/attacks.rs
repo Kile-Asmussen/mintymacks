@@ -3,8 +3,9 @@ use crate::{
     bits::{
         self, Bits, BoardMask, bit,
         board::HalfBitBoard,
+        fills::{fill_bishop2, fill_bishop4, fill_queen2, fill_queen4, fill_rook2, fill_rook4},
         jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        slide_move_attacks,
+        obstruction_difference,
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST,
@@ -156,35 +157,38 @@ pub fn king_attacks(k: BoardMask) -> BoardMask {
 
 #[inline]
 pub fn ortho_rays(sq: Square, total: BoardMask) -> BoardMask {
-    slide_move_attacks(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total)
-        | slide_move_attacks(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total)
+    obstruction_difference(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total)
+        | obstruction_difference(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total)
 }
 
 #[inline]
 pub fn diag_rays(sq: Square, total: BoardMask) -> BoardMask {
-    slide_move_attacks(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total)
-        | slide_move_attacks(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total)
+    obstruction_difference(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total)
+        | obstruction_difference(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total)
 }
 
 pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
-    let mut res = BoardMask::MIN;
-    for sq in Bits(r) {
-        res |= ortho_rays(sq, total);
-    }
-    res
+    fill_rook4(r, total)
+    // let mut res = BoardMask::MIN;
+    // for sq in Bits(r) {
+    //     res |= ortho_rays(sq, total);
+    // }
+    // res
 }
 
-pub fn bishop_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
-    let mut res = BoardMask::MIN;
-    for sq in Bits(r) {
-        res |= diag_rays(sq, total);
-    }
-    res
+pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
+    fill_bishop4(b, total)
+    // let mut res = BoardMask::MIN;
+    // for sq in Bits(b) {
+    //     res |= diag_rays(sq, total);
+    // }
+    // res
 }
 
-pub fn queen_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
+pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
+    // fill_bishop4(q, total) | fill_rook4(q, total)
     let mut res = BoardMask::MIN;
-    for sq in Bits(r) {
+    for sq in Bits(q) {
         res |= ortho_rays(sq, total);
         res |= diag_rays(sq, total);
     }

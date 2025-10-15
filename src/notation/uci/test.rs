@@ -4,6 +4,7 @@ use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::{
     bits::{Bits, BoardMask},
+    fuzzing::test::pi_rng,
     model::{BoardFile, BoardRank, ChessPiece, Square},
     notation::uci::{
         LongAlg, Uci,
@@ -73,22 +74,16 @@ fn roundtrip() {
 
 #[test]
 fn resilience_tests() {
-    insert_random_errors::<UciEngine, _>(
-        &mut SmallRng::from_seed(*b"3.141592653589793238462643383279"),
-        |x| match x {
-            UciEngine::Id(_) => true,
-            _ => false,
-        },
-    );
+    insert_random_errors::<UciEngine, _>(&mut pi_rng(), |x| match x {
+        UciEngine::Id(_) => true,
+        _ => false,
+    });
 
-    insert_random_errors::<UciGui, _>(
-        &mut SmallRng::from_seed(*b"3.141592653589793238462643383279"),
-        |x| match x {
-            UciGui::Register(_) => true,
-            UciGui::SetOption(_, _) => true,
-            _ => false,
-        },
-    );
+    insert_random_errors::<UciGui, _>(&mut pi_rng(), |x| match x {
+        UciGui::Register(_) => true,
+        UciGui::SetOption(_, _) => true,
+        _ => false,
+    });
 }
 
 trait Examples: Sized {

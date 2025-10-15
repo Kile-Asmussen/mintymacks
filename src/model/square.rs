@@ -79,6 +79,12 @@ impl Square {
     pub const h8: Square = BoardFile::H.by(BoardRank::_8);
 }
 
+#[test]
+fn afgaerg() {
+    assert_eq!(Square::EAST_EDGE, 0x7F7F_7F7F_7F7F_7F7F);
+    assert_eq!(Square::WEST_EDGE, 0xFEFE_FEFE_FEFE_FEFE);
+}
+
 impl Square {
     pub const EAST_EDGE : u64 = mask([
         0b11111110; 8

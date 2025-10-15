@@ -1,4 +1,4 @@
-use crate::{bits::{bit, board::HalfBitBoard, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, slide_move_attacks, slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES}, Bits, BoardMask}, model::{metadata::Metadata, Color}};
+use crate::{bits::{bit, board::HalfBitBoard, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, obstruction_difference, slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES}, Bits, BoardMask}, model::{metadata::Metadata, Color}};
 
 pub fn count_pseudomoves(
     friendly: &HalfBitBoard,
@@ -57,7 +57,7 @@ pub fn count_pawn_pseudomoves(
     let mut res = 0;
     for from in Bits(friendly.pawns) {
         let moves = match metadata.to_move {
-            Color::White => slide_move_attacks(
+            Color::White => obstruction_difference(
                 BoardMask::MIN,
                 WHITE_PAWN_MOVES.at(from),
                 ({
@@ -68,7 +68,7 @@ pub fn count_pawn_pseudomoves(
                     this.total
                 },
             ),
-            Color::Black => slide_move_attacks(
+            Color::Black => obstruction_difference(
                 WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
                 BoardMask::MIN,
                 ({
@@ -134,28 +134,28 @@ pub fn count_queen_pseudomoves(
     let mut res = 0;
     for from in Bits(friendly.queens) {
 
-        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
+        let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
             let this = &friendly;
             this.total
         }) | {
             let this = &enemy;
             this.total
         })
-        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
+        | obstruction_difference(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
             let this = &friendly;
             this.total
         }) | {
             let this = &enemy;
             this.total
         })
-        | slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
+        | obstruction_difference(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
             let this = &friendly;
             this.total
         }) | {
             let this = &enemy;
             this.total
         })
-        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
+        | obstruction_difference(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
             let this = &friendly;
             this.total
         }) | {
@@ -184,14 +184,14 @@ pub fn count_bishop_pseudomoves(
     for from in Bits(friendly.queens) {
 
         let attacks = 
-        slide_move_attacks(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
+        obstruction_difference(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
             let this = &friendly;
             this.total
         }) | {
             let this = &enemy;
             this.total
         })
-        | slide_move_attacks(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
+        | obstruction_difference(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
             let this = &friendly;
             this.total
         }) | {
@@ -219,14 +219,14 @@ pub fn count_rook_pseudomoves(
     let mut res = 0;
     for from in Bits(friendly.queens) {
 
-        let attacks = slide_move_attacks(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
+        let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
             let this = &friendly;
             this.total
         }) | {
             let this = &enemy;
             this.total
         })
-        | slide_move_attacks(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
+        | obstruction_difference(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
             let this = &friendly;
             this.total
         }) | {

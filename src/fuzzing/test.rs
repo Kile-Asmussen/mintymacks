@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use rand::{RngCore, SeedableRng, rngs::SmallRng, seq::IndexedRandom};
+use rand::{RngCore, SeedableRng, prelude::SmallRng, seq::IndexedRandom};
 use tokio::io::{AsyncWriteExt, stdout};
 
 use anyhow::anyhow;
@@ -36,13 +36,13 @@ use crate::{
     zobrist::{self, ZOBHASHER, ZobHash, ZobristBoard},
 };
 
-fn pi() -> SmallRng {
-    rand::prelude::SmallRng::from_seed(*b"3.141592653589793238462643383279")
+pub fn pi_rng() -> SmallRng {
+    SmallRng::from_seed(*b"3.141592653589793238462643383279")
 }
 
 #[test]
 fn fuzz_unmaking_moves() {
-    let mut rng = pi();
+    let mut rng = pi_rng();
 
     for _ in 0..1000 {
         unmake_moves(&mut rng, 50);
@@ -107,7 +107,7 @@ fn unmake_moves(rng: &mut SmallRng, ply: usize) {
 
 #[test]
 fn fuzz_zobrist_hashing() {
-    let mut rng = pi();
+    let mut rng = pi_rng();
     let mut positions = hash_map! {};
 
     for _ in 0..10000 {
@@ -162,7 +162,7 @@ fn zobrist_hashing_game(
 
 #[test]
 fn fuzz_zobrist_delta() {
-    let mut rng = pi();
+    let mut rng = pi_rng();
 
     for _ in 0..100 {
         zobrist_delta_game(&mut rng, 50);
@@ -369,7 +369,7 @@ pub async fn fuzz_stockfish_comparison(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn fuzz_against_stockfish() {
-    let mut rng = pi();
+    let mut rng = pi_rng();
     let mut engine = EngineHandle::open(Path::new("stockfish"), &[] as &[&str], false)
         .await
         .expect("Could not open stockfish");

@@ -10,6 +10,8 @@
 #![feature(format_args_nl)]
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(iter_array_chunks)]
+#![feature(portable_simd)]
+#![feature(duration_millis_float)]
 
 use std::{
     alloc::System,
@@ -37,3 +39,15 @@ pub mod openings;
 pub mod profile;
 pub mod utils;
 pub mod zobrist;
+
+#[test]
+fn enumerate() {
+    let mut times = vec![];
+    for _ in 0..20 {
+        times.push(BitBoard::startpos().enumerate(6).time);
+        println!(
+            "Average: {:.2} ms",
+            times.iter().map(|d| d.as_millis_f64()).sum::<f64>() / times.len() as f64
+        );
+    }
+}

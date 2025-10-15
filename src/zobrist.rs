@@ -8,6 +8,7 @@ use crate::{
         Bits, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
     },
+    fuzzing::test::pi_rng,
     model::{
         ChessPiece, Color, Square,
         castling::{CastlingDetail, CastlingDetails, CastlingRights},
@@ -136,9 +137,7 @@ pub struct ZobristBoard {
 
 impl ZobristBoard {
     pub fn new() -> ZobristBoard {
-        Self::new_from_rng(&mut rand::rngs::SmallRng::from_seed(
-            *b"3.141592653589793238462643383279",
-        ))
+        Self::new_from_rng(&mut pi_rng())
     }
 
     pub fn new_from_rng<R: Rng>(rng: &mut R) -> ZobristBoard {

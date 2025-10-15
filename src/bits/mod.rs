@@ -1,5 +1,6 @@
 pub mod attacks;
 pub mod board;
+pub mod fills;
 pub mod jumps;
 pub mod movecount;
 pub mod movegen;
@@ -8,12 +9,18 @@ pub mod slides;
 pub mod tests;
 pub mod victory;
 
+use std::u64;
+
 use rand::{Rng, RngCore, SeedableRng, rngs::SmallRng};
 
 use crate::{
     arrays::ArrayBoard,
-    bits::slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST},
-    model::{BoardFile, BoardRank, ChessPiece, Square, moves::PseudoMove},
+    bits::{
+        attacks::{bishop_attacks, queen_attacks, rook_attacks},
+        slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST},
+    },
+    fuzzing::test::pi_rng,
+    model::{BoardFile, BoardRank, ChessPiece, Dir, Square, moves::PseudoMove},
 };
 
 pub type BoardMask = u64;
@@ -101,7 +108,7 @@ pub fn show_mask(m: BoardMask) -> String {
 }
 
 #[inline]
-pub const fn slide_move_attacks(
+pub fn obstruction_difference(
     neg_ray: BoardMask,
     pos_ray: BoardMask,
     occupied: BoardMask,
@@ -109,65 +116,7 @@ pub const fn slide_move_attacks(
     let neg_hit = neg_ray & occupied;
     let pos_hit = pos_ray & occupied;
     let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
+    // let ms1b = 1u64 << neg_hit.checked_ilog2().unwrap_or(0);
     let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
     return (neg_ray | pos_ray) & diff;
-}
-
-#[test]
-fn square_iter() {
-    assert_eq!(Bits(1).next(), Some(Square::a1));
-    assert_eq!(Bits(2).next(), Some(Square::b1));
-    assert_eq!(Bits(3).collect::<Vec<_>>(), vec![Square::a1, Square::b1]);
-    assert_eq!(Bits(6).collect::<Vec<_>>(), vec![Square::b1, Square::c1]);
-}
-
-#[test]
-#[rustfmt::skip]
-fn mask_board_setup() {
-    assert_eq!(
-        Bits(mask([
-            0b_00000000, // 8
-            0b_00000000, // 7
-            0b_00000000, // 6
-            0b_00000000, // 5
-            0b_00000000, // 4
-            0b_00000000, // 3
-            0b_00000000, // 2
-            0b_10000000, // 1
-            // abcdefgh
-        ]))
-        .next(),
-        Some(Square::a1)
-    );
-
-    assert_eq!(
-        Square::a1.bit(),
-        mask([
-            0b_00000000, // 8
-            0b_00000000, // 7
-            0b_00000000, // 6
-            0b_00000000, // 5
-            0b_00000000, // 4
-            0b_00000000, // 3
-            0b_00000000, // 2
-            0b_10000000, // 1
-            // abcdefgh
-        ])
-    );
-
-    assert_eq!(
-        Bits(mask([
-            0b_00000001, // 8
-            0b_00000000, // 7
-            0b_00000000, // 6
-            0b_00000000, // 5
-            0b_00000000, // 4
-            0b_00000000, // 3
-            0b_00000000, // 2
-            0b_00000000, // 1
-            // abcdefgh
-        ]))
-        .next(),
-        Some(Square::h8)
-    );
 }
