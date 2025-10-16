@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Bits, BoardMask,
+        Squares, BoardMask,
         attacks::{bishop_attacks, knight_attacks, rook_attacks},
         bit,
         board::{BitBoard, HalfBitBoard},

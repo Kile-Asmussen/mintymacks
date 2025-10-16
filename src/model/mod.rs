@@ -10,13 +10,14 @@ use std::num::NonZeroI8;
 use strum::{FromRepr, VariantArray};
 
 use crate::arrays::ArrayBoard;
-use crate::bits::{Bits, BoardMask};
+use crate::bits::{BoardMask, Squares};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Square(NonZeroI8);
 
 impl Square {
+    #[inline]
     pub const fn new(ix: i8) -> Option<Self> {
         match ix {
             0..=63 => {

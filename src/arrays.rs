@@ -1,5 +1,5 @@
 use crate::{
-    bits::{Bits, BoardMask},
+    bits::{Squares, BoardMask},
     model::{ColoredChessPiece, Square},
 };
 
@@ -20,7 +20,7 @@ impl<T: Copy> ArrayBoard<T> {
     }
 
     pub const fn set_mask(&mut self, m: BoardMask, t: T) {
-        let mut it = Bits(m);
+        let mut it = Squares(m);
         while let Some(sq) = it.next() {
             self.set(sq, t);
         }
@@ -144,7 +144,7 @@ impl ArrayBoard<Option<ColoredChessPiece>> {
 
 impl ArrayBoard<BoardMask> {
     pub const fn overlay(&self, m: BoardMask) -> BoardMask {
-        let mut it = Bits(m);
+        let mut it = Squares(m);
         let mut res = BoardMask::MIN;
         while let Some(sq) = it.next() {
             res |= self.at(sq);
@@ -163,7 +163,7 @@ impl ArrayBoard<i16> {
     }
 
     pub const fn add(&mut self, m: BoardMask, n: i16) {
-        let mut it = Bits(m);
+        let mut it = Squares(m);
         while let Some(sq) = it.next() {
             self.set(sq, self.at(sq) + n);
         }
@@ -180,7 +180,7 @@ impl ArrayBoard<i8> {
     }
 
     pub const fn add(&mut self, m: BoardMask, n: i8) {
-        let mut it = Bits(m);
+        let mut it = Squares(m);
         while let Some(sq) = it.next() {
             self.set(sq, self.at(sq) + n);
         }

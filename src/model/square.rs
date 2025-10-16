@@ -1,6 +1,6 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{mask, Bits, BoardMask},
+    bits::{BoardMask, Squares, mask},
     model::{BoardFile, BoardRank, Dir, Square},
 };
 
@@ -86,21 +86,13 @@ fn afgaerg() {
 }
 
 impl Square {
-    pub const EAST_EDGE : u64 = mask([
-        0b11111110; 8
-    ]);
+    pub const EAST_EDGE: u64 = mask([0b11111110; 8]);
 
-    pub const NORTH_EDGE : u64 = mask([
-        0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    ]);
+    pub const NORTH_EDGE: u64 = mask([0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
 
-    pub const SOUTH_EDGE : u64 = mask([
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0
-    ]);
+    pub const SOUTH_EDGE: u64 = mask([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0]);
 
-    pub const WEST_EDGE : u64 = mask([
-        0b01111111; 8
-    ]);
+    pub const WEST_EDGE: u64 = mask([0b01111111; 8]);
 
     pub const fn go(self, mut dirs: &[Dir]) -> Option<Self> {
         if dirs.is_empty() {
@@ -123,7 +115,8 @@ impl Square {
             let n = edge & self.bit();
 
             if n != 0
-            && let Some(sq) = Square::new(self.ix() + dir as i8) {
+                && let Some(sq) = Square::new(self.ix() + dir as i8)
+            {
                 sq.go(dirs)
             } else {
                 None

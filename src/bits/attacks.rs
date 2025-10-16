@@ -1,9 +1,9 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        self, Bits, BoardMask, bit,
+        self, BoardMask, Squares, bit,
         board::HalfBitBoard,
-        fills::{fill_bishop2, fill_bishop4, fill_queen2, fill_queen4, fill_rook2, fill_rook4},
+        fills::{fill_bishop4, fill_queen4, fill_rook4},
         jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         obstruction_difference,
         slides::{
@@ -168,27 +168,24 @@ pub fn diag_rays(sq: Square, total: BoardMask) -> BoardMask {
 }
 
 pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
-    fill_rook4(r, total)
-    // let mut res = BoardMask::MIN;
-    // for sq in Bits(r) {
-    //     res |= ortho_rays(sq, total);
-    // }
-    // res
+    let mut res = BoardMask::MIN;
+    for sq in Squares(r) {
+        res |= ortho_rays(sq, total);
+    }
+    res
 }
 
 pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
-    fill_bishop4(b, total)
-    // let mut res = BoardMask::MIN;
-    // for sq in Bits(b) {
-    //     res |= diag_rays(sq, total);
-    // }
-    // res
+    let mut res = BoardMask::MIN;
+    for sq in Squares(b) {
+        res |= diag_rays(sq, total);
+    }
+    res
 }
 
 pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
-    // fill_bishop4(q, total) | fill_rook4(q, total)
     let mut res = BoardMask::MIN;
-    for sq in Bits(q) {
+    for sq in Squares(q) {
         res |= ortho_rays(sq, total);
         res |= diag_rays(sq, total);
     }
@@ -196,7 +193,7 @@ pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
 }
 
 pub fn count_pawn_attacker_materiel(p: BoardMask, c: Color, scale: i16, res: &mut ArrayBoard<i16>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(
             match c {
                 Color::White => WHITE_PAWN_CAPTURE,
@@ -209,7 +206,7 @@ pub fn count_pawn_attacker_materiel(p: BoardMask, c: Color, scale: i16, res: &mu
 }
 
 pub fn count_pawn_attackers(p: BoardMask, c: Color, amount: i8, res: &mut ArrayBoard<i8>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(
             match c {
                 Color::White => WHITE_PAWN_CAPTURE,
@@ -222,13 +219,13 @@ pub fn count_pawn_attackers(p: BoardMask, c: Color, amount: i8, res: &mut ArrayB
 }
 
 pub fn count_knight_attacker_materiel(p: BoardMask, scale: i16, res: &mut ArrayBoard<i16>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(KNIGHT_MOVES.at(sq), scale * ChessPiece::KNIGHT);
     }
 }
 
 pub fn count_knight_attackers(p: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(KNIGHT_MOVES.at(sq), amount);
     }
 }
@@ -239,7 +236,7 @@ pub fn count_bishop_attacker_materiel(
     scale: i16,
     res: &mut ArrayBoard<i16>,
 ) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(diag_rays(sq, total), scale * ChessPiece::BISHOP);
     }
 }
@@ -250,7 +247,7 @@ pub fn count_bishop_attackers(
     amount: i8,
     res: &mut ArrayBoard<i8>,
 ) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(diag_rays(sq, total), amount);
     }
 }
@@ -261,13 +258,13 @@ pub fn count_rook_attacker_materiel(
     scale: i16,
     res: &mut ArrayBoard<i16>,
 ) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(ortho_rays(sq, total), scale * ChessPiece::ROOK);
     }
 }
 
 pub fn count_rook_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(ortho_rays(sq, total), amount);
     }
 }
@@ -278,7 +275,7 @@ pub fn count_queen_attacker_materiel(
     scale: i16,
     res: &mut ArrayBoard<i16>,
 ) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(
             ortho_rays(sq, total) | diag_rays(sq, total),
             scale * ChessPiece::QUEEN,
@@ -287,13 +284,13 @@ pub fn count_queen_attacker_materiel(
 }
 
 pub fn count_queen_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(ortho_rays(sq, total) | diag_rays(sq, total), amount);
     }
 }
 
 pub fn count_king_attackers(p: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
-    for sq in Bits(p) {
+    for sq in Squares(p) {
         res.add(KING_MOVES.at(sq), amount);
     }
 }

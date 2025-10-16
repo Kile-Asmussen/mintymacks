@@ -15,7 +15,7 @@ use crate::engine::EngineHandle;
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Bits,
+        Squares,
         board::BitBoard,
         movegen::{king_moves, pawn_moves},
         show_mask,

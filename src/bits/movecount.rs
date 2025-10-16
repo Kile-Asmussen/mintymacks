@@ -1,4 +1,4 @@
-use crate::{bits::{bit, board::HalfBitBoard, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, obstruction_difference, slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES}, Bits, BoardMask}, model::{metadata::Metadata, Color}};
+use crate::{bits::{bit, board::HalfBitBoard, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, obstruction_difference, slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES}, Squares, BoardMask}, model::{metadata::Metadata, Color}};
 
 pub fn count_pseudomoves(
     friendly: &HalfBitBoard,
@@ -21,7 +21,7 @@ pub fn count_knight_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.knights) {
+    for from in Squares(friendly.knights) {
         res += (KNIGHT_MOVES.at(from) & !{
             let this = &friendly;
             this.total
@@ -37,7 +37,7 @@ pub fn count_king_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.knights) {
+    for from in Squares(friendly.knights) {
         res += (KING_MOVES.at(from) & !{
             let this = &friendly;
             this.total
@@ -55,7 +55,7 @@ pub fn count_pawn_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.pawns) {
+    for from in Squares(friendly.pawns) {
         let moves = match metadata.to_move {
             Color::White => obstruction_difference(
                 BoardMask::MIN,
@@ -103,7 +103,7 @@ friendly: &HalfBitBoard,
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.pawns) {
+    for from in Squares(friendly.pawns) {
         let moves = match metadata.to_move {
             Color::White => {
                 WHITE_PAWN_CAPTURE.at(from) 
@@ -132,7 +132,7 @@ pub fn count_queen_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.queens) {
+    for from in Squares(friendly.queens) {
 
         let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
             let this = &friendly;
@@ -181,7 +181,7 @@ pub fn count_bishop_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.queens) {
+    for from in Squares(friendly.queens) {
 
         let attacks = 
         obstruction_difference(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
@@ -217,7 +217,7 @@ pub fn count_rook_pseudomoves(
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
-    for from in Bits(friendly.queens) {
+    for from in Squares(friendly.queens) {
 
         let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
             let this = &friendly;

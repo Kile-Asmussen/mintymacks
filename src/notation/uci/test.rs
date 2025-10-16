@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::{
-    bits::{Bits, BoardMask},
+    bits::{Squares, BoardMask},
     fuzzing::test::pi_rng,
     model::{BoardFile, BoardRank, ChessPiece, Square},
     notation::uci::{
@@ -167,8 +167,8 @@ impl Examples for LongAlg {
     fn examples() -> Vec<Self> {
         let mut res = vec![];
         let mut n = 0;
-        for orig in Bits(BoardMask::MAX) {
-            for dst in Bits(BoardMask::MAX) {
+        for orig in Squares(BoardMask::MAX) {
+            for dst in Squares(BoardMask::MAX) {
                 if dst == orig {
                     continue;
                 }

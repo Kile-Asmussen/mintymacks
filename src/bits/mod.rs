@@ -9,7 +9,7 @@ pub mod slides;
 pub mod tests;
 pub mod victory;
 
-use std::u64;
+use std::{num::NonZeroU64, u64};
 
 use rand::{Rng, RngCore, SeedableRng, rngs::SmallRng};
 
@@ -24,20 +24,23 @@ use crate::{
 };
 
 pub type BoardMask = u64;
+pub type PopulatedBoardMask = NonZeroU64;
 
-pub struct Bits(pub BoardMask);
+pub struct Squares(pub BoardMask);
 
-impl Bits {
+impl Squares {
     pub const fn next(&mut self) -> Option<Square> {
         let n = self.0.trailing_zeros();
-        if n != 64 {
+        if n < 64 {
             self.0 &= !1 << n;
+            Square::new(n as i8)
+        } else {
+            None
         }
-        Square::new(n as i8)
     }
 }
 
-impl Iterator for Bits {
+impl Iterator for Squares {
     type Item = Square;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -47,6 +50,20 @@ impl Iterator for Bits {
     fn size_hint(&self) -> (usize, Option<usize>) {
         let n = self.0.count_ones() as usize;
         (n, Some(n))
+    }
+}
+
+pub struct Bits(pub BoardMask);
+
+impl Bits {
+    pub const fn next(&mut self) -> Option<PopulatedBoardMask> {
+        let n = self.0.trailing_zeros();
+        if n < 64 {
+            self.0 &= !1 << n;
+            PopulatedBoardMask::new(1 << n)
+        } else {
+            None
+        }
     }
 }
 

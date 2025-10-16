@@ -5,7 +5,7 @@ use rand::{Rng, SeedableRng};
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Bits, BoardMask, bit,
+        Squares, BoardMask, bit,
         board::{BitBoard, HalfBitBoard},
     },
     fuzzing::test::pi_rng,
@@ -29,7 +29,7 @@ pub fn zob<R: Rng>(rng: &mut R) -> ZobHash {
 
 impl ArrayBoard<ZobHash> {
     pub fn hash(&self, m: BoardMask) -> ZobHash {
-        Bits(m).map(|sq| self.at(sq)).fold(0, u64::bitxor)
+        Squares(m).map(|sq| self.at(sq)).fold(0, u64::bitxor)
     }
 
     pub fn at2(&self, pm: PseudoMove) -> ZobHash {
