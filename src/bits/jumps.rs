@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{BoardMask, bit},
-    model::{BoardRank, Color, Dir, Square},
+    bits::{BoardMask, one_bit},
+    model::{BoardRank, Color, Direction, Square},
 };
 
 pub const WHITE_PAWN_CAPTURE: ArrayBoard<BoardMask> = build_pawnboard(Color::White);
@@ -21,11 +21,11 @@ pub const fn build_pawnboard(c: Color) -> ArrayBoard<BoardMask> {
 
 pub const fn build_pawnmask(c: Color, sq: Square) -> BoardMask {
     let dir = match c {
-        Color::White => Dir::North,
-        Color::Black => Dir::South,
+        Color::White => Direction::North,
+        Color::Black => Direction::South,
     };
 
-    bit(sq.go(&[dir, Dir::East])) | bit(sq.go(&[dir, Dir::West]))
+    one_bit(sq.go(&[dir, Direction::East])) | one_bit(sq.go(&[dir, Direction::West]))
 }
 
 pub const KNIGHT_MOVES: ArrayBoard<BoardMask> = build_knightboard();
@@ -43,14 +43,14 @@ pub const fn build_knightboard() -> ArrayBoard<BoardMask> {
 }
 
 pub const fn build_knightmask(sq: Square) -> BoardMask {
-    bit(sq.go(&[Dir::North, Dir::NorthEast]))
-        | bit(sq.go(&[Dir::North, Dir::NorthWest]))
-        | bit(sq.go(&[Dir::West, Dir::NorthWest]))
-        | bit(sq.go(&[Dir::West, Dir::SouthWest]))
-        | bit(sq.go(&[Dir::South, Dir::SouthEast]))
-        | bit(sq.go(&[Dir::South, Dir::SouthWest]))
-        | bit(sq.go(&[Dir::East, Dir::NorthEast]))
-        | bit(sq.go(&[Dir::East, Dir::SouthEast]))
+    one_bit(sq.go(&[Direction::North, Direction::NorthEast]))
+        | one_bit(sq.go(&[Direction::North, Direction::NorthWest]))
+        | one_bit(sq.go(&[Direction::West, Direction::NorthWest]))
+        | one_bit(sq.go(&[Direction::West, Direction::SouthWest]))
+        | one_bit(sq.go(&[Direction::South, Direction::SouthEast]))
+        | one_bit(sq.go(&[Direction::South, Direction::SouthWest]))
+        | one_bit(sq.go(&[Direction::East, Direction::NorthEast]))
+        | one_bit(sq.go(&[Direction::East, Direction::SouthEast]))
 }
 
 pub const KING_MOVES: ArrayBoard<BoardMask> = build_kingboard();
@@ -68,12 +68,12 @@ pub const fn build_kingboard() -> ArrayBoard<BoardMask> {
 }
 
 pub const fn build_kingmask(sq: Square) -> BoardMask {
-    bit(sq.go(&[Dir::North]))
-        | bit(sq.go(&[Dir::NorthEast]))
-        | bit(sq.go(&[Dir::East]))
-        | bit(sq.go(&[Dir::SouthEast]))
-        | bit(sq.go(&[Dir::South]))
-        | bit(sq.go(&[Dir::SouthWest]))
-        | bit(sq.go(&[Dir::West]))
-        | bit(sq.go(&[Dir::NorthWest]))
+    one_bit(sq.go(&[Direction::North]))
+        | one_bit(sq.go(&[Direction::NorthEast]))
+        | one_bit(sq.go(&[Direction::East]))
+        | one_bit(sq.go(&[Direction::SouthEast]))
+        | one_bit(sq.go(&[Direction::South]))
+        | one_bit(sq.go(&[Direction::SouthWest]))
+        | one_bit(sq.go(&[Direction::West]))
+        | one_bit(sq.go(&[Direction::NorthWest]))
 }

@@ -5,7 +5,7 @@ use rand::{Rng, SeedableRng};
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Squares, BoardMask, bit,
+        Squares, BoardMask, one_bit,
         board::{BitBoard, HalfBitBoard},
     },
     fuzzing::test::pi_rng,

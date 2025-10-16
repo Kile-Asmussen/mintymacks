@@ -1,11 +1,11 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        self, BoardMask, Squares, bit,
+        self, BoardMask, Squares,
         board::HalfBitBoard,
-        fills::{fill_bishop4, fill_queen4, fill_rook4},
         jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        obstruction_difference,
+        one_bit,
+        opdif::{RAYCASTS, obstruction_difference},
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST,
@@ -42,7 +42,7 @@ impl HalfBitBoard {
         use ChessPiece::*;
 
         let enemy = enemy ^ mv.bits();
-        let friendly = self.total ^ bit(cap_sq);
+        let friendly = self.total ^ one_bit(cap_sq);
         let total = friendly | enemy;
 
         return pawn_attacks(self.pawns ^ is_cap(Pawn, cap_p, cap_sq), c)
@@ -70,7 +70,7 @@ impl HalfBitBoard {
     ) -> BoardMask {
         use ChessPiece::*;
 
-        let enemy = enemy ^ bit(cap);
+        let enemy = enemy ^ one_bit(cap);
         let friendly = self.total ^ mv.bits();
         let total = friendly | enemy;
 
@@ -155,22 +155,10 @@ pub fn king_attacks(k: BoardMask) -> BoardMask {
     KING_MOVES.overlay(k)
 }
 
-#[inline]
-pub fn ortho_rays(sq: Square, total: BoardMask) -> BoardMask {
-    obstruction_difference(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total)
-        | obstruction_difference(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total)
-}
-
-#[inline]
-pub fn diag_rays(sq: Square, total: BoardMask) -> BoardMask {
-    obstruction_difference(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total)
-        | obstruction_difference(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total)
-}
-
 pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(r) {
-        res |= ortho_rays(sq, total);
+        res |= RAYCASTS.at(sq).othrogonal(total);
     }
     res
 }
@@ -178,7 +166,7 @@ pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
 pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(b) {
-        res |= diag_rays(sq, total);
+        res |= RAYCASTS.at(sq).diagonal(total);
     }
     res
 }
@@ -186,8 +174,7 @@ pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
 pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(q) {
-        res |= ortho_rays(sq, total);
-        res |= diag_rays(sq, total);
+        res |= RAYCASTS.at(sq).omnidirectional(total);
     }
     res
 }
@@ -237,7 +224,7 @@ pub fn count_bishop_attacker_materiel(
     res: &mut ArrayBoard<i16>,
 ) {
     for sq in Squares(p) {
-        res.add(diag_rays(sq, total), scale * ChessPiece::BISHOP);
+        res.add(RAYCASTS.at(sq).diagonal(total), scale * ChessPiece::BISHOP);
     }
 }
 
@@ -248,7 +235,7 @@ pub fn count_bishop_attackers(
     res: &mut ArrayBoard<i8>,
 ) {
     for sq in Squares(p) {
-        res.add(diag_rays(sq, total), amount);
+        res.add(RAYCASTS.at(sq).diagonal(total), amount);
     }
 }
 
@@ -259,13 +246,13 @@ pub fn count_rook_attacker_materiel(
     res: &mut ArrayBoard<i16>,
 ) {
     for sq in Squares(p) {
-        res.add(ortho_rays(sq, total), scale * ChessPiece::ROOK);
+        res.add(RAYCASTS.at(sq).othrogonal(total), scale * ChessPiece::ROOK);
     }
 }
 
 pub fn count_rook_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
     for sq in Squares(p) {
-        res.add(ortho_rays(sq, total), amount);
+        res.add(RAYCASTS.at(sq).othrogonal(total), amount);
     }
 }
 
@@ -277,7 +264,7 @@ pub fn count_queen_attacker_materiel(
 ) {
     for sq in Squares(p) {
         res.add(
-            ortho_rays(sq, total) | diag_rays(sq, total),
+            RAYCASTS.at(sq).omnidirectional(total),
             scale * ChessPiece::QUEEN,
         );
     }
@@ -285,7 +272,7 @@ pub fn count_queen_attacker_materiel(
 
 pub fn count_queen_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
     for sq in Squares(p) {
-        res.add(ortho_rays(sq, total) | diag_rays(sq, total), amount);
+        res.add(RAYCASTS.at(sq).omnidirectional(total), amount);
     }
 }
 

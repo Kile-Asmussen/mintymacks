@@ -1,14 +1,13 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Squares, BoardMask,
+        BoardMask, Squares,
         attacks::{bishop_attacks, knight_attacks, rook_attacks},
-        bit,
         board::{BitBoard, HalfBitBoard},
         jumps::KNIGHT_MOVES,
         mask,
         movegen::{legal_moves, pawn_moves},
-        show_mask, slides,
+        one_bit, show_mask, slides,
     },
     fuzzing::stockfish_perft,
     model::{

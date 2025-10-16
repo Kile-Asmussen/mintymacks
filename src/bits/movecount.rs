@@ -1,17 +1,26 @@
-use crate::{bits::{bit, board::HalfBitBoard, jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE}, mask, obstruction_difference, slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES}, Squares, BoardMask}, model::{metadata::Metadata, Color}};
+use crate::{
+    bits::{
+        BoardMask, Squares,
+        board::HalfBitBoard,
+        jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        mask, one_bit,
+        opdif::obstruction_difference,
+        slides::{
+            RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH, RAYS_SOUTHEAST,
+            RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
+        },
+    },
+    model::{Color, metadata::Metadata},
+};
 
-pub fn count_pseudomoves(
-    friendly: &HalfBitBoard,
-    enemy: &HalfBitBoard,
-    metadata: Metadata,
-) -> u32 {
-    count_pawn_pseudomoves(friendly, enemy, metadata) +
-    count_pawn_pseudocaptures(friendly, enemy, metadata) +
-    count_knight_pseudomoves(friendly, enemy, metadata) +
-    count_bishop_pseudomoves(friendly, enemy, metadata) +
-    count_rook_pseudomoves(friendly, enemy, metadata) +
-    count_queen_pseudomoves(friendly, enemy, metadata) +
-    count_king_pseudomoves(friendly, enemy, metadata)
+pub fn count_pseudomoves(friendly: &HalfBitBoard, enemy: &HalfBitBoard, metadata: Metadata) -> u32 {
+    count_pawn_pseudomoves(friendly, enemy, metadata)
+        + count_pawn_pseudocaptures(friendly, enemy, metadata)
+        + count_knight_pseudomoves(friendly, enemy, metadata)
+        + count_bishop_pseudomoves(friendly, enemy, metadata)
+        + count_rook_pseudomoves(friendly, enemy, metadata)
+        + count_queen_pseudomoves(friendly, enemy, metadata)
+        + count_king_pseudomoves(friendly, enemy, metadata)
 }
 
 #[inline]
@@ -22,10 +31,12 @@ pub fn count_knight_pseudomoves(
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.knights) {
-        res += (KNIGHT_MOVES.at(from) & !{
-            let this = &friendly;
-            this.total
-        }).count_ones();
+        res += (KNIGHT_MOVES.at(from)
+            & !{
+                let this = &friendly;
+                this.total
+            })
+        .count_ones();
     }
     res
 }
@@ -38,10 +49,12 @@ pub fn count_king_pseudomoves(
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.knights) {
-        res += (KING_MOVES.at(from) & !{
-            let this = &friendly;
-            this.total
-        }).count_ones();
+        res += (KING_MOVES.at(from)
+            & !{
+                let this = &friendly;
+                this.total
+            })
+        .count_ones();
     }
     res += metadata.castling_rights.get(metadata.to_move).count_ones();
 
@@ -98,23 +111,19 @@ pub fn count_pawn_pseudomoves(
 
 #[inline]
 pub fn count_pawn_pseudocaptures(
-friendly: &HalfBitBoard,
+    friendly: &HalfBitBoard,
     enemy: &HalfBitBoard,
     metadata: Metadata,
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.pawns) {
         let moves = match metadata.to_move {
-            Color::White => {
-                WHITE_PAWN_CAPTURE.at(from) 
-            }
-            Color::Black => {
-                WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes()
-            }
+            Color::White => WHITE_PAWN_CAPTURE.at(from),
+            Color::Black => WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes(),
         } & (({
             let this = &enemy;
             this.total
-        }) | bit(metadata.en_passant));
+        }) | one_bit(metadata.en_passant));
 
         const END_ZONE: BoardMask = mask([0xFF, 0, 0, 0, 0, 0, 0, 0xFF]);
 
@@ -133,40 +142,53 @@ pub fn count_queen_pseudomoves(
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.queens) {
+        let attacks = obstruction_difference(
+            RAYS_SOUTH.at(from),
+            RAYS_NORTH.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | obstruction_difference(
+            RAYS_WEST.at(from),
+            RAYS_EAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | obstruction_difference(
+            RAYS_SOUTHWEST.at(from),
+            RAYS_NORTHEAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | obstruction_difference(
+            RAYS_SOUTHEAST.at(from),
+            RAYS_NORTHWEST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | obstruction_difference(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | obstruction_difference(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | obstruction_difference(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
-
-        let moves = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let moves = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         res += moves.count_ones();
     }
@@ -182,27 +204,33 @@ pub fn count_bishop_pseudomoves(
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.queens) {
+        let attacks = obstruction_difference(
+            RAYS_SOUTHWEST.at(from),
+            RAYS_NORTHEAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | obstruction_difference(
+            RAYS_SOUTHEAST.at(from),
+            RAYS_NORTHWEST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let attacks = 
-        obstruction_difference(RAYS_SOUTHWEST.at(from), RAYS_NORTHEAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | obstruction_difference(RAYS_SOUTHEAST.at(from), RAYS_NORTHWEST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
-
-        let moves = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let moves = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         res += moves.count_ones();
     }
@@ -218,26 +246,33 @@ pub fn count_rook_pseudomoves(
 ) -> u32 {
     let mut res = 0;
     for from in Squares(friendly.queens) {
+        let attacks = obstruction_difference(
+            RAYS_SOUTH.at(from),
+            RAYS_NORTH.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        ) | obstruction_difference(
+            RAYS_WEST.at(from),
+            RAYS_EAST.at(from),
+            ({
+                let this = &friendly;
+                this.total
+            }) | {
+                let this = &enemy;
+                this.total
+            },
+        );
 
-        let attacks = obstruction_difference(RAYS_SOUTH.at(from), RAYS_NORTH.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        })
-        | obstruction_difference(RAYS_WEST.at(from), RAYS_EAST.at(from), ({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
-
-        let moves = attacks & !{
-            let this = &friendly;
-            this.total
-        };
+        let moves = attacks
+            & !{
+                let this = &friendly;
+                this.total
+            };
 
         res += moves.count_ones();
     }

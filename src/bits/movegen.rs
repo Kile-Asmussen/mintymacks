@@ -1,9 +1,11 @@
 use crate::{
     bits::{
-        self, Squares, BoardMask, bit,
+        self, BoardMask, Squares,
         board::{BitBoard, HalfBitBoard},
         jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        mask, show_mask, obstruction_difference,
+        mask, one_bit,
+        opdif::{RAYCASTS, obstruction_difference},
+        show_mask,
         slides::{
             BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
@@ -74,27 +76,7 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.rooks) {
-        let attacks = obstruction_difference(
-            RAYS_SOUTH.at(from),
-            RAYS_NORTH.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        ) | obstruction_difference(
-            RAYS_WEST.at(from),
-            RAYS_EAST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        );
+        let attacks = RAYCASTS.at(from).othrogonal(friendly.total | enemy.total);
 
         let mask = attacks
             & !{
@@ -123,27 +105,7 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.bishops) {
-        let attacks = obstruction_difference(
-            RAYS_SOUTHWEST.at(from),
-            RAYS_NORTHEAST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        ) | obstruction_difference(
-            RAYS_SOUTHEAST.at(from),
-            RAYS_NORTHWEST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        );
+        let attacks = RAYCASTS.at(from).diagonal(friendly.total | enemy.total);
 
         let mask = attacks
             & !{
@@ -172,47 +134,9 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.queens) {
-        let attacks = obstruction_difference(
-            RAYS_SOUTH.at(from),
-            RAYS_NORTH.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        ) | obstruction_difference(
-            RAYS_WEST.at(from),
-            RAYS_EAST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        ) | obstruction_difference(
-            RAYS_SOUTHWEST.at(from),
-            RAYS_NORTHEAST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        ) | obstruction_difference(
-            RAYS_SOUTHEAST.at(from),
-            RAYS_NORTHWEST.at(from),
-            ({
-                let this = &friendly;
-                this.total
-            }) | {
-                let this = &enemy;
-                this.total
-            },
-        );
+        let attacks = RAYCASTS
+            .at(from)
+            .omnidirectional(friendly.total | enemy.total);
 
         let mask = attacks
             & !{
@@ -294,7 +218,7 @@ pub fn pawn_captures(
         } & (({
             let this = &enemy;
             this.total
-        }) | bit(metadata.en_passant));
+        }) | one_bit(metadata.en_passant));
 
         for dst in Squares(mask) {
             let mv = from.to(dst);

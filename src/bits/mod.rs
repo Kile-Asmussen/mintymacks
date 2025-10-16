@@ -5,6 +5,7 @@ pub mod jumps;
 pub mod movecount;
 pub mod movegen;
 pub mod moving;
+pub mod opdif;
 pub mod slides;
 pub mod tests;
 pub mod victory;
@@ -20,7 +21,7 @@ use crate::{
         slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST},
     },
     fuzzing::test::pi_rng,
-    model::{BoardFile, BoardRank, ChessPiece, Dir, Square, moves::PseudoMove},
+    model::{BoardFile, BoardRank, ChessPiece, Direction, Square, moves::PseudoMove},
 };
 
 pub type BoardMask = u64;
@@ -86,7 +87,7 @@ impl Square {
     }
 }
 
-pub const fn bit(sq: Option<Square>) -> BoardMask {
+pub const fn one_bit(sq: Option<Square>) -> BoardMask {
     if let Some(sq) = sq {
         sq.bit()
     } else {
@@ -124,16 +125,35 @@ pub fn show_mask(m: BoardMask) -> String {
 ])", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7]}
 }
 
-#[inline]
-pub fn obstruction_difference(
-    neg_ray: BoardMask,
-    pos_ray: BoardMask,
-    occupied: BoardMask,
-) -> BoardMask {
-    let neg_hit = neg_ray & occupied;
-    let pos_hit = pos_ray & occupied;
-    let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
-    // let ms1b = 1u64 << neg_hit.checked_ilog2().unwrap_or(0);
-    let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
-    return (neg_ray | pos_ray) & diff;
+impl Direction {
+    #[inline]
+    pub const fn edge(self) -> BoardMask {
+        match (self as i8) & 0x7 {
+            0 => !0,
+            1 => !BoardFile::A.mask(),
+            7 => !BoardFile::H.mask(),
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline]
+    pub const fn shift(self, mask: u64) -> u64 {
+        if self as i8 > 0 {
+            mask << self as i8 & self.edge()
+        } else {
+            mask >> -(self as i8) & self.edge()
+        }
+    }
+}
+
+impl BoardFile {
+    pub const fn mask(self) -> BoardMask {
+        0x0101_0101_0101_0101 << self as i8
+    }
+}
+
+impl BoardRank {
+    pub const fn mask(self) -> BoardMask {
+        0xFF << self as i8
+    }
 }

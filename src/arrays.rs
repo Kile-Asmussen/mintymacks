@@ -1,5 +1,7 @@
+use std::{array, mem::MaybeUninit};
+
 use crate::{
-    bits::{Squares, BoardMask},
+    bits::{BoardMask, Squares},
     model::{ColoredChessPiece, Square},
 };
 

@@ -12,6 +12,8 @@ use strum::{FromRepr, VariantArray};
 use crate::arrays::ArrayBoard;
 use crate::bits::{BoardMask, Squares};
 
+use std::marker::ConstParamTy;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Square(NonZeroI8);
@@ -66,7 +68,7 @@ impl Debug for Square {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, ConstParamTy, VariantArray)]
 #[repr(i8)]
 pub enum BoardFile {
     A = 0,
@@ -96,7 +98,7 @@ impl BoardFile {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, ConstParamTy, VariantArray)]
 #[repr(i8)]
 pub enum BoardRank {
     _1 = 0,
@@ -111,18 +113,18 @@ pub enum BoardRank {
 
 impl BoardRank {
     pub const fn ix(self) -> i8 {
-        self as i8
+        self as i8 >> 3
     }
 
     pub const fn new(ix: i8) -> Option<Self> {
         match ix {
-            0..=7 => Some(unsafe { std::mem::transmute(ix * 8) }),
+            0..=7 => Some(unsafe { std::mem::transmute(ix << 3) }),
             _ => None,
         }
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, ConstParamTy)]
 #[repr(i8)]
 pub enum Color {
     Black = -1,
@@ -147,9 +149,25 @@ impl Color {
             Color::Black => BoardRank::_8,
         }
     }
+
+    pub const fn pawn_rank(self) -> BoardRank {
+        match self {
+            Self::White => BoardRank::_2,
+            Self::Black => BoardRank::_7,
+        }
+    }
+
+    pub const fn pawn_advance(self) -> Direction {
+        match self {
+            Self::White => Direction::North,
+            Self::Black => Direction::South,
+        }
+    }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, VariantArray)]
+#[derive(
+    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, ConstParamTy, VariantArray,
+)]
 #[repr(i8)]
 pub enum ChessPiece {
     Pawn = 1,
@@ -172,7 +190,9 @@ impl ChessPiece {
     pub const QUEEN: i16 = 500;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, VariantArray)]
+#[derive(
+    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, FromRepr, VariantArray, ConstParamTy,
+)]
 #[repr(i8)]
 pub enum ColoredChessPiece {
     BlackKing = -6,
@@ -294,9 +314,9 @@ impl ColoredChessPieceWithCapture {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, ConstParamTy)]
 #[repr(i8)]
-pub enum Dir {
+pub enum Direction {
     SouthWest = -9,
     South = -8,
     SouthEast = -7,

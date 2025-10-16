@@ -1,7 +1,7 @@
 use crate::{
     arrays::ArrayBoard,
     bits::{BoardMask, Squares, mask},
-    model::{BoardFile, BoardRank, Dir, Square},
+    model::{BoardFile, BoardRank, Direction, Square},
 };
 
 #[allow(non_upper_case_globals)]
@@ -94,7 +94,7 @@ impl Square {
 
     pub const WEST_EDGE: u64 = mask([0b01111111; 8]);
 
-    pub const fn go(self, mut dirs: &[Dir]) -> Option<Self> {
+    pub const fn go(self, mut dirs: &[Direction]) -> Option<Self> {
         if dirs.is_empty() {
             Some(self)
         } else {
@@ -102,14 +102,14 @@ impl Square {
             let dirs = &dirs[1..];
 
             let edge = match dir {
-                Dir::North => Square::NORTH_EDGE,
-                Dir::East => Square::EAST_EDGE,
-                Dir::South => Square::SOUTH_EDGE,
-                Dir::West => Square::WEST_EDGE,
-                Dir::NorthEast => Square::NORTH_EDGE & Square::EAST_EDGE,
-                Dir::SouthEast => Square::SOUTH_EDGE & Square::EAST_EDGE,
-                Dir::SouthWest => Square::SOUTH_EDGE & Square::WEST_EDGE,
-                Dir::NorthWest => Square::NORTH_EDGE & Square::WEST_EDGE,
+                Direction::North => Square::NORTH_EDGE,
+                Direction::East => Square::EAST_EDGE,
+                Direction::South => Square::SOUTH_EDGE,
+                Direction::West => Square::WEST_EDGE,
+                Direction::NorthEast => Square::NORTH_EDGE & Square::EAST_EDGE,
+                Direction::SouthEast => Square::SOUTH_EDGE & Square::EAST_EDGE,
+                Direction::SouthWest => Square::SOUTH_EDGE & Square::WEST_EDGE,
+                Direction::NorthWest => Square::NORTH_EDGE & Square::WEST_EDGE,
             };
 
             let n = edge & self.bit();
@@ -143,23 +143,23 @@ fn square_names() {
 
 #[test]
 fn square_go_correct() {
-    assert_eq!(Square::a1.go(&[Dir::East]), Some(Square::b1));
-    assert_eq!(Square::a1.go(&[Dir::North]), Some(Square::a2));
-    assert_eq!(Square::a1.go(&[Dir::NorthEast]), Some(Square::b2));
+    assert_eq!(Square::a1.go(&[Direction::East]), Some(Square::b1));
+    assert_eq!(Square::a1.go(&[Direction::North]), Some(Square::a2));
+    assert_eq!(Square::a1.go(&[Direction::NorthEast]), Some(Square::b2));
 
-    assert_eq!(Square::a1.go(&[Dir::South]), None);
-    assert_eq!(Square::a1.go(&[Dir::West]), None);
-    assert_eq!(Square::a1.go(&[Dir::SouthWest]), None);
-    assert_eq!(Square::a1.go(&[Dir::SouthEast]), None);
-    assert_eq!(Square::a1.go(&[Dir::NorthWest]), None);
+    assert_eq!(Square::a1.go(&[Direction::South]), None);
+    assert_eq!(Square::a1.go(&[Direction::West]), None);
+    assert_eq!(Square::a1.go(&[Direction::SouthWest]), None);
+    assert_eq!(Square::a1.go(&[Direction::SouthEast]), None);
+    assert_eq!(Square::a1.go(&[Direction::NorthWest]), None);
 
     assert_eq!(
-        Square::c1.go(&[Dir::West, Dir::NorthWest]),
+        Square::c1.go(&[Direction::West, Direction::NorthWest]),
         Some(Square::a2)
     );
 
     assert_eq!(
-        Square::a1.go(&[Dir::North, Dir::East]),
-        Square::a1.go(&[Dir::NorthEast])
+        Square::a1.go(&[Direction::North, Direction::East]),
+        Square::a1.go(&[Direction::NorthEast])
     )
 }
