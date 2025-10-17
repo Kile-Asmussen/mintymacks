@@ -24,7 +24,10 @@ use std::{
 };
 
 use crate::{
-    bits::board::BitBoard,
+    bits::{
+        board::BitBoard,
+        opdif::{anti_ray, diag_ray},
+    },
     fuzzing::stockfish_perft,
     model::{Square, castling::CastlingRights, moves::ChessMove},
 };
@@ -53,5 +56,5 @@ fn enumerate() {
     println!(
         "Average: {:.2} ms",
         times.iter().map(|d| d.as_millis_f64()).sum::<f64>() / times.len() as f64
-    )
+    );
 }

@@ -2,9 +2,9 @@ use crate::{
     bits::{
         self, BoardMask, Squares,
         board::{BitBoard, HalfBitBoard},
-        jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         mask, one_bit,
-        opdif::{RAYCASTS, obstruction_difference},
+        opdif::{bishop_rays, obstruction_difference, queen_rays, rook_rays},
         show_mask,
         slides::{
             BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
@@ -76,7 +76,7 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.rooks) {
-        let attacks = RAYCASTS.at(from).othrogonal(friendly.total | enemy.total);
+        let attacks = rook_rays(from, friendly.total | enemy.total);
 
         let mask = attacks
             & !{
@@ -105,13 +105,9 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.bishops) {
-        let attacks = RAYCASTS.at(from).diagonal(friendly.total | enemy.total);
+        let attacks = bishop_rays(from, friendly.total | enemy.total);
 
-        let mask = attacks
-            & !{
-                let this = &friendly;
-                this.total
-            };
+        let mask = attacks & !friendly.total;
 
         for dst in Squares(mask) {
             encode_piece_move(
@@ -134,9 +130,7 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.queens) {
-        let attacks = RAYCASTS
-            .at(from)
-            .omnidirectional(friendly.total | enemy.total);
+        let attacks = queen_rays(from, friendly.total | enemy.total);
 
         let mask = attacks
             & !{

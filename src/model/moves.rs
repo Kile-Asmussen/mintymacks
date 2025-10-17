@@ -16,10 +16,10 @@ impl PseudoMove {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum SpecialMove {
+    Null,
     Promotion(ChessPiece),
     CastlingWestward,
     CastlingEastward,
-    Null,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]

@@ -5,7 +5,7 @@ use crate::{
         board::HalfBitBoard,
         jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
         one_bit,
-        opdif::{RAYCASTS, obstruction_difference},
+        opdif::{bishop_rays, obstruction_difference, queen_rays, rook_rays},
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST,
@@ -158,7 +158,7 @@ pub fn king_attacks(k: BoardMask) -> BoardMask {
 pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(r) {
-        res |= RAYCASTS.at(sq).othrogonal(total);
+        res |= rook_rays(sq, total);
     }
     res
 }
@@ -166,7 +166,7 @@ pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
 pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(b) {
-        res |= RAYCASTS.at(sq).diagonal(total);
+        res |= bishop_rays(sq, total);
     }
     res
 }
@@ -174,7 +174,7 @@ pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
 pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
     let mut res = BoardMask::MIN;
     for sq in Squares(q) {
-        res |= RAYCASTS.at(sq).omnidirectional(total);
+        res |= queen_rays(sq, total);
     }
     res
 }
@@ -224,7 +224,7 @@ pub fn count_bishop_attacker_materiel(
     res: &mut ArrayBoard<i16>,
 ) {
     for sq in Squares(p) {
-        res.add(RAYCASTS.at(sq).diagonal(total), scale * ChessPiece::BISHOP);
+        res.add(bishop_rays(sq, total), scale * ChessPiece::BISHOP);
     }
 }
 
@@ -235,7 +235,7 @@ pub fn count_bishop_attackers(
     res: &mut ArrayBoard<i8>,
 ) {
     for sq in Squares(p) {
-        res.add(RAYCASTS.at(sq).diagonal(total), amount);
+        res.add(bishop_rays(sq, total), amount);
     }
 }
 
@@ -246,13 +246,13 @@ pub fn count_rook_attacker_materiel(
     res: &mut ArrayBoard<i16>,
 ) {
     for sq in Squares(p) {
-        res.add(RAYCASTS.at(sq).othrogonal(total), scale * ChessPiece::ROOK);
+        res.add(rook_rays(sq, total), scale * ChessPiece::ROOK);
     }
 }
 
 pub fn count_rook_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
     for sq in Squares(p) {
-        res.add(RAYCASTS.at(sq).othrogonal(total), amount);
+        res.add(rook_rays(sq, total), amount);
     }
 }
 
@@ -263,16 +263,13 @@ pub fn count_queen_attacker_materiel(
     res: &mut ArrayBoard<i16>,
 ) {
     for sq in Squares(p) {
-        res.add(
-            RAYCASTS.at(sq).omnidirectional(total),
-            scale * ChessPiece::QUEEN,
-        );
+        res.add(queen_rays(sq, total), scale * ChessPiece::QUEEN);
     }
 }
 
 pub fn count_queen_attackers(p: BoardMask, total: BoardMask, amount: i8, res: &mut ArrayBoard<i8>) {
     for sq in Squares(p) {
-        res.add(RAYCASTS.at(sq).omnidirectional(total), amount);
+        res.add(queen_rays(sq, total), amount);
     }
 }
 

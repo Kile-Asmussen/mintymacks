@@ -383,5 +383,5 @@ async fn fuzz_against_stockfish() {
         .await;
 
     rng.next_u64();
-    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 0, 96, 3, 1).await;
+    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 0, 96, 1, 1).await;
 }
