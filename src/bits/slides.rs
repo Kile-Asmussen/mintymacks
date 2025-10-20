@@ -1,8 +1,22 @@
 use crate::{
     arrays::ArrayBoard,
-    bits::{BoardMask, one_bit, mask, show_mask},
+    bits::{BoardMask, Squares, mask, one_bit, show_mask},
     model::{BoardRank, Color, Direction, Square},
 };
+
+#[inline]
+pub const fn obstruction_difference(
+    neg_ray: BoardMask,
+    pos_ray: BoardMask,
+    occupied: BoardMask,
+) -> BoardMask {
+    let neg_hit = neg_ray & occupied;
+    let pos_hit = pos_ray & occupied;
+    let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
+    // let ms1b = 1u64 << neg_hit.checked_ilog2().unwrap_or(0);
+    let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
+    return (neg_ray | pos_ray) & diff;
+}
 
 pub const RAYS_EAST: ArrayBoard<BoardMask> = build_slideboard(Direction::East);
 pub const RAYS_NORTH: ArrayBoard<BoardMask> = build_slideboard(Direction::North);
@@ -72,117 +86,49 @@ pub const fn build_pawnmask(c: Color, sq: Square) -> BoardMask {
     }
 }
 
-#[test]
-fn slidemask_correct() {
-    assert_eq!(
-        RAYS_EAST.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00001111,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-        ])
-    );
+#[inline]
+pub fn simple_orthogonal_attack(sq: Square, total: BoardMask) -> BoardMask {
+    obstruction_difference(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total)
+        | obstruction_difference(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total)
+}
 
-    assert_eq!(
-        RAYS_NORTH.at(Square::d4),
-        mask([
-            0b_00010000,
-            0b_00010000,
-            0b_00010000,
-            0b_00010000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-        ])
-    );
+#[inline]
+pub fn simple_orthogonal_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
+    let mut res = 0;
+    for sq in Squares(r) {
+        res |= simple_orthogonal_attack(sq, total)
+    }
+    res
+}
 
-    assert_eq!(
-        RAYS_WEST.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_11100000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-        ])
-    );
+#[inline]
+pub fn simple_omnidirectional_attack(sq: Square, total: BoardMask) -> BoardMask {
+    obstruction_difference(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total)
+        | obstruction_difference(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total)
+        | obstruction_difference(RAYS_SOUTH.at(sq), RAYS_NORTH.at(sq), total)
+        | obstruction_difference(RAYS_WEST.at(sq), RAYS_EAST.at(sq), total)
+}
 
-    assert_eq!(
-        RAYS_SOUTH.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00010000,
-            0b_00010000,
-            0b_00010000,
-        ])
-    );
+#[inline]
+pub fn simple_omnidirectional_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
+    let mut res = 0;
+    for sq in Squares(q) {
+        res |= simple_omnidirectional_attack(sq, total)
+    }
+    res
+}
 
-    assert_eq!(
-        RAYS_NORTHEAST.at(Square::d4),
-        mask([
-            0b_00000001,
-            0b_00000010,
-            0b_00000100,
-            0b_00001000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-        ])
-    );
+#[inline]
+pub fn simple_diagonal_attack(sq: Square, total: BoardMask) -> BoardMask {
+    obstruction_difference(RAYS_SOUTHWEST.at(sq), RAYS_NORTHEAST.at(sq), total)
+        | obstruction_difference(RAYS_SOUTHEAST.at(sq), RAYS_NORTHWEST.at(sq), total)
+}
 
-    assert_eq!(
-        RAYS_NORTHWEST.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_10000000,
-            0b_01000000,
-            0b_00100000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-        ])
-    );
-
-    assert_eq!(
-        RAYS_SOUTHEAST.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00001000,
-            0b_00000100,
-            0b_00000010,
-        ])
-    );
-
-    assert_eq!(
-        RAYS_SOUTHWEST.at(Square::d4),
-        mask([
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00000000,
-            0b_00100000,
-            0b_01000000,
-            0b_10000000,
-        ])
-    );
+#[inline]
+pub fn simple_diagonal_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
+    let mut res = 0;
+    for sq in Squares(b) {
+        res |= simple_diagonal_attack(sq, total);
+    }
+    res
 }

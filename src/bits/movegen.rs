@@ -1,21 +1,20 @@
 use crate::{
     bits::{
-        self, BoardMask, Squares,
+        BoardMask, Squares,
         board::{BitBoard, HalfBitBoard},
-        jumps::{BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
-        mask, one_bit,
-        opdif::{bishop_rays, obstruction_difference, queen_rays, rook_rays},
-        show_mask,
+        jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        one_bit,
+        slides::obstruction_difference,
         slides::{
-            BLACK_PAWN_MOVES, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
-            RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, WHITE_PAWN_MOVES,
+            BLACK_PAWN_MOVES, WHITE_PAWN_MOVES, simple_diagonal_attack,
+            simple_omnidirectional_attack, simple_orthogonal_attack,
         },
     },
     model::{
-        BoardRank, ChessPiece, Color, ColoredChessPiece, Square,
-        castling::{self, CastlingDetail, CastlingDetails, CastlingMove, CastlingRights},
+        BoardRank, ChessPiece, Color, Square,
+        castling::CastlingDetail,
         metadata::Metadata,
-        moves::{self, ChessMove, PseudoMove, SpecialMove},
+        moves::{ChessMove, PseudoMove, SpecialMove},
     },
 };
 
@@ -76,13 +75,9 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.rooks) {
-        let attacks = rook_rays(from, friendly.total | enemy.total);
+        let attacks = simple_orthogonal_attack(from, friendly.total | enemy.total);
 
-        let mask = attacks
-            & !{
-                let this = &friendly;
-                this.total
-            };
+        let mask = attacks & !friendly.total;
 
         for dst in Squares(mask) {
             encode_piece_move(
@@ -105,7 +100,7 @@ pub fn bishop_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.bishops) {
-        let attacks = bishop_rays(from, friendly.total | enemy.total);
+        let attacks = simple_diagonal_attack(from, friendly.total | enemy.total);
 
         let mask = attacks & !friendly.total;
 
@@ -130,13 +125,9 @@ pub fn queen_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.queens) {
-        let attacks = queen_rays(from, friendly.total | enemy.total);
+        let attacks = simple_omnidirectional_attack(from, friendly.total | enemy.total);
 
-        let mask = attacks
-            & !{
-                let this = &friendly;
-                this.total
-            };
+        let mask = attacks & !friendly.total;
 
         for dst in Squares(mask) {
             encode_piece_move(
@@ -163,32 +154,15 @@ pub fn pawn_moves(
             Color::White => obstruction_difference(
                 BoardMask::MIN,
                 WHITE_PAWN_MOVES.at(from),
-                ({
-                    let this = &friendly;
-                    this.total
-                }) | {
-                    let this = &enemy;
-                    this.total
-                },
+                friendly.total | enemy.total,
             ),
             Color::Black => obstruction_difference(
-                WHITE_PAWN_MOVES.at(from.swap()).swap_bytes(),
+                BLACK_PAWN_MOVES.at(from),
                 BoardMask::MIN,
-                ({
-                    let this = &friendly;
-                    this.total
-                }) | {
-                    let this = &enemy;
-                    this.total
-                },
+                friendly.total | enemy.total,
             ),
-        } & !(({
-            let this = &friendly;
-            this.total
-        }) | {
-            let this = &enemy;
-            this.total
-        });
+        } & !friendly.total
+            & !enemy.total;
 
         for dst in Squares(mask) {
             let mv = from.to(dst);
@@ -209,10 +183,7 @@ pub fn pawn_captures(
         let mask = match metadata.to_move {
             Color::White => WHITE_PAWN_CAPTURE.at(from),
             Color::Black => WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes(),
-        } & (({
-            let this = &enemy;
-            this.total
-        }) | one_bit(metadata.en_passant));
+        } & (enemy.total | one_bit(metadata.en_passant));
 
         for dst in Squares(mask) {
             let mv = from.to(dst);
@@ -243,14 +214,7 @@ pub fn king_moves(
     let static_threats = enemy.attacks(metadata.to_move.opposite(), friendly.total);
 
     for from in Squares(friendly.kings) {
-        for dst in Squares(
-            KING_MOVES.at(from)
-                & !static_threats
-                & !{
-                    let this = &friendly;
-                    this.total
-                },
-        ) {
+        for dst in Squares(KING_MOVES.at(from) & !static_threats & !friendly.total) {
             encode_piece_move(
                 from.to(dst),
                 ChessPiece::King,

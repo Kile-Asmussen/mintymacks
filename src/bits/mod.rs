@@ -1,14 +1,15 @@
+pub mod attackers;
 pub mod attacks;
 pub mod board;
 pub mod fills;
 pub mod jumps;
-pub mod movecount;
 pub mod movegen;
 pub mod moving;
 pub mod opdif;
 pub mod slides;
 pub mod tests;
 pub mod victory;
+pub mod vision;
 
 use std::{num::NonZeroU64, u64};
 

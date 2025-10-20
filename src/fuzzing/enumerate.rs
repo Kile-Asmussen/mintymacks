@@ -1,21 +1,24 @@
 use std::{
-    collections::{BTreeMap, HashMap, btree_map},
+    collections::{BTreeMap, HashMap, btree_map, hash_map},
     time::{Duration, Instant},
 };
 
+use rand::Rng;
+
 use crate::{
     bits::board::BitBoard,
+    fuzzing::test::{pi_rng, pi_rng_skip},
     model::{
         ChessPiece,
         moves::{ChessMove, PseudoMove},
     },
     println_async,
     utils::tree_map,
-    zobrist::{ZobHash, ZobristBoard},
+    zobrist::{ZOBRIST, ZobHash, ZobristBoard, table::ZobHashing},
 };
 
 impl BitBoard {
-    pub fn enumerate(&self, depth: u64) -> EnumerationResult {
+    pub fn enumerate(&self, depth: usize) -> EnumerationResult {
         if depth == 0 {
             EnumerationResult {
                 time: Duration::ZERO,
@@ -28,12 +31,14 @@ impl BitBoard {
         }
     }
 
-    fn enumerate_mut(&mut self, depth: u64) -> EnumerationResult {
+    fn enumerate_mut(&mut self, depth: usize) -> EnumerationResult {
+        let mut depth_hashes = vec![0; depth as usize];
+        pi_rng_skip(500).fill(&mut depth_hashes[..]);
+
         let now = Instant::now();
         let mut moves = tree_map! {};
-        let mut zobrist = HashMap::with_capacity(10usize.pow(depth as u32));
-        let hasher = ZobristBoard::new();
-        let hash = hasher.hash(self);
+        let mut zobrist = HashMap::with_capacity_and_hasher(10usize.pow(depth as u32), ZobHashing);
+        let hash = ZOBRIST.hash(self);
 
         let mut startmvs = vec![];
         self.moves(&mut startmvs);
@@ -41,13 +46,13 @@ impl BitBoard {
         let mut buf = Vec::with_capacity(startmvs.len());
 
         for mv in startmvs {
-            let hash = hash ^ hasher.delta(mv, self.metadata.castling_details);
+            let hash = hash ^ ZOBRIST.delta(mv, self.metadata.castling_details);
             self.apply(mv);
             buf.clear();
             self.moves(&mut buf);
             moves.insert(
                 mv.simplify(),
-                self.enum_nodes(&buf, depth - 1, hash, &mut zobrist, &hasher),
+                self.enum_nodes(&buf, depth - 1, hash, &mut zobrist, &depth_hashes[..]),
             );
             self.unapply(mv);
         }
@@ -63,18 +68,18 @@ impl BitBoard {
     fn enum_nodes(
         &mut self,
         moves: &[ChessMove],
-        depth: u64,
+        depth: usize,
         hash: ZobHash,
-        zobrist: &mut HashMap<(ZobHash, u64), usize>,
-        hasher: &ZobristBoard,
+        zobrist: &mut HashMap<(ZobHash, ZobHash), usize, ZobHashing>,
+        depths: &[ZobHash],
     ) -> usize {
-        if let Some(n) = zobrist.get(&(hash, depth)) {
+        if let Some(n) = zobrist.get(&(hash, depths[depth])) {
             return *n;
         } else if depth == 0 {
             return 1;
         } else if depth == 1 {
             let n = moves.len();
-            zobrist.insert((hash, depth), n);
+            zobrist.insert((hash, depths[depth as usize]), n);
             return n;
         }
 
@@ -83,20 +88,20 @@ impl BitBoard {
 
         for mv in moves {
             let mv = *mv;
-            let hash = hash ^ hasher.delta(mv, self.metadata.castling_details);
+            let hash = hash ^ ZOBRIST.delta(mv, self.metadata.castling_details);
             let depth = depth - 1;
-            if let Some(n) = zobrist.get(&(hash, depth)) {
+            if let Some(n) = zobrist.get(&(hash, depths[depth])) {
                 res += n;
             } else {
                 self.apply(mv);
                 buf.clear();
                 self.moves(&mut buf);
-                res += self.enum_nodes(&buf, depth, hash, zobrist, hasher);
+                res += self.enum_nodes(&buf, depth, hash, zobrist, depths);
                 self.unapply(mv);
             }
         }
 
-        zobrist.insert((hash, depth), res);
+        zobrist.insert((hash, depths[depth]), res);
 
         return res;
     }
@@ -104,7 +109,7 @@ impl BitBoard {
 
 pub struct EnumerationResult {
     pub time: Duration,
-    pub depth: u64,
+    pub depth: usize,
     pub moves: BTreeMap<(PseudoMove, Option<ChessPiece>), usize>,
     pub transpos: (usize, usize),
 }
@@ -135,16 +140,4 @@ impl EnumerationResult {
             println_async!("{}: {}", k.0.longalg(k.1), v).await;
         }
     }
-}
-
-#[test]
-fn enumerate_3() {
-    let res = BitBoard::startpos().enumerate(3);
-
-    res.print();
-}
-
-#[test]
-fn enumerate_7() {
-    BitBoard::startpos().enumerate(7).print();
 }

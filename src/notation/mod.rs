@@ -9,10 +9,9 @@ pub mod uci;
 #[macro_export]
 macro_rules! regexp {
     ($pat:literal) => {{
-        lazy_static::lazy_static! {
-            static ref PATTERN: regex::Regex =
-                regex::Regex::new($pat).expect(concat!("invalid regex: `", $pat, "'"));
-        }
+        static PATTERN: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+            regex::Regex::new($pat).expect(concat!("invalid regex: `", $pat, "'"))
+        });
         &PATTERN
     }};
 }

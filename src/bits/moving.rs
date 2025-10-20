@@ -11,7 +11,7 @@ use crate::{
         metadata::{self, Metadata},
         moves::{ChessMove, PseudoMove, SpecialMove},
     },
-    zobrist::ZOBHASHER,
+    zobrist::ZOBRIST,
 };
 
 impl BitBoard {
@@ -116,7 +116,7 @@ impl Metadata {
         } else {
             self.halfmove_clock += 1;
         }
-        self.hash ^= ZOBHASHER.delta(mv, self.castling_details);
+        self.hash ^= ZOBRIST.delta(mv, self.castling_details);
     }
 
     #[inline]
@@ -128,6 +128,6 @@ impl Metadata {
             self.turn -= 1;
         }
         self.halfmove_clock = mv.hmc;
-        self.hash ^= ZOBHASHER.delta(mv, self.castling_details);
+        self.hash ^= ZOBRIST.delta(mv, self.castling_details);
     }
 }

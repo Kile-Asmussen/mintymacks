@@ -18,7 +18,7 @@ use crate::{
         },
     },
     profile::Profile,
-    zobrist::{ZOBHASHER, ZobHash},
+    zobrist::{ZOBRIST, ZobHash},
 };
 
 pub struct GameState {
@@ -127,7 +127,7 @@ impl GameState {
                         algebraic: pm.ambiguate(&self.board, &self.possible_moves),
                         precon: self.board.metadata.hash,
                         postcon: self.board.metadata.hash
-                            ^ ZOBHASHER.delta(pm, self.board.metadata.castling_details),
+                            ^ ZOBRIST.delta(pm, self.board.metadata.castling_details),
                     })
                 } else if let Ok(_) = res {
                     res = Err(2)
@@ -149,7 +149,7 @@ impl GameState {
                     algebraic: pm.ambiguate(&self.board, &self.possible_moves),
                     precon: self.board.metadata.hash,
                     postcon: self.board.metadata.hash
-                        ^ ZOBHASHER.delta(pm, self.board.metadata.castling_details),
+                        ^ ZOBRIST.delta(pm, self.board.metadata.castling_details),
                 });
             }
         }

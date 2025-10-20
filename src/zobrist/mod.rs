@@ -1,12 +1,13 @@
-use std::{arch::x86_64, array, fs::canonicalize, ops::BitXor};
+use std::{arch::x86_64, array, fs::canonicalize, ops::BitXor, sync::LazyLock};
 
 use rand::{Rng, SeedableRng};
 
 use crate::{
     arrays::ArrayBoard,
     bits::{
-        Squares, BoardMask, one_bit,
+        BoardMask, Squares,
         board::{BitBoard, HalfBitBoard},
+        one_bit,
     },
     fuzzing::test::pi_rng,
     model::{
@@ -17,9 +18,9 @@ use crate::{
     },
 };
 
-lazy_static::lazy_static! {
-    pub static ref ZOBHASHER: ZobristBoard = ZobristBoard::new();
-}
+pub mod table;
+
+pub static ZOBRIST: LazyLock<ZobristBoard> = LazyLock::new(|| ZobristBoard::new());
 
 pub type ZobHash = u64;
 

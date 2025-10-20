@@ -14,6 +14,7 @@
 #![feature(portable_simd)]
 #![feature(duration_millis_float)]
 #![feature(const_option_ops)]
+#![feature(hasher_prefixfree_extras)]
 
 use std::{
     alloc::System,
@@ -46,15 +47,6 @@ pub mod utils;
 pub mod zobrist;
 
 #[test]
-fn enumerate() {
-    let mut times = vec![];
-    for _ in 0..20 {
-        times.push(BitBoard::startpos().enumerate(6).time);
-        println!("Time: {:.2} ms", times.last().unwrap().as_millis_f64());
-    }
-
-    println!(
-        "Average: {:.2} ms",
-        times.iter().map(|d| d.as_millis_f64()).sum::<f64>() / times.len() as f64
-    );
+fn main_perft() {
+    BitBoard::startpos().enumerate(6).print();
 }

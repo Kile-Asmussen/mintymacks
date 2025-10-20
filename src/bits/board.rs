@@ -6,7 +6,7 @@ use crate::{
         castling::{self, CLASSIC_CASTLING, CastlingDetails, CastlingRights},
         metadata::Metadata,
     },
-    zobrist::{ZOBHASHER, ZobHash},
+    zobrist::{ZOBRIST, ZobHash},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -115,7 +115,7 @@ impl BitBoard {
                 hash: 0,
             },
         };
-        res.metadata.hash = ZOBHASHER.hash(&res);
+        res.metadata.hash = ZOBRIST.hash(&res);
         res
     }
 
@@ -150,7 +150,7 @@ impl BitBoard {
     }
 
     pub fn pure_position_hash(&self) -> ZobHash {
-        self.metadata.hash ^ ZOBHASHER.metadata.hash_color(self.metadata.to_move)
+        self.metadata.hash ^ ZOBRIST.metadata.hash_color(self.metadata.to_move)
     }
 }
 

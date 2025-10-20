@@ -34,7 +34,7 @@ pub async fn stockfish_perft(
     engine: &mut EngineHandle,
     startpos: Option<&BitBoard>,
     moves: &[ChessMove],
-    depth: u64,
+    depth: usize,
 ) -> tokio::io::Result<BTreeMap<(PseudoMove, Option<ChessPiece>), usize>> {
     let mut res = tree_map! {};
 
@@ -51,7 +51,7 @@ pub async fn stockfish_perft(
         .interleave(
             &mut deque![
                 UciGui::Position(startpos, pmoves),
-                UciGui::Go(GoCommand::Perft(Some(depth)))
+                UciGui::Go(GoCommand::Perft(Some(depth as u64)))
             ],
             &mut output,
             Duration::from_millis(5) * 2u32.pow(depth as u32),

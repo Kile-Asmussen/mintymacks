@@ -33,11 +33,19 @@ use crate::{
         uci::{engine::UciEngine, gui::UciGui},
     },
     println_async,
-    zobrist::{self, ZOBHASHER, ZobHash, ZobristBoard},
+    zobrist::{self, ZOBRIST, ZobHash, ZobristBoard},
 };
 
 pub fn pi_rng() -> SmallRng {
     SmallRng::from_seed(*b"3.141592653589793238462643383279")
+}
+
+pub fn pi_rng_skip(n: usize) -> SmallRng {
+    let mut rng = pi_rng();
+    for _ in 0..n {
+        rng.next_u64();
+    }
+    rng
 }
 
 #[test]
@@ -127,7 +135,7 @@ fn zobrist_hashing_game(
     let mut board = BitBoard::startpos();
 
     for _ in 0..ply {
-        let hash = ZOBHASHER.hash(&board);
+        let hash = ZOBRIST.hash(&board);
 
         if let Some(b) = positions.get(&hash)
             && board.white != b.white
@@ -182,7 +190,7 @@ fn zobrist_delta_game(rng: &mut SmallRng, ply: usize) {
             let mv = *mv;
             moves.push(mv);
             board.apply(mv);
-            let reference = ZOBHASHER.hash(&board);
+            let reference = ZOBRIST.hash(&board);
 
             if board.metadata.hash != reference {
                 println!(
@@ -213,7 +221,7 @@ async fn stockfish_comparison_game(
     rng: &mut SmallRng,
     ply: usize,
     skip_over: usize,
-    depth: u64,
+    depth: usize,
     startpos: Option<&BitBoard>,
     start: &[(PseudoMove, Option<ChessPiece>)],
     skip_this: bool,
@@ -339,7 +347,7 @@ pub async fn fuzz_stockfish_comparison(
     n: usize,
     skip_to: usize,
     ply: usize,
-    depth: u64,
+    depth: usize,
     step: usize,
 ) {
     use crate::println_async;

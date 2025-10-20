@@ -12,20 +12,6 @@ use crate::{
 };
 
 #[inline]
-pub const fn obstruction_difference(
-    neg_ray: BoardMask,
-    pos_ray: BoardMask,
-    occupied: BoardMask,
-) -> BoardMask {
-    let neg_hit = neg_ray & occupied;
-    let pos_hit = pos_ray & occupied;
-    let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
-    // let ms1b = 1u64 << neg_hit.checked_ilog2().unwrap_or(0);
-    let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
-    return (neg_ray | pos_ray) & diff;
-}
-
-#[inline]
 pub const fn difference_obstruction(
     occupied: BoardMask,
     neg_occ: BoardMask,
@@ -90,6 +76,7 @@ pub const fn anti_ray(sq: Square) -> BoardMask {
     (diag << (8 + (sq.ix() & 0x38) + ((sq.ix() & 0x7) << 3)) >> 64) as u64
 }
 
+#[inline]
 pub const fn split(sq: Square, mask: BoardMask) -> (BoardMask, BoardMask) {
     let (lo, hi) = (!0 >> (63 - sq.ix()) & !sq.bit(), !0 << sq.ix() & !sq.bit());
     (lo & mask, hi & mask)
