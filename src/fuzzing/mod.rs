@@ -48,13 +48,20 @@ pub async fn stockfish_perft(
 
     let mut output = vec![];
     engine
-        .interleave(
+        .interleave_until(
             &mut deque![
                 UciGui::Position(startpos, pmoves),
                 UciGui::Go(GoCommand::Perft(Some(depth as u64)))
             ],
             &mut output,
-            Duration::from_millis(5) * 2u32.pow(depth as u32),
+            |c| match c {
+                UciEngine::Info(v) => match &v[..] {
+                    [InfoString::String(s)] => s.starts_with("Nodes searched:"),
+                    _ => false,
+                },
+                _ => false,
+            },
+            Duration::from_millis(1000),
         )
         .await?;
 

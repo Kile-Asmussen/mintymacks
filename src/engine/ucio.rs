@@ -77,9 +77,7 @@ impl GoStopInfo {
                     outbox.pop_front();
                 }
                 uci = ucin.receive() => {
-                    if let Ok(uci) = uci? {
-                        self.react(&uci);
-                    }
+                    self.react(&(uci?));
                 }
                 uci = self.receiver.recv() => {
                     if let Some(uci) = uci {
@@ -104,10 +102,10 @@ impl Ucin {
         }
     }
 
-    pub async fn receive(&mut self) -> tokio::io::Result<Result<UciGui, String>> {
+    pub async fn receive(&mut self) -> tokio::io::Result<UciGui> {
         let mut buf = String::new();
         self.reader.read_line(&mut buf).await?;
-        Ok(UciGui::from_str(buf))
+        Ok(UciGui::from_string(buf))
     }
 }
 

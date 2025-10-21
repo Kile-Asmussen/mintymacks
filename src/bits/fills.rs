@@ -7,12 +7,14 @@ use rand::RngCore;
 
 use crate::{
     bits::{
-        Bits, Squares,
-        attacks::{bishop_attacks, king_attacks, knight_attacks, queen_attacks, rook_attacks},
+        Bits, BoardMask, Squares,
+        attacks::{
+            bishop_attacks, king_attacks, knight_attacks, pawn_attacks, queen_attacks, rook_attacks,
+        },
         mask,
         movegen::pawn_moves,
         show_mask,
-        slides::WHITE_PAWN_MOVES,
+        slides::{BLACK_PAWN_MOVES, WHITE_PAWN_MOVES, obstruction_difference},
     },
     fuzzing::test::pi_rng,
     model::{BoardFile, BoardRank, Color, Direction, Square},
@@ -26,13 +28,11 @@ pub fn rook_fill(mask: u64, empty: u64) -> u64 {
 
     const SHIFT: [u64; 2] = [Direction::North as u64, Direction::East as u64];
 
-    const MASK_UPPER: [u64; 2] = [!0, !BoardFile::A.mask()];
-
-    const MASK_LOWER: [u64; 2] = [!0, !BoardFile::H.mask()];
-
     #[inline]
     fn rook_upper(mask: u64, empty: u64) -> u64 {
-        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK_UPPER);
+        const MASK: [u64; 2] = [!0, !BoardFile::A.mask()];
+
+        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK);
         let mut prop = Du64::from_array([mask; 2]);
         let mut fill = Du64::from_array([mask; 2]);
 
@@ -43,12 +43,14 @@ pub fn rook_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop << Du64::from_array(SHIFT)) & empty;
 
-        (fill << Du64::from_array(SHIFT) & Du64::from_array(MASK_UPPER)).reduce_or()
+        (fill << Du64::from_array(SHIFT) & Du64::from_array(MASK)).reduce_or()
     }
 
     #[inline]
     fn rook_lower(mask: u64, empty: u64) -> u64 {
-        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK_LOWER);
+        const MASK: [u64; 2] = [!0, !BoardFile::H.mask()];
+
+        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK);
         let mut prop = Du64::from_array([mask; 2]);
         let mut fill = Du64::from_array([mask; 2]);
 
@@ -59,7 +61,7 @@ pub fn rook_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop >> Du64::from_array(SHIFT)) & empty;
 
-        (fill >> Du64::from_array(SHIFT) & Du64::from_array(MASK_LOWER)).reduce_or()
+        (fill >> Du64::from_array(SHIFT) & Du64::from_array(MASK)).reduce_or()
     }
 }
 
@@ -68,13 +70,11 @@ pub fn bishop_fill(mask: u64, empty: u64) -> u64 {
 
     const SHIFT: [u64; 2] = [Direction::NorthWest as u64, Direction::NorthEast as u64];
 
-    const MASK_UPPER: [u64; 2] = [!BoardFile::H.mask(), !BoardFile::A.mask()];
-
-    const MASK_LOWER: [u64; 2] = [!BoardFile::A.mask(), !BoardFile::H.mask()];
-
     #[inline]
     fn bishop_upper(mask: u64, empty: u64) -> u64 {
-        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK_UPPER);
+        const MASK: [u64; 2] = [!BoardFile::H.mask(), !BoardFile::A.mask()];
+
+        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK);
         let mut prop = Du64::from_array([mask; 2]);
         let mut fill = Du64::from_array([mask; 2]);
 
@@ -85,12 +85,13 @@ pub fn bishop_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop << Du64::from_array(SHIFT)) & empty;
 
-        (fill << Du64::from_array(SHIFT) & Du64::from_array(MASK_UPPER)).reduce_or()
+        (fill << Du64::from_array(SHIFT) & Du64::from_array(MASK)).reduce_or()
     }
 
     #[inline]
     fn bishop_lower(mask: u64, empty: u64) -> u64 {
-        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK_LOWER);
+        const MASK: [u64; 2] = [!BoardFile::A.mask(), !BoardFile::H.mask()];
+        let empty = Du64::from_array([empty; 2]) & Du64::from_array(MASK);
         let mut prop = Du64::from_array([mask; 2]);
         let mut fill = Du64::from_array([mask; 2]);
 
@@ -101,10 +102,11 @@ pub fn bishop_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop >> Du64::from_array(SHIFT)) & empty;
 
-        (fill >> Du64::from_array(SHIFT) & Du64::from_array(MASK_LOWER)).reduce_or()
+        (fill >> Du64::from_array(SHIFT) & Du64::from_array(MASK)).reduce_or()
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 pub fn queen_fill(mask: u64, empty: u64) -> u64 {
     return queen_upper(mask, empty) | queen_lower(mask, empty);
 
@@ -115,15 +117,11 @@ pub fn queen_fill(mask: u64, empty: u64) -> u64 {
         Direction::East as u64,
     ];
 
-    const MASK_UPPER: [u64; 4] =
-        [!BoardFile::H.mask(), !0, !BoardFile::A.mask(), !BoardFile::A.mask()];
-
-    const MASK_LOWER: [u64; 4] =
-        [!BoardFile::A.mask(), !0, !BoardFile::H.mask(), !BoardFile::H.mask()];
-
     #[inline]
     fn queen_upper(mask: u64, empty: u64) -> u64 {
-        let empty = Qu64::from_array([empty; 4]) & Qu64::from_array(MASK_UPPER);
+        const MASK: [u64; 4] =
+            [!BoardFile::H.mask(), !0, !BoardFile::A.mask(), !BoardFile::A.mask()];
+        let empty = Qu64::from_array([empty; 4]) & Qu64::from_array(MASK);
         let mut prop = Qu64::from_array([mask; 4]);
         let mut fill = Qu64::from_array([mask; 4]);
 
@@ -134,12 +132,14 @@ pub fn queen_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop << Qu64::from_array(SHIFT)) & empty;
 
-        (fill << Qu64::from_array(SHIFT) & Qu64::from_array(MASK_UPPER)).reduce_or()
+        (fill << Qu64::from_array(SHIFT) & Qu64::from_array(MASK)).reduce_or()
     }
 
     #[inline]
     fn queen_lower(mask: u64, empty: u64) -> u64 {
-        let empty = Qu64::from_array([empty; 4]) & Qu64::from_array(MASK_LOWER);
+        const MASK: [u64; 4] =
+            [!BoardFile::A.mask(), !0, !BoardFile::H.mask(), !BoardFile::H.mask()];
+        let empty = Qu64::from_array([empty; 4]) & Qu64::from_array(MASK);
         let mut prop = Qu64::from_array([mask; 4]);
         let mut fill = Qu64::from_array([mask; 4]);
 
@@ -150,7 +150,7 @@ pub fn queen_fill(mask: u64, empty: u64) -> u64 {
 
         fill |= (prop >> Qu64::from_array(SHIFT)) & empty;
 
-        (fill >> Qu64::from_array(SHIFT) & Qu64::from_array(MASK_LOWER)).reduce_or()
+        (fill >> Qu64::from_array(SHIFT) & Qu64::from_array(MASK)).reduce_or()
     }
 }
 
@@ -192,76 +192,71 @@ pub fn knight_fill(mask: u64) -> u64 {
         (Direction::West as i8 + Direction::NorthWest as i8) as u64,
     ];
 
-    const MASK_UPPER: [u64; 4] = [
-        !BoardFile::H.mask(),
-        !BoardFile::A.mask(),
-        !BoardFile::G.mask() & !BoardFile::H.mask(),
-        !BoardFile::A.mask() & !BoardFile::B.mask(),
-    ];
-
-    const MASK_LOWER: [u64; 4] = [
-        !BoardFile::A.mask(),
-        !BoardFile::H.mask(),
-        !BoardFile::A.mask() & !BoardFile::B.mask(),
-        !BoardFile::G.mask() & !BoardFile::H.mask(),
-    ];
-
     #[inline]
     pub fn knight_fill_upper(mask: u64) -> u64 {
-        ((Qu64::from_array([mask; 4]) & Qu64::from_array(MASK_UPPER)) << Qu64::from_array(SHIFT))
+        const MASK: [u64; 4] = [
+            !BoardFile::H.mask(),
+            !BoardFile::A.mask(),
+            !BoardFile::G.mask() & !BoardFile::H.mask(),
+            !BoardFile::A.mask() & !BoardFile::B.mask(),
+        ];
+
+        ((Qu64::from_array([mask; 4]) & Qu64::from_array(MASK)) << Qu64::from_array(SHIFT))
             .reduce_or()
     }
 
     #[inline]
     pub fn knight_fill_lower(mask: u64) -> u64 {
-        ((Qu64::from_array([mask; 4]) & Qu64::from_array(MASK_LOWER)) >> Qu64::from_array(SHIFT))
+        const MASK: [u64; 4] = [
+            !BoardFile::A.mask(),
+            !BoardFile::H.mask(),
+            !BoardFile::A.mask() & !BoardFile::B.mask(),
+            !BoardFile::G.mask() & !BoardFile::H.mask(),
+        ];
+
+        ((Qu64::from_array([mask; 4]) & Qu64::from_array(MASK)) >> Qu64::from_array(SHIFT))
             .reduce_or()
     }
 }
 
+#[inline]
 pub fn white_pawn_move_fill(mask: u64, empty: u64) -> u64 {
-    pawn_move_fill(Direction::North, BoardRank::_2, mask, empty)
+    let start = mask & BoardRank::_2.mask();
+    (mask << 8 & empty) | ((start << 8 & empty) << 8 & empty)
 }
 
+#[inline]
 pub fn black_pawn_move_fill(mask: u64, empty: u64) -> u64 {
-    pawn_move_fill(Direction::South, BoardRank::_7, mask, empty)
+    let start = mask & BoardRank::_7.mask();
+    mask >> 8 & empty | (start >> 8 & empty) >> 8 & empty
 }
 
 #[inline]
-pub const fn pawn_move_fill(dir: Direction, rank: BoardRank, mask: u64, empty: u64) -> u64 {
-    dir.shift(mask & !rank.mask()) & empty
-        | dir.shift(dir.shift(mask & rank.mask()) & empty) & empty
-}
-
 pub fn white_pawn_attack_fill(mask: u64) -> u64 {
-    pawn_attack_fill(Direction::NorthEast, Direction::NorthWest, mask)
-}
-
-pub fn black_pawn_attack_fill(mask: u64, empty: u64) -> u64 {
-    pawn_attack_fill(Direction::SouthEast, Direction::SouthWest, mask)
+    mask << 9 & !BoardFile::A.mask() | mask << 7 & !BoardFile::H.mask()
 }
 
 #[inline]
-pub const fn pawn_attack_fill(dir1: Direction, dir2: Direction, mask: u64) -> u64 {
-    dir1.shift(mask) & dir2.shift(mask)
+pub fn black_pawn_attack_fill(mask: u64) -> u64 {
+    mask >> 9 & !BoardFile::H.mask() | mask >> 7 & !BoardFile::A.mask()
 }
 
 #[test]
-#[rustfmt::skip]
 fn fill_test() {
     let mut rng = pi_rng();
 
-    for _ in 0 .. 100 {
+    for _ in 0..100 {
         let total = rng.next_u64() & rng.next_u64();
         for sq1 in Squares(u64::MAX) {
             for sq2 in Squares(u64::MAX) {
                 let pieces = sq1.bit() | sq2.bit();
                 let total = total | pieces;
+
                 assert_eq!(queen_fill(pieces, !total), queen_attacks(pieces, total));
                 assert_eq!(rook_fill(pieces, !total), rook_attacks(pieces, total));
                 assert_eq!(bishop_fill(pieces, !total), bishop_attacks(pieces, total));
                 assert_eq!(knight_fill(pieces), knight_attacks(pieces));
-                assert_eq!(king_fill(pieces), king_attacks(pieces), "{}", show_mask(pieces));
+                assert_eq!(king_fill(pieces), king_attacks(pieces));
             }
         }
     }

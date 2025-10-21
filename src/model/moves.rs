@@ -34,16 +34,6 @@ pub struct ChessMove {
 }
 
 impl ChessMove {
-    pub const NULL: ChessMove = ChessMove {
-        cpc: ColoredChessPiece::WhiteKing.with_cap(Some(ChessPiece::King)),
-        pmv: PseudoMove::NULL,
-        cap: Some(Square::a1),
-        spc: Some(SpecialMove::Null),
-        cr: CastlingRights::nil(),
-        epc: Some(Square::a1),
-        hmc: 255,
-    };
-
     pub const fn ep_opening(self) -> Option<Square> {
         if self.cpc.color_piece() as i8 == ColoredChessPiece::WhitePawn as i8 {
             if (self.pmv.to.ix() - self.pmv.from.ix()).abs() == 16 {

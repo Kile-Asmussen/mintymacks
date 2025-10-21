@@ -28,6 +28,7 @@ pub enum UciGui {
     Quit(),
     Register(Registration),
     Stop(),
+    Custom(Vec<String>),
 }
 
 impl UciGui {
@@ -37,12 +38,12 @@ impl UciGui {
         res.join(" ")
     }
 
-    pub fn from_str(s: String) -> Result<Self, String> {
+    pub fn from_string(s: String) -> Self {
         let input = s.split_whitespace().collect::<Vec<_>>();
         if let Some((res, _)) = parse_uci(&input[..]) {
-            Ok(res)
+            res
         } else {
-            return Err(s);
+            Self::Custom(input.into_iter().map(|s| s.to_string()).collect())
         }
     }
 }
@@ -66,6 +67,7 @@ impl Uci for UciGui {
             Self::Quit() => print_uci!(output, "quit"),
             Self::Register(registration) => print_uci!(output, "register", registration),
             Self::Stop() => print_uci!(output, "stop"),
+            Self::Custom(items) => print_uci!(output, &items[..]),
         }
     }
 

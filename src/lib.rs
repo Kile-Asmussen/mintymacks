@@ -31,6 +31,7 @@ use crate::{
     },
     fuzzing::stockfish_perft,
     model::{Square, castling::CastlingRights, moves::ChessMove},
+    notation::fen::parse_fen,
 };
 
 pub mod arrays;
@@ -48,5 +49,5 @@ pub mod zobrist;
 
 #[test]
 fn main_perft() {
-    BitBoard::startpos().enumerate(6).print();
+    BitBoard::startpos().enumerate(7).print();
 }

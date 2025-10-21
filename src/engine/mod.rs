@@ -294,8 +294,13 @@ impl<'a> EngineEgress<'a> {
 impl<'a> EngineIngress<'a> {
     #[must_use]
     pub async fn receive(&mut self) -> tokio::io::Result<UciEngine> {
-        let mut buf = String::new();
-        self.0.read_line(&mut buf).await?;
-        Ok(UciEngine::from_string(buf))
+        loop {
+            let mut buf = String::new();
+            self.0.read_line(&mut buf).await?;
+            if buf.trim().is_empty() {
+                continue;
+            }
+            return Ok(UciEngine::from_string(buf));
+        }
     }
 }

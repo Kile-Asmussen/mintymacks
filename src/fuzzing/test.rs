@@ -220,11 +220,9 @@ async fn stockfish_comparison_game(
     engine: &mut EngineHandle,
     rng: &mut SmallRng,
     ply: usize,
-    skip_over: usize,
     depth: usize,
     startpos: Option<&BitBoard>,
     start: &[(PseudoMove, Option<ChessPiece>)],
-    skip_this: bool,
 ) {
     use crate::println_async;
 
@@ -244,19 +242,16 @@ async fn stockfish_comparison_game(
     let mut problems = vec![];
 
     println_async!("Playing {} ply: ", ply + 1).await;
-    if skip_this {
-        println_async!("(skipping stockfish eval)").await;
-    }
 
     'ply: loop {
-        let mut mint = board.enumerate(depth).moves;
-        let stock = if skip_this {
-            mint.clone()
-        } else {
-            stockfish_perft(engine, startpos, &moves, depth)
-                .await
-                .expect("Unable to get stockfish perft!")
-        };
+        let mint = tokio::task::spawn_blocking({
+            let b = board.clone();
+            move || b.enumerate(depth).moves
+        });
+        let stock = stockfish_perft(engine, startpos, &moves, depth)
+            .await
+            .expect("Unable to get stockfish perft!");
+        let mut mint = mint.await.expect("Unable to get minty perft!");
 
         for (stock_move, stock_num) in stock {
             if let Some((mint_move, mint_num)) = mint.remove_entry(&stock_move) {
@@ -288,29 +283,27 @@ async fn stockfish_comparison_game(
             break;
         }
 
-        for _ in 0..=skip_over {
-            buf.clear();
-            board.moves(&mut buf);
+        buf.clear();
+        board.moves(&mut buf);
 
-            if let Some(mv) = buf.choose(rng) {
-                use crate::print_async;
+        if let Some(mv) = buf.choose(rng) {
+            use crate::print_async;
 
-                if moves.len() % 8 == 0 {
-                    if moves.len() != 0 {
-                        use crate::println_async;
-                        println_async!().await;
-                    }
-                    print_async!("{:03}> ", moves.len()).await;
+            if moves.len() % 8 == 0 {
+                if moves.len() != 0 {
+                    use crate::println_async;
+                    println_async!().await;
                 }
-                moves.push(*mv);
-                board.apply(*mv);
-                print_async!("{} ", mv.longalg()).await;
-            } else {
-                break 'ply;
+                print_async!("{:03}> ", moves.len()).await;
             }
+            moves.push(*mv);
+            board.apply(*mv);
+            print_async!("{} ", mv.longalg()).await;
+        } else {
+            break 'ply;
         }
 
-        if moves.len() > ply + skip_over {
+        if moves.len() > ply {
             break 'ply;
         }
     }
@@ -345,10 +338,8 @@ pub async fn fuzz_stockfish_comparison(
     engine: &mut EngineHandle,
     rng: &mut SmallRng,
     n: usize,
-    skip_to: usize,
     ply: usize,
     depth: usize,
-    step: usize,
 ) {
     use crate::println_async;
 
@@ -358,17 +349,7 @@ pub async fn fuzz_stockfish_comparison(
         use crate::println_async;
 
         println_async!("\n### Game {i} ###").await;
-        stockfish_comparison_game(
-            engine,
-            rng,
-            ply - 1,
-            step - 1,
-            depth,
-            None,
-            &[],
-            i < skip_to,
-        )
-        .await;
+        stockfish_comparison_game(engine, rng, ply - 1, depth, None, &[]).await;
     }
 
     println_async!("\n !!! Successfully played {n} random games in accordance with stockfish !!!")
@@ -391,5 +372,5 @@ async fn fuzz_against_stockfish() {
         .await;
 
     rng.next_u64();
-    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 0, 96, 1, 1).await;
+    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 96, 4).await;
 }

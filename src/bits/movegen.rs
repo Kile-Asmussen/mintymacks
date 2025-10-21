@@ -1,13 +1,17 @@
 use crate::{
     bits::{
         BoardMask, Squares,
+        attacks::superpiece_attacks,
         board::{BitBoard, HalfBitBoard},
-        jumps::{KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        fills::{
+            black_pawn_attack_fill, black_pawn_move_fill, white_pawn_attack_fill,
+            white_pawn_move_fill,
+        },
+        jumps::{KING_MOVES, KNIGHT_MOVES},
         one_bit,
-        slides::obstruction_difference,
         slides::{
-            BLACK_PAWN_MOVES, WHITE_PAWN_MOVES, simple_diagonal_attack,
-            simple_omnidirectional_attack, simple_orthogonal_attack,
+            obstruction_difference, simple_diagonal_attack, simple_omnidirectional_attack,
+            simple_orthogonal_attack,
         },
     },
     model::{
@@ -149,20 +153,15 @@ pub fn pawn_moves(
     metadata: Metadata,
     res: &mut Vec<ChessMove>,
 ) {
+    let move_fill = match metadata.to_move {
+        Color::White => white_pawn_move_fill,
+        Color::Black => black_pawn_move_fill,
+    };
+
+    let empty = !(friendly.total | enemy.total);
+
     for from in Squares(friendly.pawns) {
-        let mask = match metadata.to_move {
-            Color::White => obstruction_difference(
-                BoardMask::MIN,
-                WHITE_PAWN_MOVES.at(from),
-                friendly.total | enemy.total,
-            ),
-            Color::Black => obstruction_difference(
-                BLACK_PAWN_MOVES.at(from),
-                BoardMask::MIN,
-                friendly.total | enemy.total,
-            ),
-        } & !friendly.total
-            & !enemy.total;
+        let mask = move_fill(from.bit(), empty);
 
         for dst in Squares(mask) {
             let mv = from.to(dst);
@@ -179,11 +178,13 @@ pub fn pawn_captures(
     metadata: Metadata,
     res: &mut Vec<ChessMove>,
 ) {
+    let attack_fill = match metadata.to_move {
+        Color::White => white_pawn_attack_fill,
+        Color::Black => black_pawn_attack_fill,
+    };
+
     for from in Squares(friendly.pawns) {
-        let mask = match metadata.to_move {
-            Color::White => WHITE_PAWN_CAPTURE.at(from),
-            Color::Black => WHITE_PAWN_CAPTURE.at(from.swap()).swap_bytes(),
-        } & (enemy.total | one_bit(metadata.en_passant));
+        let mask = attack_fill(from.bit()) & (enemy.total | one_bit(metadata.en_passant));
 
         for dst in Squares(mask) {
             let mv = from.to(dst);
@@ -311,21 +312,22 @@ pub fn encode_piece_move(
         (None, None)
     };
 
-    let hypothetical_threat = enemy.attacks_after_enemy_move(
-        metadata.to_move.opposite(),
-        friendly.total,
-        mv,
-        cap_sq,
-        cap_p,
-    );
-
     let kings = if piece == ChessPiece::King {
         friendly.kings ^ mv.bits()
     } else {
         friendly.kings
     };
 
-    if (hypothetical_threat & kings) == 0 {
+    let hypothetical_check = enemy.checks_after_enemy_move(
+        metadata.to_move.opposite(),
+        friendly.total,
+        mv,
+        cap_sq,
+        cap_p,
+        kings,
+    );
+
+    if !hypothetical_check {
         res.push(ChessMove {
             cpc: metadata.to_move.piece(piece).with_cap(cap_p),
             pmv: mv,
@@ -353,15 +355,16 @@ pub fn encode_pawn_move(
         None
     };
 
-    let hypothetical_threat = enemy.attacks_after_enemy_move(
+    let hypothetical_check = enemy.checks_after_enemy_move(
         metadata.to_move.opposite(),
         friendly.total,
         mv,
         cap_sq,
         cap_p,
+        friendly.kings,
     );
 
-    if (hypothetical_threat & friendly.kings) == 0 {
+    if !hypothetical_check {
         let promotions = if let BoardRank::_1 | BoardRank::_8 = mv.to.file_rank().1 {
             &[ChessPiece::Knight, ChessPiece::Bishop, ChessPiece::Rook, ChessPiece::Queen]
                 .map(|p| Some(SpecialMove::Promotion(p)))[..]

@@ -4,7 +4,8 @@ use crate::{
         self, BoardMask, Squares,
         attacks::{bishop_attacks, queen_attacks, rook_attacks},
         board::HalfBitBoard,
-        jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        fills::{black_pawn_attack_fill, white_pawn_attack_fill},
+        jumps::{self, KING_MOVES, KNIGHT_MOVES},
         one_bit,
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
@@ -74,10 +75,9 @@ pub fn count_pawn_attacker_materiel(p: BoardMask, c: Color, scale: i16, res: &mu
     for sq in Squares(p) {
         res.add(
             match c {
-                Color::White => WHITE_PAWN_CAPTURE,
-                Color::Black => BLACK_PAWN_CAPTURE,
-            }
-            .at(sq),
+                Color::White => white_pawn_attack_fill(sq.bit()),
+                Color::Black => black_pawn_attack_fill(sq.bit()),
+            },
             scale * ChessPiece::PAWN,
         );
     }
@@ -87,10 +87,9 @@ pub fn count_pawn_attackers(p: BoardMask, c: Color, amount: i8, res: &mut ArrayB
     for sq in Squares(p) {
         res.add(
             match c {
-                Color::White => WHITE_PAWN_CAPTURE,
-                Color::Black => BLACK_PAWN_CAPTURE,
-            }
-            .at(sq),
+                Color::White => white_pawn_attack_fill(sq.bit()),
+                Color::Black => black_pawn_attack_fill(sq.bit()),
+            },
             amount,
         );
     }

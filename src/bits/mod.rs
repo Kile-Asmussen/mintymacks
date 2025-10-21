@@ -9,7 +9,6 @@ pub mod opdif;
 pub mod slides;
 pub mod tests;
 pub mod victory;
-pub mod vision;
 
 use std::{num::NonZeroU64, u64};
 
@@ -124,27 +123,6 @@ pub fn show_mask(m: BoardMask) -> String {
     0b_{:08b}, // 1
     // abcdefgh
 ])", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7]}
-}
-
-impl Direction {
-    #[inline]
-    pub const fn edge(self) -> BoardMask {
-        match (self as i8) & 0x7 {
-            0 => !0,
-            1 => !BoardFile::A.mask(),
-            7 => !BoardFile::H.mask(),
-            _ => unreachable!(),
-        }
-    }
-
-    #[inline]
-    pub const fn shift(self, mask: u64) -> u64 {
-        if self as i8 > 0 {
-            mask << self as i8 & self.edge()
-        } else {
-            mask >> -(self as i8) & self.edge()
-        }
-    }
 }
 
 impl BoardFile {

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::{
-    bits::{Squares, BoardMask},
+    bits::{BoardMask, Squares},
     fuzzing::test::pi_rng,
     model::{BoardFile, BoardRank, ChessPiece, Square},
     notation::uci::{
@@ -28,8 +28,8 @@ fn roundtrip_render_parse_uci_engine(val: UciEngine) {
 
 fn roundtrip_render_parse_uci_gui(val: UciGui) {
     assert_eq!(
-        UciGui::from_str(val.to_string()),
-        Ok(val.clone()),
+        UciGui::from_string(val.to_string()),
+        val.clone(),
         "{}",
         val.to_string()
     )
@@ -440,4 +440,12 @@ impl Examples for TimeControl {
             },
         ]
     }
+}
+
+#[test]
+fn fun_joke() {
+    let parse = UciGui::from_string(
+        "go find the sea mine at a depth of 16 km below the surface".to_string(),
+    );
+    assert_eq!(parse, UciGui::Go(GoCommand::Depth(16)));
 }

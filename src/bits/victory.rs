@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use crate::{
-    bits::board::{BitBoard, HalfBitBoard},
+    bits::{
+        BoardMask,
+        board::{BitBoard, HalfBitBoard},
+    },
     model::{ChessPiece, Color, DrawReason, Victory, WinReason, moves::ChessMove},
     zobrist::ZobHash,
 };

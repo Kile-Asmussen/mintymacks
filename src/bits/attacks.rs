@@ -3,13 +3,15 @@ use crate::{
     bits::{
         self, BoardMask, Squares,
         board::HalfBitBoard,
-        jumps::{self, BLACK_PAWN_CAPTURE, KING_MOVES, KNIGHT_MOVES, WHITE_PAWN_CAPTURE},
+        fills::{black_pawn_attack_fill, white_pawn_attack_fill},
+        jumps::{self, KING_MOVES, KNIGHT_MOVES},
         one_bit,
         opdif::{bishop_rays, queen_rays, rook_rays},
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, simple_diagonal_attacks,
-            simple_omnidirectional_attacks, simple_orthogonal_attacks,
+            simple_omnidirectional_attack, simple_omnidirectional_attacks,
+            simple_orthogonal_attacks,
         },
         two_bits,
     },
@@ -62,6 +64,47 @@ impl HalfBitBoard {
         }
     }
 
+    pub fn checks_after_enemy_move(
+        &self,
+        c: Color,
+        enemy: BoardMask,
+        mv: PseudoMove,
+        cap_sq: Option<Square>,
+        cap_p: Option<ChessPiece>,
+        king: BoardMask,
+    ) -> bool {
+        use ChessPiece::*;
+
+        let enemy = enemy ^ mv.bits();
+        let friendly = self.total ^ one_bit(cap_sq);
+        let total = friendly | enemy;
+
+        let superking = superpiece_attacks(king, total);
+
+        let attacks = pawn_attacks(superking & self.pawns ^ is_cap(Pawn, cap_p, cap_sq), c)
+            | knight_attacks(superking & self.knights ^ is_cap(Knight, cap_p, cap_sq))
+            | king_attacks(superking & self.kings)
+            | rook_attacks(superking & self.rooks ^ is_cap(Rook, cap_p, cap_sq), total)
+            | bishop_attacks(
+                superking & self.bishops ^ is_cap(Bishop, cap_p, cap_sq),
+                total,
+            )
+            | queen_attacks(
+                superking & self.queens ^ is_cap(Queen, cap_p, cap_sq),
+                total,
+            );
+
+        return attacks & king != 0;
+
+        #[inline]
+        fn is_cap(is: ChessPiece, cap: Option<ChessPiece>, sq: Option<Square>) -> BoardMask {
+            match (cap, sq) {
+                (Some(p), Some(sq)) if p == is => sq.bit(),
+                _ => BoardMask::MIN,
+            }
+        }
+    }
+
     pub fn attacks_after_friendly_move(
         &self,
         c: ColoredChessPieceWithCapture,
@@ -96,8 +139,8 @@ impl HalfBitBoard {
 #[inline]
 pub fn pawn_attacks(p: BoardMask, c: Color) -> BoardMask {
     match c {
-        Color::White => WHITE_PAWN_CAPTURE.overlay(p),
-        Color::Black => BLACK_PAWN_CAPTURE.overlay(p),
+        Color::White => white_pawn_attack_fill(p),
+        Color::Black => black_pawn_attack_fill(p),
     }
 }
 
@@ -124,4 +167,9 @@ pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
 #[inline]
 pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
     simple_omnidirectional_attacks(q, total)
+}
+
+#[inline]
+pub fn superpiece_attacks(s: BoardMask, total: BoardMask) -> BoardMask {
+    simple_omnidirectional_attacks(s, total) | knight_attacks(s)
 }
