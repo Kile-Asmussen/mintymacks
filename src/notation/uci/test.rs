@@ -4,7 +4,7 @@ use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::{
     bits::{BoardMask, Squares},
-    fuzzing::test::pi_rng,
+    fuzzing::pi_rng,
     model::{BoardFile, BoardRank, ChessPiece, Square},
     notation::uci::{
         LongAlg, Uci,

@@ -5,7 +5,7 @@ pub mod fills;
 pub mod jumps;
 pub mod movegen;
 pub mod moving;
-pub mod opdif;
+pub mod rays;
 pub mod slides;
 pub mod tests;
 pub mod victory;
@@ -20,7 +20,6 @@ use crate::{
         attacks::{bishop_attacks, queen_attacks, rook_attacks},
         slides::{RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST},
     },
-    fuzzing::test::pi_rng,
     model::{BoardFile, BoardRank, ChessPiece, Direction, Square, moves::PseudoMove},
 };
 

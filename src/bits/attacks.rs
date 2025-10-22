@@ -6,7 +6,7 @@ use crate::{
         fills::{black_pawn_attack_fill, white_pawn_attack_fill},
         jumps::{self, KING_MOVES, KNIGHT_MOVES},
         one_bit,
-        opdif::{bishop_rays, queen_rays, rook_rays},
+        rays::{bishop_lasers, bishop_rays, queen_lasers, queen_rays, rook_lasers, rook_rays},
         slides::{
             self, RAYS_EAST, RAYS_NORTH, RAYS_NORTHEAST, RAYS_NORTHWEST, RAYS_SOUTH,
             RAYS_SOUTHEAST, RAYS_SOUTHWEST, RAYS_WEST, simple_diagonal_attacks,
@@ -156,7 +156,7 @@ pub fn king_attacks(k: BoardMask) -> BoardMask {
 
 #[inline]
 pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
-    simple_orthogonal_attacks(r, total)
+    rook_lasers(r, total)
 }
 
 #[inline]

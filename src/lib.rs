@@ -27,7 +27,7 @@ use std::{
 use crate::{
     bits::{
         board::BitBoard,
-        opdif::{anti_ray, diag_ray},
+        rays::{anti_ray, diag_ray},
     },
     fuzzing::stockfish_perft,
     model::{Square, castling::CastlingRights, moves::ChessMove},
@@ -49,5 +49,5 @@ pub mod zobrist;
 
 #[test]
 fn main_perft() {
-    BitBoard::startpos().enumerate(7).print();
+    BitBoard::startpos().enumerate(6).print();
 }

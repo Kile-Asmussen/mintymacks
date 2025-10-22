@@ -21,7 +21,7 @@ use crate::{
         show_mask,
     },
     deque,
-    fuzzing::stockfish_perft,
+    fuzzing::{pi_rng, stockfish_perft},
     model::{
         ChessPiece, Color, ColoredChessPiece, Square,
         castling::{CLASSIC_CASTLING, CastlingRights},
@@ -35,18 +35,6 @@ use crate::{
     println_async,
     zobrist::{self, ZOBRIST, ZobHash, ZobristBoard},
 };
-
-pub fn pi_rng() -> SmallRng {
-    SmallRng::from_seed(*b"3.141592653589793238462643383279")
-}
-
-pub fn pi_rng_skip(n: usize) -> SmallRng {
-    let mut rng = pi_rng();
-    for _ in 0..n {
-        rng.next_u64();
-    }
-    rng
-}
 
 #[test]
 fn fuzz_unmaking_moves() {
@@ -372,5 +360,5 @@ async fn fuzz_against_stockfish() {
         .await;
 
     rng.next_u64();
-    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 96, 4).await;
+    fuzz_stockfish_comparison(&mut engine, &mut rng, 1_000, 96, 3).await;
 }

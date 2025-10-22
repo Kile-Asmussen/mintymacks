@@ -9,7 +9,7 @@ use crate::{
         board::{BitBoard, HalfBitBoard},
         one_bit,
     },
-    fuzzing::test::pi_rng,
+    fuzzing::pi_rng,
     model::{
         ChessPiece, Color, Square,
         castling::{CastlingDetail, CastlingDetails, CastlingRights},

@@ -7,7 +7,7 @@ use rand::Rng;
 
 use crate::{
     bits::board::BitBoard,
-    fuzzing::test::{pi_rng, pi_rng_skip},
+    fuzzing::pi_rng_skip,
     model::{
         ChessPiece,
         moves::{ChessMove, PseudoMove},
@@ -73,44 +73,40 @@ impl BitBoard {
         zobrist: &mut HashMap<(ZobHash, ZobHash), usize, ZobHashing>,
         depths: &[ZobHash],
     ) -> usize {
-        if let Some(n) = zobrist.get(&(self.metadata.hash, depths[depth])) {
-            return *n;
-        }
+        let mut res = 0;
 
         if depth == 0 {
             return 1;
         }
-
         if depth == 1 {
-            // for mv in moves {
-            //     let mv = *mv;
-            //     self.apply(mv);
-            //     self.unapply(mv);
-            // }
-            let n = moves.len();
-            zobrist.insert((self.metadata.hash, depths[depth as usize]), n);
-            return n;
-        }
-
-        let mut buf = Vec::with_capacity(moves.len());
-        let mut res = 0;
-
-        for mv in moves {
-            let mv = *mv;
-            let depth = depth - 1;
-            self.apply(mv);
-            if let Some(n) = zobrist.get(&(self.metadata.hash, depths[depth])) {
-                res += n;
+            for mv in moves {
+                let mv = *mv;
+                self.apply(mv);
                 self.unapply(mv);
-                continue;
             }
-            buf.clear();
-            self.moves(&mut buf);
-            res += self.enum_nodes(&buf, depth, zobrist, depths);
-            self.unapply(mv);
+            res = moves.len();
+        } else {
+            let mut buf = Vec::with_capacity(moves.len());
+
+            for mv in moves {
+                let mv = *mv;
+                let depth = depth - 1;
+                self.apply(mv);
+
+                // if let Some(n) = zobrist.get(&(self.metadata.hash, depths[depth])) {
+                //     res += n;
+                //     self.unapply(mv);
+                //     continue;
+                // }
+
+                buf.clear();
+                self.moves(&mut buf);
+                res += self.enum_nodes(&buf, depth, zobrist, depths);
+                self.unapply(mv);
+            }
         }
 
-        zobrist.insert((self.metadata.hash, depths[depth]), res);
+        // zobrist.insert((self.metadata.hash, depths[depth]), res);
 
         return res;
     }

@@ -16,7 +16,7 @@ use crate::{
         show_mask,
         slides::{BLACK_PAWN_MOVES, WHITE_PAWN_MOVES, obstruction_difference},
     },
-    fuzzing::test::pi_rng,
+    fuzzing::pi_rng,
     model::{BoardFile, BoardRank, Color, Direction, Square},
 };
 

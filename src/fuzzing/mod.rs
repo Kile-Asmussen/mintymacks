@@ -8,6 +8,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use rand::{RngCore, SeedableRng, rngs::SmallRng};
 use serde::de;
 use trie_rs::inc_search::Position;
 
@@ -29,6 +30,18 @@ use crate::{
     },
     tree_map,
 };
+
+pub fn pi_rng() -> SmallRng {
+    SmallRng::from_seed(*b"3.141592653589793238462643383279")
+}
+
+pub fn pi_rng_skip(n: usize) -> SmallRng {
+    let mut rng = pi_rng();
+    for _ in 0..n {
+        rng.next_u64();
+    }
+    rng
+}
 
 pub async fn stockfish_perft(
     engine: &mut EngineHandle,
