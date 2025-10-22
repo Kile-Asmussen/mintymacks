@@ -161,7 +161,7 @@ pub fn rook_attacks(r: BoardMask, total: BoardMask) -> BoardMask {
 
 #[inline]
 pub fn bishop_attacks(b: BoardMask, total: BoardMask) -> BoardMask {
-    simple_diagonal_attacks(b, total)
+    bishop_lasers(b, total)
 }
 
 #[inline]
@@ -171,5 +171,5 @@ pub fn queen_attacks(q: BoardMask, total: BoardMask) -> BoardMask {
 
 #[inline]
 pub fn superpiece_attacks(s: BoardMask, total: BoardMask) -> BoardMask {
-    simple_omnidirectional_attacks(s, total) | knight_attacks(s)
+    queen_attacks(s, total) | knight_attacks(s)
 }

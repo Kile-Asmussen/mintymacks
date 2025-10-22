@@ -9,6 +9,7 @@ use crate::{
         },
         jumps::{KING_MOVES, KNIGHT_MOVES},
         one_bit,
+        rays::{bishop_rays, rook_rays},
         slides::{
             obstruction_difference, simple_diagonal_attack, simple_omnidirectional_attack,
             simple_orthogonal_attack,
@@ -79,7 +80,7 @@ pub fn rook_moves(
     res: &mut Vec<ChessMove>,
 ) {
     for from in Squares(friendly.rooks) {
-        let attacks = simple_orthogonal_attack(from, friendly.total | enemy.total);
+        let attacks = rook_rays(from, friendly.total | enemy.total);
 
         let mask = attacks & !friendly.total;
 

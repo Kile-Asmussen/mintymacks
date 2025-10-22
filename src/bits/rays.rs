@@ -19,11 +19,12 @@ use crate::{
 pub const fn difference_obstruction(
     neg_occ: BoardMask,
     pos_occ: BoardMask,
+    occupied: BoardMask,
     ray: BoardMask,
 ) -> BoardMask {
     let neg_hit = ray & neg_occ;
     let pos_hit = ray & pos_occ;
-    let ms1b = 1u64 << (63 - (neg_hit & (neg_occ | pos_occ) | 1).leading_zeros());
+    let ms1b = 1u64 << (63 - (neg_hit & occupied | 1).leading_zeros());
     let diff = pos_hit ^ pos_hit.wrapping_sub(ms1b);
     return ray & diff;
 }
@@ -47,9 +48,9 @@ pub fn bishop_lasers(rooks: BoardMask, occupied: BoardMask) -> BoardMask {
 }
 
 #[inline]
-pub fn queen_lasers(rooks: BoardMask, occupied: BoardMask) -> BoardMask {
+pub fn queen_lasers(queens: BoardMask, occupied: BoardMask) -> BoardMask {
     let mut res = 0;
-    for sq in Squares(rooks) {
+    for sq in Squares(queens) {
         res |= queen_rays(sq, occupied);
     }
     res
@@ -58,26 +59,26 @@ pub fn queen_lasers(rooks: BoardMask, occupied: BoardMask) -> BoardMask {
 #[inline]
 pub fn rook_rays(sq: Square, occupied: BoardMask) -> BoardMask {
     let (neg_occ, pos_occ) = split(sq, occupied);
-    let rank = difference_obstruction(neg_occ, pos_occ, rank_ray(sq));
-    let file = difference_obstruction(neg_occ, pos_occ, file_ray(sq));
+    let rank = difference_obstruction(neg_occ, pos_occ, occupied, rank_ray(sq));
+    let file = difference_obstruction(neg_occ, pos_occ, occupied, file_ray(sq));
     (rank | file) & !sq.bit()
 }
 
 #[inline]
 pub fn bishop_rays(sq: Square, occupied: BoardMask) -> BoardMask {
     let (neg_occ, pos_occ) = split(sq, occupied);
-    let diag = difference_obstruction(neg_occ, pos_occ, diag_ray(sq));
-    let anti = difference_obstruction(neg_occ, pos_occ, anti_ray(sq));
+    let diag = difference_obstruction(neg_occ, pos_occ, occupied, diag_ray(sq));
+    let anti = difference_obstruction(neg_occ, pos_occ, occupied, anti_ray(sq));
     (diag | anti) & !sq.bit()
 }
 
 #[inline]
 pub fn queen_rays(sq: Square, occupied: BoardMask) -> BoardMask {
     let (neg_occ, pos_occ) = split(sq, occupied);
-    let rank = difference_obstruction(neg_occ, pos_occ, rank_ray(sq));
-    let file = difference_obstruction(neg_occ, pos_occ, file_ray(sq));
-    let diag = difference_obstruction(neg_occ, pos_occ, diag_ray(sq));
-    let anti = difference_obstruction(neg_occ, pos_occ, anti_ray(sq));
+    let rank = difference_obstruction(neg_occ, pos_occ, occupied, rank_ray(sq));
+    let file = difference_obstruction(neg_occ, pos_occ, occupied, file_ray(sq));
+    let diag = difference_obstruction(neg_occ, pos_occ, occupied, diag_ray(sq));
+    let anti = difference_obstruction(neg_occ, pos_occ, occupied, anti_ray(sq));
     (rank | file | diag | anti) & !sq.bit()
 }
 
