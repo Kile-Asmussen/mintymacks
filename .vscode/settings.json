@@ -15,5 +15,9 @@
         "rustfmt",
         "--edition",
         "2024"
+    ],
+    "rust-analyzer.cargo.cfgs": [
+        "debug_assertions",
+        "miri",
     ]
 }

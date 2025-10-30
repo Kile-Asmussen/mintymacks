@@ -106,7 +106,6 @@ pub fn bishop_fill(mask: u64, empty: u64) -> u64 {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
 pub fn queen_fill(mask: u64, empty: u64) -> u64 {
     return queen_upper(mask, empty) | queen_lower(mask, empty);
 
